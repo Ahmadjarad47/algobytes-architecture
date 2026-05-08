@@ -1,0 +1,11 @@
+.app-theme-toggle {
+  position: fixed;
+  bottom: 14px;
+  left: 12px;
+  z-index: 1700;
+  border: 1px solid var(--border-color) !important;
+  background: color-mix(in srgb, var(--surface-overlay) 88%, transparent) !important;
+  color: var(--text-secondary) !important;
+  box-shadow: var(--shadow-sm) !important;
+  backdrop-filter: blur(12px);
+}

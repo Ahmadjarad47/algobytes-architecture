@@ -1,0 +1,168 @@
+<section class="condition-builder">
+  <div class="condition-builder__header">
+    <div>
+      <h3>Conditions</h3>
+      <p>{{ resource() || 'Select a resource' }}</p>
+    </div>
+    <p-button
+      label="Validate condition"
+      icon="pi pi-check-circle"
+      size="small"
+      severity="secondary"
+      [outlined]="true"
+      [disabled]="state().mode === 'none'"
+      (onClick)="validateRequested.emit()"
+    />
+  </div>
+
+  @if (validationMessage()) {
+    <p-message [severity]="validationSeverity()" [text]="validationMessage() ?? ''" />
+  }
+
+  @if (state().mode === 'advanced') {
+    <div class="condition-builder__advanced">
+      <p-message
+        severity="warn"
+        text="Advanced condition detected. The visual builder can preview it, but this shape needs fallback JSON editing."
+      />
+      @if (state().advancedReason) {
+        <p class="condition-builder__hint">{{ state().advancedReason }}</p>
+      }
+      <textarea
+        pTextarea
+        rows="7"
+        class="condition-builder__json-editor"
+        [ngModel]="state().advancedJson"
+        (ngModelChange)="updateAdvancedJson($event)"
+      ></textarea>
+    </div>
+  } @else {
+    <div class="condition-builder__mode">
+      <p-select
+        [options]="modeOptions"
+        optionLabel="label"
+        optionValue="value"
+        [ngModel]="state().mode"
+        (ngModelChange)="setMode($event)"
+        appendTo="body"
+      />
+      @if (state().mode !== 'none') {
+        <p-button
+          label="Add condition"
+          icon="pi pi-plus"
+          size="small"
+          [disabled]="fields().length === 0"
+          (onClick)="addRow()"
+        />
+      }
+    </div>
+
+    @if (state().mode !== 'none') {
+      <div class="condition-builder__rows">
+        @for (row of state().rows; track row.id) {
+          @let field = fieldFor(row);
+          <div class="condition-builder__row">
+            <p-select
+              [options]="fieldOptions()"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="row.field"
+              (ngModelChange)="updateField(row, $event)"
+              appendTo="body"
+              placeholder="Field"
+            />
+            <p-select
+              [options]="operatorOptions(row)"
+              optionLabel="label"
+              optionValue="value"
+              [ngModel]="row.operator"
+              (ngModelChange)="updateOperator(row, $event)"
+              appendTo="body"
+              placeholder="Operator"
+            />
+
+            @if (row.operator === 'isNull' || row.operator === 'notNull') {
+              <span class="condition-builder__empty">No value</span>
+            } @else {
+              @switch (field?.type) {
+                @case ('boolean') {
+                  <p-select
+                    [options]="booleanOptions"
+                    optionLabel="label"
+                    optionValue="value"
+                    [ngModel]="row.value"
+                    (ngModelChange)="updateValue(row, $event)"
+                    appendTo="body"
+                  />
+                }
+                @case ('number') {
+                  <p-inputnumber
+                    [ngModel]="row.value"
+                    (ngModelChange)="updateValue(row, $event)"
+                    inputStyleClass="w-full"
+                  />
+                }
+                @case ('date') {
+                  <p-datepicker
+                    [ngModel]="row.value"
+                    (ngModelChange)="updateValue(row, $event)"
+                    [showIcon]="true"
+                    appendTo="body"
+                    styleClass="w-full"
+                    inputStyleClass="w-full"
+                  />
+                }
+                @case ('enum') {
+                  <p-select
+                    [options]="enumOptions(field)"
+                    optionLabel="label"
+                    optionValue="value"
+                    [ngModel]="row.value"
+                    (ngModelChange)="updateValue(row, $event)"
+                    appendTo="body"
+                  />
+                }
+                @default {
+                  <input
+                    pInputText
+                    class="w-full"
+                    [ngModel]="row.value"
+                    (ngModelChange)="updateValue(row, $event)"
+                  />
+                }
+              }
+            }
+
+            <p-button
+              icon="pi pi-trash"
+              severity="danger"
+              size="small"
+              [text]="true"
+              [rounded]="true"
+              ariaLabel="Remove condition"
+              (onClick)="removeRow(row.id)"
+            />
+          </div>
+        }
+      </div>
+    }
+  }
+
+  <p-panel header="Preview JSON" [toggleable]="true" [collapsed]="true">
+    @if (previewJson()) {
+      <pre>{{ previewJson() }}</pre>
+    } @else {
+      <span class="condition-builder__empty">No condition JSON will be sent.</span>
+    }
+    @if (state().mode !== 'advanced' && state().advancedReason) {
+      <p-button
+        label="Edit advanced JSON"
+        icon="pi pi-code"
+        size="small"
+        severity="secondary"
+        [outlined]="true"
+        (onClick)="enableAdvancedEdit()"
+      />
+    }
+  </p-panel>
+</section>
