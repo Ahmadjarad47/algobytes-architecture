@@ -1,0 +1,18 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/algo.SharedKernel/algo.SharedKernel.csproj" />
+    <Project Path="src/algo.Domain/algo.Domain.csproj" />
+    <Project Path="src/algo.Application/algo.Application.csproj" />
+    <Project Path="src/algo.Persistence/algo.Persistence.csproj" />
+    <Project Path="src/algo.Infrastructure/algo.Infrastructure.csproj" />
+    <Project Path="src/algo.API/algo.API.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/algo.Domain.UnitTests/algo.Domain.UnitTests.csproj" />
+    <Project Path="tests/algo.Application.UnitTests/algo.Application.UnitTests.csproj" />
+    <Project Path="tests/algo.Application.ArchitectureTests/algo.Application.ArchitectureTests.csproj" />
+    <Project Path="tests/algo.Persistence.IntegrationTests/algo.Persistence.IntegrationTests.csproj" />
+    <Project Path="tests/algo.API.IntegrationTests/algo.API.IntegrationTests.csproj" />
+    <Project Path="tests/algo.ArchitectureTests/algo.ArchitectureTests.csproj" />
+  </Folder>
+</Solution>
