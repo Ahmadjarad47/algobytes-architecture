@@ -2,6 +2,8 @@ import { inject, Injectable } from '@angular/core';
 import { catchError, forkJoin, Observable, of } from 'rxjs';
 import { map } from 'rxjs/operators';
 
+import { Permissions } from '../../../core/permissions/permission.catalog';
+import { PermissionService } from '../../../core/permissions/permission.service';
 import { AccessPoliciesApiService } from '../../access-policies/api/access-policies-api.service';
 import { ApiService } from '../../../core/api/api.service';
 import { ErrorLogsApiService } from '../../error-logs/api/error-logs-api.service';
@@ -34,15 +36,21 @@ export class DashboardApiService {
   private readonly logsApi = inject(LogsApiService);
   private readonly errorLogsApi = inject(ErrorLogsApiService);
   private readonly accessPoliciesApi = inject(AccessPoliciesApiService);
+  private readonly permissions = inject(PermissionService);
 
   getStats(): Observable<UserDashboardStats> {
     return this.api.get<UserDashboardStats>('/Users/dashboard');
   }
 
   getOverview(query: AdminDashboardOverviewQuery = {}): Observable<AdminDashboardOverview> {
+    const canReadUsers = this.permissions.can({ any: [Permissions.users.read] });
+    const canReadLogs = this.permissions.can({ any: [Permissions.logs.read] });
+    const canReadErrorLogs = this.permissions.can({ any: [Permissions.errorLogs.read] });
+    const canReadPolicies = this.permissions.can({ any: [Permissions.accessPolicies.read] });
+
     return forkJoin({
-      stats: this.getStats().pipe(catchError(() => of(EMPTY_USER_STATS))),
-      logs: this.logsApi
+      stats: (canReadUsers ? this.getStats() : of(EMPTY_USER_STATS)).pipe(catchError(() => of(EMPTY_USER_STATS))),
+      logs: (canReadLogs ? this.logsApi
         .getLogs({
           PageNumber: 1,
           PageSize: 50,
@@ -54,8 +62,8 @@ export class DashboardApiService {
         .pipe(
           map((page) => page.items),
           catchError(() => of([]))
-        ),
-      errorLogs: this.errorLogsApi
+        ) : of([])),
+      errorLogs: (canReadErrorLogs ? this.errorLogsApi
         .getErrorLogs({
           PageNumber: 1,
           PageSize: 25,
@@ -67,8 +75,8 @@ export class DashboardApiService {
         .pipe(
           map((page) => page.items),
           catchError(() => of([]))
-        ),
-      accessPolicies: this.accessPoliciesApi.getPolicies().pipe(catchError(() => of([])))
+        ) : of([])),
+      accessPolicies: (canReadPolicies ? this.accessPoliciesApi.getPolicies() : of([])).pipe(catchError(() => of([])))
     });
   }
 }

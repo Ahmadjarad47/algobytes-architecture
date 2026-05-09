@@ -2,12 +2,20 @@ import { Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
+import { permissionGuard } from './core/guards/permission.guard';
+import { DashboardAnyReadPermissions, Permissions } from './core/permissions/permission.catalog';
 
 export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
     redirectTo: 'dashboard'
+  },
+  {
+    path: 'access-denied',
+    title: 'Access denied | algo.ui',
+    loadComponent: () =>
+      import('./features/auth/pages/access-denied/access-denied').then((m) => m.AccessDenied)
   },
   {
     path: 'auth',
@@ -27,6 +35,8 @@ export const routes: Routes = [
     children: [
       {
         path: 'dashboard',
+        canActivate: [permissionGuard],
+        data: { permission: { any: DashboardAnyReadPermissions } },
         loadChildren: () =>
           import('./features/dashboard/dashboard.routes').then(
             (m) => m.DASHBOARD_ROUTES
@@ -34,28 +44,47 @@ export const routes: Routes = [
       },
       {
         path: 'users',
+        canActivate: [permissionGuard],
+        data: { permission: { any: [Permissions.users.read] } },
         loadChildren: () =>
           import('./features/users/users.routes').then((m) => m.USERS_ROUTES)
       },
       {
         path: 'roles',
+        canActivate: [permissionGuard],
+        data: { permission: { any: [Permissions.roles.read] } },
         loadChildren: () =>
           import('./features/roles/roles.routes').then((m) => m.ROLES_ROUTES)
       },
       {
         path: 'access-policies',
+        canActivate: [permissionGuard],
+        data: { permission: { any: [Permissions.accessPolicies.read] } },
         loadChildren: () =>
           import('./features/access-policies/access-policies.routes').then(
             (m) => m.ACCESS_POLICIES_ROUTES
           )
       },
       {
+        path: 'active-sessions',
+        canActivate: [permissionGuard],
+        data: { permission: { any: [Permissions.sessions.read] } },
+        loadChildren: () =>
+          import('./features/active-sessions/active-sessions.routes').then(
+            (m) => m.ACTIVE_SESSIONS_ROUTES
+          )
+      },
+      {
         path: 'logs',
+        canActivate: [permissionGuard],
+        data: { permission: { any: [Permissions.logs.read] } },
         loadChildren: () =>
           import('./features/logs/logs.routes').then((m) => m.LOGS_ROUTES)
       },
       {
         path: 'error-logs',
+        canActivate: [permissionGuard],
+        data: { permission: { any: [Permissions.errorLogs.read] } },
         loadChildren: () =>
           import('./features/error-logs/error-logs.routes').then(
             (m) => m.ERROR_LOGS_ROUTES
@@ -63,6 +92,8 @@ export const routes: Routes = [
       },
       {
         path: 'settings',
+        canActivate: [permissionGuard],
+        data: { permission: { any: [Permissions.settings.read] } },
         loadChildren: () =>
           import('./features/settings/settings.routes').then(
             (m) => m.SETTINGS_ROUTES
@@ -70,6 +101,8 @@ export const routes: Routes = [
       },
       {
         path: 'reports',
+        canActivate: [permissionGuard],
+        data: { permission: { any: [Permissions.reports.read] } },
         loadChildren: () =>
           import('./features/reports/reports.routes').then(
             (m) => m.REPORTS_ROUTES

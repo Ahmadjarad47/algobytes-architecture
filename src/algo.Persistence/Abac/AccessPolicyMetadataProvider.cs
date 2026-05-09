@@ -18,6 +18,7 @@ public sealed class AccessPolicyMetadataProvider : IAccessPolicyMetadataProvider
                 [AccessPolicyResources.Users] = CreateUsersMetadata(),
                 [AccessPolicyResources.Roles] = CreateRolesMetadata(),
                 [AccessPolicyResources.AccessPolicies] = CreateAccessPoliciesMetadata(),
+                [AccessPolicyResources.Sessions] = CreateSessionsMetadata(),
                 [AccessPolicyResources.Logs] = CreateLogsMetadata(),
                 [AccessPolicyResources.ErrorLogs] = CreateErrorLogsMetadata(),
             });
@@ -114,6 +115,31 @@ public sealed class AccessPolicyMetadataProvider : IAccessPolicyMetadataProvider
             ["userName"] = Field(type, nameof(ApplicationLog.UserName)),
             ["requestPath"] = Field(type, nameof(ApplicationLog.RequestPath)),
             ["requestMethod"] = Field(type, nameof(ApplicationLog.RequestMethod)),
+        };
+
+        return new AccessPolicyEntityMetadata
+        {
+            EntityType = type,
+            Fields = fields,
+        };
+    }
+
+    private static AccessPolicyEntityMetadata CreateSessionsMetadata()
+    {
+        var type = typeof(RefreshToken);
+        var fields = new Dictionary<string, AccessPolicyFieldMetadata>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["id"] = Field(type, nameof(RefreshToken.Id)),
+            ["userId"] = Field(type, nameof(RefreshToken.UserId)),
+            ["expiresAt"] = Field(type, nameof(RefreshToken.ExpiresAt)),
+            ["createdAt"] = Field(type, nameof(RefreshToken.CreatedAt)),
+            ["lastActivityAt"] = Field(type, nameof(RefreshToken.LastActivityAt)),
+            ["revokedAt"] = Field(type, nameof(RefreshToken.RevokedAt)),
+            ["ipAddress"] = Field(type, nameof(RefreshToken.IpAddress)),
+            ["device"] = Field(type, nameof(RefreshToken.Device)),
+            ["browser"] = Field(type, nameof(RefreshToken.Browser)),
+            ["operatingSystem"] = Field(type, nameof(RefreshToken.OperatingSystem)),
+            ["isSuspicious"] = Field(type, nameof(RefreshToken.IsSuspicious)),
         };
 
         return new AccessPolicyEntityMetadata

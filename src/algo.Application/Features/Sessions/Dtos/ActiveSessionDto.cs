@@ -1,0 +1,26 @@
+namespace algo.Application.Features.Sessions.Dtos;
+
+public sealed record ActiveSessionDto(
+    Guid Id,
+    string UserId,
+    string UserName,
+    string Email,
+    string Role,
+    string Status,
+    string Device,
+    string Browser,
+    string Os,
+    string? IpAddress,
+    string? Location,
+    DateTimeOffset LoginTime,
+    DateTimeOffset LastActivity,
+    int DurationMinutes,
+    DateTimeOffset ExpiresAt,
+    DateTimeOffset? RefreshTokenExpiresAt,
+    bool CurrentAdminSession,
+    bool TrustedDevice,
+    bool Suspicious,
+    DateTimeOffset? RevokedAt,
+    string? RevokedBy,
+    string? UserAgent,
+    IReadOnlyList<string> ActivityTimeline);

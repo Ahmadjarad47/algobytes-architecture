@@ -7,7 +7,6 @@ using algo.Application.Features.Users.Validation;
 using algo.Domain.Identity.Entities;
 using FluentValidation;
 using FluentValidation.Results;
-using Mapster;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -80,13 +79,25 @@ public sealed class GetUsersQueryHandler(
             .Take(size)
             .ToListAsync(cancellationToken);
 
-        var rolesByUser = await LoadRolesForUsersAsync(db, users.Select(u => u.Id).ToList(), cancellationToken);
+        var userIds = users.Select(u => u.Id).ToList();
+        var rolesByUser = await LoadRolesForUsersAsync(db, userIds, cancellationToken);
+        var onlineUserIds = await LoadOnlineUserIdsAsync(db, userIds, utcNow, cancellationToken);
 
-        var items = users.Select(u =>
-        {
-            var dto = u.Adapt<UserListItemDto>();
-            return dto with { Roles = rolesByUser.GetValueOrDefault(u.Id, []) };
-        }).ToList();
+        var items = users.Select(u => new UserListItemDto(
+            u.Id,
+            u.Email,
+            u.UserName,
+            u.DisplayName,
+            u.PhoneNumber,
+            u.IsActive,
+            u.LockoutEnd.HasValue && u.LockoutEnd > utcNow,
+            u.EmailConfirmed,
+            u.PhoneNumberConfirmed,
+            u.CreatedAt,
+            u.UpdatedAt,
+            u.LastLoginAt,
+            onlineUserIds.Contains(u.Id),
+            rolesByUser.GetValueOrDefault(u.Id, []))).ToList();
 
         return new PaginatedResult<UserListItemDto>(items, page, size, total);
     }
@@ -145,6 +156,28 @@ public sealed class GetUsersQueryHandler(
         return pairs
             .GroupBy(x => x.UserId)
             .ToDictionary(g => g.Key, g => g.Select(x => x.RoleName).Distinct().OrderBy(n => n).ToArray(), StringComparer.Ordinal);
+    }
+
+    private static async Task<HashSet<string>> LoadOnlineUserIdsAsync(
+        IApplicationDbContext db,
+        List<string> userIds,
+        DateTimeOffset utcNow,
+        CancellationToken cancellationToken)
+    {
+        if (userIds.Count == 0)
+            return [];
+
+        var ids = await db.RefreshTokens
+            .AsNoTracking()
+            .Where(token =>
+                userIds.Contains(token.UserId) &&
+                token.RevokedAt == null &&
+                token.ExpiresAt > utcNow)
+            .Select(token => token.UserId)
+            .Distinct()
+            .ToListAsync(cancellationToken);
+
+        return ids.ToHashSet(StringComparer.Ordinal);
     }
 
     private static string EscapeLike(string value) =>

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, input, output } from '@angular/core';
 import { CommonModule, DatePipe } from '@angular/common';
+import { ButtonModule } from 'primeng/button';
 import { DrawerModule } from 'primeng/drawer';
 import { TagModule } from 'primeng/tag';
 
@@ -7,7 +8,7 @@ import { AdminDetailItem } from '../../models/admin-table.model';
 
 @Component({
   selector: 'app-admin-details-drawer',
-  imports: [CommonModule, DrawerModule, TagModule, DatePipe],
+  imports: [CommonModule, ButtonModule, DrawerModule, TagModule, DatePipe],
   template: `
     <p-drawer
       position="right"
@@ -56,6 +57,23 @@ import { AdminDetailItem } from '../../models/admin-table.model';
             No details available for this record.
           </section>
         }
+
+        @if (showCopy() || secondaryCopyLabel() || actionLabel() || secondaryActionLabel()) {
+          <div class="sticky bottom-0 -mx-3 mt-2 flex flex-wrap justify-end gap-2 border-t border-surface-200 bg-white/95 px-3 py-3">
+            @if (showCopy()) {
+              <p-button [label]="copyLabel()" icon="pi pi-copy" severity="secondary" size="small" [outlined]="true" (onClick)="copy.emit()" />
+            }
+            @if (secondaryCopyLabel()) {
+              <p-button [label]="secondaryCopyLabel()" icon="pi pi-copy" severity="secondary" size="small" [outlined]="true" (onClick)="secondaryCopy.emit()" />
+            }
+            @if (actionLabel()) {
+              <p-button [label]="actionLabel()" [icon]="actionIcon()" size="small" (onClick)="action.emit()" />
+            }
+            @if (secondaryActionLabel()) {
+              <p-button [label]="secondaryActionLabel()" [icon]="secondaryActionIcon()" severity="warn" size="small" [outlined]="true" (onClick)="secondaryAction.emit()" />
+            }
+          </div>
+        }
       </div>
     </p-drawer>
   `,
@@ -65,8 +83,19 @@ export class AdminDetailsDrawer {
   readonly visible = input(false);
   readonly title = input.required<string>();
   readonly items = input<AdminDetailItem[]>([]);
+  readonly showCopy = input(false);
+  readonly copyLabel = input('Copy');
+  readonly secondaryCopyLabel = input('');
+  readonly actionLabel = input('');
+  readonly actionIcon = input('pi pi-check');
+  readonly secondaryActionLabel = input('');
+  readonly secondaryActionIcon = input('pi pi-users');
 
   readonly visibleChange = output<boolean>();
+  readonly copy = output<void>();
+  readonly secondaryCopy = output<void>();
+  readonly action = output<void>();
+  readonly secondaryAction = output<void>();
 
   formatValue(value: unknown): string {
     if (value === null || value === undefined || value === '') {

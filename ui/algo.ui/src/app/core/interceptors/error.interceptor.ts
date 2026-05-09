@@ -1,16 +1,31 @@
 import { inject } from '@angular/core';
-import { HttpErrorResponse, HttpInterceptorFn } from '@angular/common/http';
+import { HttpErrorResponse, HttpInterceptorFn, HttpRequest } from '@angular/common/http';
+import { Router } from '@angular/router';
 import { catchError, throwError } from 'rxjs';
 
 import { ApiError } from '../models/api-error.model';
+import { AuthService } from '../services/auth.service';
 import { AppToastService } from '../services/app-toast.service';
+import { SessionRealtimeService } from '../services/session-realtime.service';
 
 export const errorInterceptor: HttpInterceptorFn = (request, next) => {
   const toast = inject(AppToastService);
+  const authService = inject(AuthService);
+  const router = inject(Router);
+  const sessionRealtime = inject(SessionRealtimeService);
 
   return next(request).pipe(
     catchError((error: unknown) => {
       if (error instanceof HttpErrorResponse) {
+        if (error.status === 401 && shouldRedirectToLogin(request)) {
+          sessionRealtime.stop();
+          authService.clearSession();
+
+          if (!router.url.startsWith('/auth')) {
+            void router.navigateByUrl('/auth/login');
+          }
+        }
+
         const message = errorMessage(error);
         const apiError: ApiError = {
           message,
@@ -26,6 +41,13 @@ export const errorInterceptor: HttpInterceptorFn = (request, next) => {
     })
   );
 };
+
+function shouldRedirectToLogin(request: HttpRequest<unknown>): boolean {
+  const normalizedUrl = request.url.toLowerCase();
+  return !normalizedUrl.includes('/auth/login') &&
+    !normalizedUrl.includes('/auth/register') &&
+    !normalizedUrl.includes('/auth/refresh-token');
+}
 
 function errorSummary(error: HttpErrorResponse): string {
   if (error.status === 0) {

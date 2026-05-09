@@ -24,7 +24,9 @@ export class AuthApiService {
     );
   }
 
-  logout(): Observable<void> {
-    return this.api.post<void, Record<string, never>>('/Auth/logout', {});
+  logout(refreshToken: string | null): Observable<void> {
+    return this.api.post<void, { refreshToken: string | null }>('/Auth/logout', {
+      refreshToken
+    });
   }
 }

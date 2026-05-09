@@ -39,6 +39,19 @@ export class UsersApiService {
     return this.api.patch<void>(`/Users/${id}/deactivate`);
   }
 
+  lockUser(id: string): Observable<void> {
+    const lockoutEnd = new Date();
+    lockoutEnd.setFullYear(lockoutEnd.getFullYear() + 1);
+
+    return this.api.patch<void, { lockoutEnd: string }>(`/Users/${id}/lock`, {
+      lockoutEnd: lockoutEnd.toISOString()
+    });
+  }
+
+  unlockUser(id: string): Observable<void> {
+    return this.api.patch<void>(`/Users/${id}/unlock`);
+  }
+
   deleteUser(id: string): Observable<void> {
     return this.api.delete<void>(`/Users/${id}`);
   }

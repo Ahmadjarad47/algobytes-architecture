@@ -3,7 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormControl, FormGroup, ReactiveFormsModule } from '@angular/forms';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
-import { DialogModule } from 'primeng/dialog';
+import { DrawerModule } from 'primeng/drawer';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { FluidModule } from 'primeng/fluid';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -23,7 +23,7 @@ import { AdminFormField } from '../../models/admin-table.model';
     ReactiveFormsModule,
     ButtonModule,
     DatePickerModule,
-    DialogModule,
+    DrawerModule,
     FloatLabelModule,
     FluidModule,
     InputNumberModule,
@@ -35,16 +35,17 @@ import { AdminFormField } from '../../models/admin-table.model';
     ToggleSwitchModule
   ],
   template: `
-    <p-dialog
+    <p-drawer
+      position="right"
       [visible]="visible()"
       [header]="title()"
       [modal]="true"
-      [closable]="true"
-      [draggable]="false"
-      [resizable]="false"
-      [style]="{ width: 'min(38rem, 92vw)' }"
-      styleClass="surface-dialog"
-      maskStyleClass="backdrop-blur-[3px]"
+      [dismissible]="true"
+      [blockScroll]="true"
+      [appendTo]="'body'"
+      [style]="{ width: 'min(38rem, 100vw)' }"
+      styleClass="surface-dialog app-details-drawer"
+      [maskStyle]="{ background: 'rgba(15, 23, 42, 0.18)', backdropFilter: 'none' }"
       (visibleChange)="visibleChange.emit($event)"
     >
       <form [formGroup]="form()" class="flex flex-col gap-4" (ngSubmit)="submit.emit()">
@@ -142,7 +143,7 @@ import { AdminFormField } from '../../models/admin-table.model';
           />
         </div>
       </form>
-    </p-dialog>
+    </p-drawer>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })

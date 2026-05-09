@@ -15,7 +15,8 @@ public sealed class VerifyOtpCommandHandler(
     UserManager<ApplicationUser> userManager,
     IOtpService otpService,
     IJwtTokenService jwt,
-    IApplicationDbContext db) : IRequestHandler<VerifyOtpCommand, AuthResponseDto>
+    IApplicationDbContext db,
+    ISessionContext sessionContext) : IRequestHandler<VerifyOtpCommand, AuthResponseDto>
 {
     public async Task<AuthResponseDto> Handle(VerifyOtpCommand request, CancellationToken cancellationToken)
     {
@@ -65,6 +66,6 @@ public sealed class VerifyOtpCommandHandler(
         await db.SaveChangesAsync(cancellationToken);
 
         var roles = (await userManager.GetRolesAsync(user)).ToArray();
-        return await AuthSessionIssuer.IssueAsync(user, roles, jwt, db, cancellationToken);
+        return await AuthSessionIssuer.IssueAsync(user, roles, jwt, db, sessionContext, cancellationToken);
     }
 }

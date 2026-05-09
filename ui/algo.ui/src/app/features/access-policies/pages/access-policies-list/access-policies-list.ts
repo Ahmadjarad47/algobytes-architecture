@@ -3,7 +3,7 @@ import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angula
 import { finalize } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
-import { DialogModule } from 'primeng/dialog';
+import { DrawerModule } from 'primeng/drawer';
 import { FloatLabelModule } from 'primeng/floatlabel';
 import { FluidModule } from 'primeng/fluid';
 import { InputNumberModule } from 'primeng/inputnumber';
@@ -22,6 +22,10 @@ import {
   AdminTableColumn
 } from '../../../../shared/models/admin-table.model';
 import { AppToastService } from '../../../../core/services/app-toast.service';
+import { AdminActionBusService } from '../../../../core/services/admin-action-bus.service';
+import { Permissions } from '../../../../core/permissions/permission.catalog';
+import { PermissionService } from '../../../../core/permissions/permission.service';
+import { exportCsv, exportJson, ExportRow } from '../../../../shared/utils/export.utils';
 import { AccessPoliciesApiService } from '../../api/access-policies-api.service';
 import { AccessPolicyConditionBuilderComponent } from '../../components/access-policy-condition-builder/access-policy-condition-builder.component';
 import {
@@ -64,7 +68,7 @@ const FALLBACK_POLICY_OPTIONS: AccessPolicyOptionsDto = {
     AccessPolicyConditionBuilderComponent,
     ButtonModule,
     DatePickerModule,
-    DialogModule,
+    DrawerModule,
     FloatLabelModule,
     FluidModule,
     InputNumberModule,
@@ -84,24 +88,29 @@ const FALLBACK_POLICY_OPTIONS: AccessPolicyOptionsDto = {
       [rows]="25"
       [totalRecords]="policies().length"
       [globalFilterFields]="['resource', 'action', 'subjectKey', 'description']"
+      [showCreate]="canCreate()"
+      [showExport]="canExport()"
       searchPlaceholder="Search policies"
       emptyTitle="No access policies found"
       emptyMessage="Create your first policy to define authorization rules."
-      [actions]="actions"
+      [actions]="actions()"
       (refresh)="loadPolicies()"
       (create)="openCreate()"
       (rowAction)="handleAction($event.actionId, $event.row)"
+      (exportCsv)="exportRows('access-policies', $event)"
+      (exportJson)="exportRowsJson('access-policies', $event)"
     />
 
-    <p-dialog
+    <p-drawer
+      position="right"
       [visible]="formVisible()"
       [header]="editingPolicyId() ? 'Edit policy' : 'Create policy'"
       [modal]="true"
-      [closable]="true"
-      [draggable]="false"
-      [resizable]="false"
-      [style]="{ width: 'min(52rem, 94vw)' }"
-      styleClass="surface-dialog"
+      [dismissible]="true"
+      [blockScroll]="true"
+      [appendTo]="'body'"
+      [style]="{ width: 'min(52rem, 100vw)' }"
+      styleClass="surface-dialog app-details-drawer"
       (visibleChange)="closeForm($event)"
     >
       <form [formGroup]="form" class="flex flex-col gap-4" (ngSubmit)="save()">
@@ -230,7 +239,7 @@ const FALLBACK_POLICY_OPTIONS: AccessPolicyOptionsDto = {
           />
         </div>
       </form>
-    </p-dialog>
+    </p-drawer>
 
     <app-admin-details-drawer
       [visible]="detailsVisible()"
@@ -256,6 +265,8 @@ export class AccessPoliciesList {
   private readonly api = inject(AccessPoliciesApiService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly toast = inject(AppToastService);
+  private readonly actionBus = inject(AdminActionBusService);
+  private readonly permissionService = inject(PermissionService);
 
   protected readonly policies = signal<AccessPolicyAdminDto[]>([]);
   protected readonly loading = signal(false);
@@ -292,12 +303,19 @@ export class AccessPoliciesList {
     { field: 'validTo', header: 'Valid to', cellType: 'date' }
   ];
 
-  protected readonly actions: AdminRowAction<AccessPolicyAdminDto>[] = [
+  protected readonly canCreate = computed(() => this.permissionService.can({ any: [Permissions.accessPolicies.create] }));
+  protected readonly canUpdate = computed(() => this.permissionService.can({ any: [Permissions.accessPolicies.update] }));
+  protected readonly canDelete = computed(() => this.permissionService.can({ any: [Permissions.accessPolicies.delete] }));
+  protected readonly canExport = computed(() => this.permissionService.can({ any: [Permissions.accessPolicies.read] }));
+
+  protected readonly actions = computed<AdminRowAction<AccessPolicyAdminDto>[]>(() => [
     { id: 'view', label: 'View policy', icon: 'pi pi-eye' },
-    { id: 'edit', label: 'Edit policy', icon: 'pi pi-pencil' },
-    { id: 'toggle', label: 'Toggle policy', icon: 'pi pi-shield', severity: 'warn' },
-    { id: 'delete', label: 'Delete policy', icon: 'pi pi-trash', severity: 'danger' }
-  ];
+    ...(this.canUpdate() ? [
+      { id: 'edit', label: 'Edit policy', icon: 'pi pi-pencil' } as AdminRowAction<AccessPolicyAdminDto>,
+      { id: 'toggle', label: 'Toggle policy', icon: 'pi pi-shield', severity: 'warn' as const }
+    ] : []),
+    ...(this.canDelete() ? [{ id: 'delete', label: 'Delete policy', icon: 'pi pi-trash', severity: 'danger' as const }] : [])
+  ]);
 
   protected readonly resourceOptions = computed(() =>
     this.options().resources.map((resource) => ({
@@ -381,6 +399,11 @@ export class AccessPoliciesList {
     });
     this.loadOptions();
     this.loadPolicies();
+    this.actionBus.actions$.subscribe((action) => {
+      if (action === 'create-access-policy' && this.canCreate()) {
+        this.openCreate();
+      }
+    });
   }
 
   protected loadOptions(): void {
@@ -617,5 +640,13 @@ export class AccessPoliciesList {
       .replace(/([a-z])([A-Z])/g, '$1 $2')
       .replace(/[_-]+/g, ' ')
       .replace(/^\w/, (letter) => letter.toUpperCase());
+  }
+
+  protected exportRows(fileName: string, rows: AccessPolicyAdminDto[]): void {
+    exportCsv(fileName, rows as unknown as ExportRow[]);
+  }
+
+  protected exportRowsJson(fileName: string, rows: AccessPolicyAdminDto[]): void {
+    exportJson(fileName, rows as unknown as ExportRow[]);
   }
 }

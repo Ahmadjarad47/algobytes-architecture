@@ -7,6 +7,7 @@ using algo.Application.DependencyInjection;
 using algo.Infrastructure.DependencyInjection;
 using algo.Persistence.Context;
 using algo.Persistence.DependencyInjection;
+using algo.RealTime;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
@@ -24,6 +25,7 @@ builder.Host.UseSerilog(SerilogConfiguration.Configure);
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication(builder.Configuration);
+builder.Services.AddRealTime();
 
 builder.Services.AddControllers(options => options.Filters.Add<ValidationExceptionFilter>())
     .AddJsonOptions(o =>
@@ -68,6 +70,14 @@ builder.Services
         {
             OnMessageReceived = context =>
             {
+                var accessToken = context.Request.Query["access_token"];
+                var path = context.HttpContext.Request.Path;
+                if (!string.IsNullOrWhiteSpace(accessToken) &&
+                    path.StartsWithSegments("/hubs/sessions", StringComparison.OrdinalIgnoreCase))
+                {
+                    context.Token = accessToken;
+                }
+
                 var logger = context.HttpContext.RequestServices
                     .GetRequiredService<ILoggerFactory>()
                     .CreateLogger("JwtBearer");
@@ -92,6 +102,33 @@ builder.Services
                 var logger = context.HttpContext.RequestServices
                     .GetRequiredService<ILoggerFactory>()
                     .CreateLogger("JwtBearer");
+
+                var principal = context.Principal;
+                var userId = principal?.FindFirstValue(JwtRegisteredClaimNames.Sub)
+                    ?? principal?.FindFirstValue(ClaimTypes.NameIdentifier);
+                var sessionClaim = principal?.FindFirstValue(JwtRegisteredClaimNames.Sid)
+                    ?? principal?.FindFirstValue(ClaimTypes.Sid);
+
+                if (string.IsNullOrWhiteSpace(userId) ||
+                    !Guid.TryParse(sessionClaim, out var sessionId))
+                {
+                    context.Fail("Missing or invalid session claim.");
+                    return Task.CompletedTask;
+                }
+
+                var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
+                var now = DateTimeOffset.UtcNow;
+                var isValidSession = db.RefreshTokens.Any(token =>
+                    token.Id == sessionId &&
+                    token.UserId == userId &&
+                    token.RevokedAt == null &&
+                    token.ExpiresAt > now);
+
+                if (!isValidSession)
+                {
+                    context.Fail("Session has been revoked or expired.");
+                    return Task.CompletedTask;
+                }
 
                 logger.LogInformation(
                     "JWT token validated. IsAuthenticated={IsAuthenticated}",
@@ -135,6 +172,20 @@ builder.Services
     });
 
 builder.Services.AddAuthorization();
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy("UiDevCors", policy =>
+    {
+        policy.WithOrigins(
+                "http://localhost:4200",
+                "https://localhost:4200",
+                "http://127.0.0.1:4200",
+                "https://127.0.0.1:4200")
+            .AllowAnyHeader()
+            .AllowAnyMethod()
+            .AllowCredentials();
+    });
+});
 
 builder.Services.AddOpenApi(options =>
 {
@@ -176,7 +227,7 @@ builder.Services.AddOpenApi(options =>
 });
 
 var app = builder.Build();
-app.UseCors(m=>m.AllowAnyOrigin().AllowAnyMethod().AllowAnyHeader());
+app.UseCors("UiDevCors");
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -195,6 +246,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<SessionHub>("/hubs/sessions");
 
 using (var scope = app.Services.CreateScope())
 {

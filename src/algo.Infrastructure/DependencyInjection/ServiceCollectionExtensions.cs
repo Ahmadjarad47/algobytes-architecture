@@ -21,6 +21,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IOtpService, OtpService>();
         services.AddScoped<IEmailService, EmailService>();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
+        services.AddScoped<ISessionContext, SessionContext>();
         services.AddScoped<IAccessPolicyTokenResolver, AccessPolicyTokenResolver>();
 
         return services;

@@ -11,6 +11,8 @@ import type { ChartData, ChartOptions } from 'chart.js';
 import { AccessPolicyAdminDto } from '../../../access-policies/models/access-policies.models';
 import { ErrorLogDto } from '../../../error-logs/models/error-logs.models';
 import { ApplicationLogDto } from '../../../logs/models/logs.models';
+import { Permissions } from '../../../../core/permissions/permission.catalog';
+import { PermissionService } from '../../../../core/permissions/permission.service';
 import { DashboardApiService } from '../../api/dashboard-api.service';
 import { UserDashboardStats } from '../../models/dashboard.models';
 
@@ -66,7 +68,7 @@ interface PrimeChartConfig {
               </p>
             </div>
 
-            <div class="grid min-w-[280px] gap-2 sm:grid-cols-3">
+            <div class="grid min-w-0 gap-2 sm:grid-cols-3 xl:w-[min(100%,560px)]">
               <div class="rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
                 <div class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
                   API health
@@ -137,7 +139,7 @@ interface PrimeChartConfig {
             </div>
           </div>
 
-          <div class="mt-4 grid gap-3 xl:grid-cols-[minmax(260px,0.9fr)_minmax(320px,1.1fr)_minmax(300px,1fr)]">
+          <div class="mt-4 grid min-w-0 gap-3 xl:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)_minmax(0,1fr)]">
             <section class="snapshot-panel">
               <div class="flex items-start justify-between gap-3">
                 <div>
@@ -151,7 +153,7 @@ interface PrimeChartConfig {
                 </span>
               </div>
 
-              <div class="mt-3 grid items-center gap-3 sm:grid-cols-[160px_minmax(0,1fr)]">
+              <div class="mt-3 grid min-w-0 items-center gap-3 sm:grid-cols-[minmax(120px,160px)_minmax(0,1fr)]">
                 <p-chart
                   type="doughnut"
                   styleClass="dashboard-prime-chart"
@@ -183,7 +185,7 @@ interface PrimeChartConfig {
                 <p-tag [value]="apiHealthLabel()" [severity]="apiHealthSeverity()" />
               </div>
 
-              <div class="mt-3 grid gap-3 sm:grid-cols-[minmax(0,1fr)_118px]">
+              <div class="mt-3 grid min-w-0 gap-3 sm:grid-cols-[minmax(0,1fr)_minmax(96px,118px)]">
                 <p-chart
                   type="bar"
                   styleClass="dashboard-prime-chart"
@@ -277,7 +279,7 @@ interface PrimeChartConfig {
           </div>
 
           <div class="grid gap-2">
-            @for (action of quickActions; track action.label) {
+            @for (action of quickActions(); track action.label) {
               <a
                 [routerLink]="action.path"
                 class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-left transition hover:border-slate-300 hover:bg-white"
@@ -332,7 +334,7 @@ interface PrimeChartConfig {
         }
       </section>
 
-      <section class="dashboard-grid xl:grid-cols-[minmax(0,1.75fr)_minmax(320px,0.95fr)]">
+      <section class="dashboard-grid xl:grid-cols-[minmax(0,1.75fr)_minmax(0,0.95fr)]">
         <div class="dashboard-grid">
           <section class="surface-card dashboard-section">
             <div class="mb-3 flex items-center justify-between">
@@ -620,6 +622,7 @@ interface PrimeChartConfig {
 })
 export class Overview {
   private readonly dashboardApi = inject(DashboardApiService);
+  private readonly permissionService = inject(PermissionService);
 
   protected readonly loading = signal(true);
   protected readonly fromDate = signal(this.toDateInputValue(this.addDays(new Date(), -7)));
@@ -628,13 +631,25 @@ export class Overview {
   protected readonly logs = signal<ApplicationLogDto[]>([]);
   protected readonly errorLogs = signal<ErrorLogDto[]>([]);
   protected readonly accessPolicies = signal<AccessPolicyAdminDto[]>([]);
+  protected readonly canReadUsers = computed(() => this.permissionService.can({ any: [Permissions.users.read] }));
+  protected readonly canReadRoles = computed(() => this.permissionService.can({ any: [Permissions.roles.read] }));
+  protected readonly canReadPolicies = computed(() => this.permissionService.can({ any: [Permissions.accessPolicies.read] }));
+  protected readonly canReadErrorLogs = computed(() => this.permissionService.can({ any: [Permissions.errorLogs.read] }));
 
-  protected readonly quickActions = [
-    { label: 'Create user', description: 'Open the directory and add a new account.', path: '/users', icon: 'pi pi-user-plus' },
-    { label: 'Review roles', description: 'Audit role assignment and privileges.', path: '/roles', icon: 'pi pi-id-card' },
-    { label: 'Inspect policies', description: 'Validate access rules and conditions.', path: '/access-policies', icon: 'pi pi-shield' },
-    { label: 'Open error queue', description: 'Investigate the latest application failures.', path: '/error-logs', icon: 'pi pi-exclamation-triangle' }
-  ];
+  protected readonly quickActions = computed(() => [
+    ...(this.canReadUsers()
+      ? [{ label: 'Create user', description: 'Open the directory and add a new account.', path: '/users', icon: 'pi pi-user-plus' }]
+      : []),
+    ...(this.canReadRoles()
+      ? [{ label: 'Review roles', description: 'Audit role assignment and privileges.', path: '/roles', icon: 'pi pi-id-card' }]
+      : []),
+    ...(this.canReadPolicies()
+      ? [{ label: 'Inspect policies', description: 'Validate access rules and conditions.', path: '/access-policies', icon: 'pi pi-shield' }]
+      : []),
+    ...(this.canReadErrorLogs()
+      ? [{ label: 'Open error queue', description: 'Investigate the latest application failures.', path: '/error-logs', icon: 'pi pi-exclamation-triangle' }]
+      : [])
+  ]);
 
   protected readonly metrics = computed<readonly DashboardMetric[]>(() => {
     const stats = this.stats();

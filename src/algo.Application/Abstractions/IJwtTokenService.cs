@@ -6,7 +6,8 @@ public interface IJwtTokenService
 {
     (string accessToken, DateTimeOffset accessTokenExpiresAt) CreateAccessToken(
         ApplicationUser user,
-        IReadOnlyList<string> roleNames);
+        IReadOnlyList<string> roleNames,
+        Guid sessionId);
 
     (string rawRefreshToken, string refreshTokenHash, DateTimeOffset refreshTokenExpiresAt) CreateRefreshToken();
 

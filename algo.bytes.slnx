@@ -5,6 +5,7 @@
     <Project Path="src/algo.Application/algo.Application.csproj" />
     <Project Path="src/algo.Persistence/algo.Persistence.csproj" />
     <Project Path="src/algo.Infrastructure/algo.Infrastructure.csproj" />
+    <Project Path="src/algo.RealTime/algo.RealTime.csproj" />
     <Project Path="src/algo.API/algo.API.csproj" />
   </Folder>
   <Folder Name="/tests/">

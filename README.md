@@ -74,7 +74,7 @@ algo.bytes/
 ### Backend
 
 See [src/README.md](src/README.md) for backend setup, configuration, database,
-migrations, and API documentation details.
+migrations, API documentation details, and API contract structure conventions.
 
 Quick start:
 

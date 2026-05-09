@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { TableLazyLoadEvent } from 'primeng/table';
@@ -9,12 +9,18 @@ import { AdminDetailsDrawer } from '../../../../shared/components/admin-details-
 import { AdminFormDialog } from '../../../../shared/components/admin-form-dialog/admin-form-dialog';
 import {
   AdminDetailItem,
+  AdminBulkAction,
   AdminFormField,
   AdminRowAction,
   AdminTableColumn
 } from '../../../../shared/models/admin-table.model';
 import { toTableQuery } from '../../../../shared/utils/admin-table.utils';
 import { AppToastService } from '../../../../core/services/app-toast.service';
+import { AdminActionBusService } from '../../../../core/services/admin-action-bus.service';
+import { Permissions } from '../../../../core/permissions/permission.catalog';
+import { PermissionService } from '../../../../core/permissions/permission.service';
+import { SessionRealtimeService } from '../../../../core/services/session-realtime.service';
+import { downloadCsvTemplate, exportCsv, exportJson, ExportRow } from '../../../../shared/utils/export.utils';
 import { UsersApiService } from '../../api/users-api.service';
 import {
   CreateUserCommand,
@@ -46,15 +52,41 @@ import { RoleDto } from '../../../roles/models/roles.models';
       [first]="first()"
       [totalRecords]="totalRecords()"
       [globalFilterFields]="['displayName', 'email', 'userName']"
+      [selectable]="true"
+      [showCreate]="canCreate()"
+      [bulkActions]="bulkActions()"
+      [showExport]="canExport()"
       searchPlaceholder="Search users"
       emptyTitle="No users found"
       emptyMessage="Try a different filter combination or add a new user."
-      [actions]="actions"
+      [actions]="actions()"
       (lazyLoad)="loadUsers($event)"
       (refresh)="reload()"
       (create)="openCreate()"
       (rowAction)="handleAction($event.actionId, $event.row)"
+      (bulkAction)="handleBulkAction($event.actionId, $event.rows)"
+      (exportCsv)="exportRows('users', $event)"
+      (exportJson)="exportRowsJson('users', $event)"
     />
+
+    <section class="surface-card dashboard-section mt-3">
+      <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+        <div>
+          <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Import users</div>
+          <div class="mt-1 text-sm font-semibold text-slate-950">CSV import placeholder</div>
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <label class="dashboard-filter-button flex cursor-pointer items-center gap-2">
+            <i class="pi pi-upload text-[11px]"></i>
+            Import users CSV
+            <input type="file" accept=".csv" class="hidden" (change)="importUsersPlaceholder()" />
+          </label>
+          <button type="button" class="dashboard-filter-button" (click)="downloadTemplate()">
+            Download CSV template
+          </button>
+        </div>
+      </div>
+    </section>
 
     <app-admin-form-dialog
       [visible]="formVisible()"
@@ -103,6 +135,9 @@ export class UsersList {
   private readonly rolesApi = inject(RolesApiService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly toast = inject(AppToastService);
+  private readonly actionBus = inject(AdminActionBusService);
+  private readonly permissionService = inject(PermissionService);
+  private readonly sessionRealtime = inject(SessionRealtimeService);
 
   protected readonly users = signal<UserListItem[]>([]);
   protected readonly loading = signal(false);
@@ -121,6 +156,8 @@ export class UsersList {
   protected readonly assigningRoles = signal(false);
   protected readonly pendingAssignUser = signal<UserListItem | null>(null);
   protected readonly roles = signal<RoleDto[]>([]);
+  protected readonly canCreate = computed(() => this.permissionService.can({ any: [Permissions.users.create] }));
+  protected readonly canExport = computed(() => this.permissionService.can({ any: [Permissions.users.read] }));
 
   protected readonly columns: AdminTableColumn[] = [
     { field: 'displayName', header: 'Display name', sortable: true },
@@ -155,19 +192,52 @@ export class UsersList {
       cellType: 'date'
     },
     {
+      field: 'isOnline',
+      header: 'Online',
+      cellType: 'boolean'
+    },
+    {
       field: 'roles',
       header: 'Roles',
       cellType: 'list'
     }
   ];
 
-  protected readonly actions: AdminRowAction<UserListItem>[] = [
-    { id: 'view', label: 'View details', icon: 'pi pi-eye' },
-    { id: 'edit', label: 'Edit user', icon: 'pi pi-pencil' },
-    { id: 'assign-roles', label: 'Assign roles', icon: 'pi pi-user-plus' },
-    { id: 'toggle-active', label: 'Toggle active', icon: 'pi pi-power-off', severity: 'warn' },
-    { id: 'delete', label: 'Delete user', icon: 'pi pi-trash', severity: 'danger' }
-  ];
+  protected readonly actions = computed<AdminRowAction<UserListItem>[]>(() => {
+    const canUpdate = this.permissionService.can({ any: [Permissions.users.update] });
+    const canDelete = this.permissionService.can({ any: [Permissions.users.delete] });
+    const canReadRoles = this.permissionService.can({ any: [Permissions.roles.read] });
+
+    return [
+      { id: 'view', label: 'View details', icon: 'pi pi-eye' },
+      ...(canUpdate ? [
+        { id: 'edit', label: 'Edit user', icon: 'pi pi-pencil' },
+        ...(canReadRoles ? [{ id: 'assign-roles', label: 'Assign roles', icon: 'pi pi-user-plus' } as AdminRowAction<UserListItem>] : []),
+        { id: 'toggle-active', label: 'Toggle active', icon: 'pi pi-power-off', severity: 'warn' as const },
+        { id: 'toggle-lock', label: 'Lock or unlock', icon: 'pi pi-lock', severity: 'warn' as const },
+        { id: 'reset-password', label: 'Reset password', icon: 'pi pi-key' }
+      ] : []),
+      ...(canDelete ? [{ id: 'delete', label: 'Delete user', icon: 'pi pi-trash', severity: 'danger' as const }] : [])
+    ];
+  });
+
+  protected readonly bulkActions = computed<AdminBulkAction[]>(() => {
+    const canUpdate = this.permissionService.can({ any: [Permissions.users.update] });
+    const canDelete = this.permissionService.can({ any: [Permissions.users.delete] });
+    const canExport = this.permissionService.can({ any: [Permissions.users.read] });
+
+    return [
+      ...(canUpdate ? [
+        { id: 'activate', label: 'Activate', icon: 'pi pi-check', severity: 'success' as const },
+        { id: 'deactivate', label: 'Deactivate', icon: 'pi pi-ban', severity: 'warn' as const },
+        { id: 'lock', label: 'Lock', icon: 'pi pi-lock', severity: 'warn' as const },
+        { id: 'unlock', label: 'Unlock', icon: 'pi pi-lock-open', severity: 'success' as const },
+        { id: 'assign-role', label: 'Assign role', icon: 'pi pi-user-plus' }
+      ] : []),
+      ...(canDelete ? [{ id: 'delete', label: 'Delete', icon: 'pi pi-trash', severity: 'danger' as const }] : []),
+      ...(canExport ? [{ id: 'export-selected', label: 'Export selected', icon: 'pi pi-download' }] : [])
+    ];
+  });
 
   protected readonly form = this.formBuilder.group({
     email: ['', [Validators.required, Validators.email]],
@@ -256,8 +326,23 @@ export class UsersList {
   };
 
   constructor() {
+    this.sessionRealtime.start();
     this.loadRoles();
     this.loadUsers(this.lastLazyEvent);
+
+    effect(() => {
+      const onlineUserIds = this.sessionRealtime.onlineUserIds();
+      this.users.update((users) => users.map((user) => ({
+        ...user,
+        isOnline: onlineUserIds.has(user.id)
+      })));
+    });
+
+    this.actionBus.actions$.subscribe((action) => {
+      if (action === 'create-user' && this.canCreate()) {
+        this.openCreate();
+      }
+    });
   }
 
   protected loadUsers(event: TableLazyLoadEvent): void {
@@ -282,7 +367,11 @@ export class UsersList {
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
         next: (response) => {
-          this.users.set(response.items);
+          const onlineUserIds = this.sessionRealtime.onlineUserIds();
+          this.users.set(response.items.map((user) => ({
+            ...user,
+            isOnline: user.isOnline || onlineUserIds.has(user.id)
+          })));
           this.totalRecords.set(response.totalCount);
         }
       });
@@ -351,11 +440,79 @@ export class UsersList {
           }
         );
         break;
+      case 'toggle-lock':
+        (row.isLocked ? this.api.unlockUser(row.id) : this.api.lockUser(row.id)).subscribe(() => {
+          const toast = row.isLocked ? this.toast.success.bind(this.toast) : this.toast.warn.bind(this.toast);
+          toast(row.isLocked ? 'User unlocked' : 'User locked', row.displayName);
+          this.reload();
+        });
+        break;
+      case 'reset-password':
+        this.toast.info('Reset password placeholder', 'Connect this action to your password reset flow.');
+        break;
       case 'delete':
         this.pendingDeleteUser.set(row);
         this.deleteDialogVisible.set(true);
         break;
     }
+  }
+
+  protected handleBulkAction(actionId: string, rows: UserListItem[]): void {
+    if (rows.length === 0) {
+      return;
+    }
+
+    if (actionId === 'assign-role') {
+      this.toast.info('Bulk assign role', 'Select a role drawer can be wired to your backend rules.');
+      return;
+    }
+
+    if (actionId === 'delete') {
+      this.toast.warn('Bulk delete placeholder', 'Use the row delete confirmation for destructive operations.');
+      return;
+    }
+
+    if (actionId === 'export-selected') {
+      this.exportRows('selected-users', rows);
+      return;
+    }
+
+    const requests = rows.map((row) => {
+      switch (actionId) {
+        case 'activate':
+          return this.api.activateUser(row.id);
+        case 'deactivate':
+          return this.api.deactivateUser(row.id);
+        case 'lock':
+          return this.api.lockUser(row.id);
+        case 'unlock':
+          return this.api.unlockUser(row.id);
+        default:
+          return null;
+      }
+    }).filter(Boolean);
+
+    for (const request of requests) {
+      request?.subscribe(() => this.reload());
+    }
+
+    this.toast.success('Bulk action queued', `${rows.length} users selected.`);
+  }
+
+  protected exportRows(fileName: string, rows: UserListItem[]): void {
+    exportCsv(fileName, rows as unknown as ExportRow[]);
+  }
+
+  protected exportRowsJson(fileName: string, rows: UserListItem[]): void {
+    exportJson(fileName, rows as unknown as ExportRow[]);
+  }
+
+  protected importUsersPlaceholder(): void {
+    this.toast.info('Import users placeholder', 'CSV parsing can be connected when an import endpoint is available.');
+  }
+
+  protected downloadTemplate(): void {
+    downloadCsvTemplate('users-template', ['email', 'userName', 'displayName', 'phoneNumber', 'roles']);
   }
 
   protected closeAssignRoles(visible: boolean): void {

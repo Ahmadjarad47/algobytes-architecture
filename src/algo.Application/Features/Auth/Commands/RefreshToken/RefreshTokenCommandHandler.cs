@@ -14,7 +14,8 @@ namespace algo.Application.Features.Auth.Commands.RefreshToken;
 public sealed class RefreshTokenCommandHandler(
     UserManager<ApplicationUser> userManager,
     IJwtTokenService jwt,
-    IApplicationDbContext db) : IRequestHandler<RefreshTokenCommand, AuthResponseDto>
+    IApplicationDbContext db,
+    ISessionContext sessionContext) : IRequestHandler<RefreshTokenCommand, AuthResponseDto>
 {
     public async Task<AuthResponseDto> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
@@ -38,17 +39,28 @@ public sealed class RefreshTokenCommandHandler(
         stored.RevokedAt = DateTimeOffset.UtcNow;
         stored.ReplacedByTokenHash = newHash;
 
+        var sessionId = Guid.NewGuid();
+
         db.RefreshTokens.Add(new DomainRefreshToken
         {
-            Id = Guid.NewGuid(),
+            Id = sessionId,
             UserId = stored.UserId,
             TokenHash = newHash,
             ExpiresAt = refreshExp,
             CreatedAt = DateTimeOffset.UtcNow,
+            LastActivityAt = DateTimeOffset.UtcNow,
+            IpAddress = sessionContext.IpAddress ?? stored.IpAddress,
+            Location = sessionContext.Location ?? stored.Location,
+            Device = sessionContext.Device,
+            Browser = sessionContext.Browser,
+            OperatingSystem = sessionContext.OperatingSystem,
+            UserAgent = sessionContext.UserAgent ?? stored.UserAgent,
+            IsSuspicious = sessionContext.IsSuspicious,
+            IsTrustedDevice = !sessionContext.IsSuspicious,
         });
 
         var roles = (await userManager.GetRolesAsync(stored.User)).ToArray();
-        var (accessToken, accessExp) = jwt.CreateAccessToken(stored.User, roles);
+        var (accessToken, accessExp) = jwt.CreateAccessToken(stored.User, roles, sessionId);
         await db.SaveChangesAsync(cancellationToken);
 
         var userDto = await AuthSessionIssuer.BuildUserDtoAsync(stored.User, roles, db, cancellationToken);

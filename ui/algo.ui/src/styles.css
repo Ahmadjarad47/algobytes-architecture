@@ -34,7 +34,7 @@
   --app-font-lg: 14px;
   --app-font-xl: 16px;
   --app-font-2xl: 20px;
-  /* --app-shell-max-width: 1480px; */
+  --app-shell-max-width: 100%;
   --app-content-max-width: 1220px;
   --app-table-row-height: 34px;
   --app-toolbar-height: 42px;
@@ -120,6 +120,7 @@ html,
 body {
   min-height: 100%;
   background: var(--app-bg);
+  overflow-x: hidden;
 }
 
 :root.p-dark body,
@@ -155,13 +156,16 @@ body {
 }
 
 .app-shell {
-  width: min(calc(100% - 16px), var(--app-shell-max-width));
+  width: calc(100% - 16px);
+  max-width: var(--app-shell-max-width);
+  min-width: 0;
   margin: 0 auto;
 }
 
-/* .content-shell {
-  width: min(100%, var(--app-content-max-width));
-} */
+.content-shell {
+  width: 100%;
+  min-width: 0;
+}
 
 .surface-sidebar {
   background: var(--surface-sidebar);
@@ -202,6 +206,8 @@ body {
 }
 
 .surface-content {
+  min-width: 0;
+  overflow-x: clip;
   background: var(--surface-content);
   border: 1px solid var(--border-color);
   box-shadow: var(--shadow-sm);
@@ -785,9 +791,11 @@ body.app-dark .p-multiselect-option.p-focus {
 .dashboard-grid {
   display: grid;
   gap: var(--app-gap);
+  min-width: 0;
 }
 
 .dashboard-section {
+  min-width: 0;
   padding: var(--app-card-padding);
   border-radius: var(--radius-lg);
 }
@@ -1148,6 +1156,97 @@ body.app-dark [class*="bg-slate-900"] {
 body.app-dark [class*="border-slate-200"],
 body.app-dark [class*="border-slate-300"] {
   border-color: var(--border-color) !important;
+}
+
+.settings-title {
+  margin: 0 0 12px;
+  color: var(--text-primary);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.settings-grid {
+  display: grid;
+  min-width: 0;
+  gap: 12px;
+}
+
+@media (min-width: 768px) {
+  .settings-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.settings-field,
+.settings-switch {
+  display: grid;
+  min-width: 0;
+  gap: 6px;
+}
+
+.settings-field span,
+.settings-switch span,
+.settings-list-title {
+  color: var(--text-muted);
+  font-size: 10px;
+  font-weight: 750;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.settings-field input,
+.settings-field textarea,
+.settings-field .p-select,
+.settings-field .p-inputnumber {
+  width: 100%;
+}
+
+.settings-switch,
+.settings-list-row {
+  min-width: 0;
+  align-items: center;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+  border-radius: var(--radius-md);
+  background: #f8fafc;
+  padding: 9px 10px;
+}
+
+.settings-switch {
+  display: flex;
+  justify-content: space-between;
+}
+
+.settings-list-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  color: var(--text-secondary);
+  font-size: 12px;
+}
+
+.settings-list-row small {
+  color: var(--text-muted);
+}
+
+.app-compact {
+  --app-gap: 8px;
+  --app-card-padding: 9px;
+  --app-table-row-height: 30px;
+}
+
+.app-sharp {
+  --radius-sm: 4px;
+  --radius-md: 6px;
+  --radius-lg: 8px;
+  --radius-xl: 10px;
+}
+
+:root.app-dark .settings-switch,
+:root.app-dark .settings-list-row,
+body.app-dark .settings-switch,
+body.app-dark .settings-list-row {
+  border-color: var(--border-color);
+  background: var(--surface-inset);
 }
 
 .timeline-chart__bucket {

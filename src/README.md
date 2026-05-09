@@ -24,6 +24,21 @@ The backend follows clean architecture principles:
 - `algo.Infrastructure` implements external services.
 - `algo.Persistence` implements database access and EF Core mappings.
 
+## API Contract Structure
+
+To keep controllers transport-only and maintainable:
+
+- Do not declare request/response `record` or `class` types inside controllers.
+- Keep request models in `algo.Application` feature folders, typically near the
+  command/query that consumes them.
+- Keep shared response DTOs in `algo.Application/Features/*/Dtos`.
+
+Example conventions currently used:
+
+- `Features/Users/Commands/*/*Request.cs`
+- `Features/AccessPolicies/Commands/SetAccessPolicyEnabled/SetEnabledRequest.cs`
+- `Features/Sessions/Dtos/RevokeCountResponse.cs`
+
 ## Features
 
 - JWT login, refresh token, logout, registration, OTP verification, forgot

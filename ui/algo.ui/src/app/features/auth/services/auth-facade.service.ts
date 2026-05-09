@@ -1,5 +1,5 @@
 import { inject, Injectable } from '@angular/core';
-import { tap } from 'rxjs';
+import { finalize, tap } from 'rxjs';
 
 import { AuthService } from '../../../core/services/auth.service';
 import { AuthApiService } from '../api/auth-api.service';
@@ -28,8 +28,10 @@ export class AuthFacadeService {
   }
 
   logout() {
-    return this.authApi.logout().pipe(
-      tap(() => this.authService.clearSession())
+    const refreshToken = this.authService.session()?.refreshToken ?? null;
+
+    return this.authApi.logout(refreshToken).pipe(
+      finalize(() => this.authService.clearSession())
     );
   }
 }

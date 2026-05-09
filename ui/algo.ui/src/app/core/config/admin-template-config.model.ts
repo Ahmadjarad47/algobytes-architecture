@@ -1,0 +1,109 @@
+export type AdminEnvironment = 'Dev' | 'Staging' | 'Prod';
+export type AdminDirection = 'ltr' | 'rtl';
+export type AdminThemeMode = 'light' | 'dark';
+export type AdminShapeMode = 'rounded' | 'sharp';
+
+export interface AdminFeatureFlags {
+  readonly users: boolean;
+  readonly roles: boolean;
+  readonly accessPolicies: boolean;
+  readonly activeSessions: boolean;
+  readonly logs: boolean;
+  readonly errorLogs: boolean;
+  readonly settings: boolean;
+}
+
+export interface AdminPasswordPolicy {
+  readonly minLength: number;
+  readonly requireUppercase: boolean;
+  readonly requireNumber: boolean;
+  readonly requireSymbol: boolean;
+}
+
+export interface AdminApiKeyConfig {
+  readonly id: string;
+  readonly name: string;
+  readonly createdAt: string;
+}
+
+export interface AdminWebhookConfig {
+  readonly id: string;
+  readonly name: string;
+  readonly url: string;
+  readonly enabled: boolean;
+}
+
+export interface AdminTemplateConfig {
+  readonly appName: string;
+  readonly workspaceName: string;
+  readonly environment: AdminEnvironment;
+  readonly apiBaseUrl: string;
+  readonly defaultLanguage: string;
+  readonly timezone: string;
+  readonly direction: AdminDirection;
+  readonly theme: AdminThemeMode;
+  readonly compactMode: boolean;
+  readonly shape: AdminShapeMode;
+  readonly sidebarCollapsed: boolean;
+  readonly sidebarTitle: string;
+  readonly primaryColor: string;
+  readonly logoUrl: string | null;
+  readonly faviconUrl: string | null;
+  readonly sessionTimeoutMinutes: number;
+  readonly passwordPolicy: AdminPasswordPolicy;
+  readonly twoFactorEnabled: boolean;
+  readonly allowedEmailDomains: readonly string[];
+  readonly emailNotifications: boolean;
+  readonly systemAlerts: boolean;
+  readonly errorAlerts: boolean;
+  readonly apiKeys: readonly AdminApiKeyConfig[];
+  readonly webhooks: readonly AdminWebhookConfig[];
+  readonly features: AdminFeatureFlags;
+}
+
+export const DEFAULT_ADMIN_TEMPLATE_CONFIG: AdminTemplateConfig = {
+  appName: 'ALGO.UI',
+  workspaceName: 'Workspace Admin Console',
+  environment: 'Dev',
+  apiBaseUrl: 'https://localhost:7259/api',
+  defaultLanguage: 'en',
+  timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+  direction: 'ltr',
+  theme: 'light',
+  compactMode: false,
+  shape: 'rounded',
+  sidebarCollapsed: false,
+  sidebarTitle: 'Admin Console',
+  primaryColor: '#2563eb',
+  logoUrl: null,
+  faviconUrl: null,
+  sessionTimeoutMinutes: 60,
+  passwordPolicy: {
+    minLength: 8,
+    requireUppercase: true,
+    requireNumber: true,
+    requireSymbol: true
+  },
+  twoFactorEnabled: false,
+  allowedEmailDomains: [],
+  emailNotifications: true,
+  systemAlerts: true,
+  errorAlerts: true,
+  apiKeys: [
+    {
+      id: 'template-key',
+      name: 'Template development key',
+      createdAt: new Date().toISOString()
+    }
+  ],
+  webhooks: [],
+  features: {
+    users: true,
+    roles: true,
+    accessPolicies: true,
+    activeSessions: true,
+    logs: true,
+    errorLogs: true,
+    settings: true
+  }
+};

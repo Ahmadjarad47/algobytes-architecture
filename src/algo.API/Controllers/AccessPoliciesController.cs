@@ -97,5 +97,3 @@ public sealed class AccessPoliciesController(IMediator mediator) : ControllerBas
         CancellationToken cancellationToken) =>
         mediator.Send(command, cancellationToken);
 }
-
-public sealed record SetEnabledRequest(bool IsEnabled);

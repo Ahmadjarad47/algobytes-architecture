@@ -157,3 +157,5 @@ dist/
 - API calls should go through services in each feature's `api/` folder.
 - Shared admin UI patterns live in `src/app/shared/components`.
 - Cross-cutting app services live in `src/app/core`.
+- Keep frontend request/response interfaces in feature `models/` folders and
+  avoid declaring ad-hoc API contracts directly inside components.

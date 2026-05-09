@@ -12,7 +12,8 @@ namespace algo.Application.Features.Auth.Commands.Login;
 public sealed class LoginCommandHandler(
     UserManager<ApplicationUser> userManager,
     IJwtTokenService jwt,
-    IApplicationDbContext db) : IRequestHandler<LoginCommand, AuthResponseDto>
+    IApplicationDbContext db,
+    ISessionContext sessionContext) : IRequestHandler<LoginCommand, AuthResponseDto>
 {
     public async Task<AuthResponseDto> Handle(LoginCommand request, CancellationToken cancellationToken)
     {
@@ -38,6 +39,6 @@ public sealed class LoginCommandHandler(
         await userManager.UpdateAsync(user);
 
         var roles = (await userManager.GetRolesAsync(user)).ToArray();
-        return await AuthSessionIssuer.IssueAsync(user, roles, jwt, db, cancellationToken);
+        return await AuthSessionIssuer.IssueAsync(user, roles, jwt, db, sessionContext, cancellationToken);
     }
 }

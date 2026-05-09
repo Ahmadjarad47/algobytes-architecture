@@ -13,8 +13,18 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
         builder.Property(t => t.UserId).IsRequired();
         builder.Property(t => t.TokenHash).HasMaxLength(128).IsRequired();
         builder.Property(t => t.ReplacedByTokenHash).HasMaxLength(128);
+        builder.Property(t => t.IpAddress).HasMaxLength(64);
+        builder.Property(t => t.Location).HasMaxLength(160);
+        builder.Property(t => t.Device).HasMaxLength(80);
+        builder.Property(t => t.Browser).HasMaxLength(80);
+        builder.Property(t => t.OperatingSystem).HasMaxLength(80);
+        builder.Property(t => t.UserAgent).HasMaxLength(512);
+        builder.Property(t => t.RevokedByUserId).HasMaxLength(450);
 
         builder.HasIndex(t => t.TokenHash).IsUnique();
+        builder.HasIndex(t => t.UserId);
+        builder.HasIndex(t => t.RevokedAt);
+        builder.HasIndex(t => t.ExpiresAt);
 
         builder.HasOne(t => t.User)
             .WithMany(u => u.RefreshTokens)

@@ -12,6 +12,10 @@ import {
 import { toTableQuery } from '../../../../shared/utils/admin-table.utils';
 import { ErrorLogsApiService } from '../../api/error-logs-api.service';
 import { ErrorLogDto } from '../../models/error-logs.models';
+import { exportCsv, exportJson, ExportRow } from '../../../../shared/utils/export.utils';
+import { AppToastService } from '../../../../core/services/app-toast.service';
+import { Permissions } from '../../../../core/permissions/permission.catalog';
+import { PermissionService } from '../../../../core/permissions/permission.service';
 
 @Component({
   selector: 'app-error-logs-list',
@@ -28,6 +32,7 @@ import { ErrorLogDto } from '../../models/error-logs.models';
       [first]="first()"
       [totalRecords]="totalRecords()"
       [globalFilterFields]="['message', 'exceptionType', 'userName', 'traceId']"
+      [showExport]="canExport()"
       searchPlaceholder="Search errors"
       emptyTitle="No error logs found"
       emptyMessage="Expand the date range or search for a different error signature."
@@ -36,19 +41,29 @@ import { ErrorLogDto } from '../../models/error-logs.models';
       (lazyLoad)="loadLogs($event)"
       (refresh)="reload()"
       (rowAction)="viewLog($event.row)"
+      (exportCsv)="exportRows('error-logs', $event)"
+      (exportJson)="exportRowsJson('error-logs', $event)"
     />
 
     <app-admin-details-drawer
       [visible]="detailsVisible()"
       [title]="selectedLog()?.exceptionType ?? 'Error details'"
       [items]="detailItems()"
+      [showCopy]="true"
+      actionLabel="Mark as resolved"
+      actionIcon="pi pi-check"
       (visibleChange)="detailsVisible.set($event)"
+      (copy)="copySelectedLog()"
+      (action)="markResolvedPlaceholder()"
     />
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class ErrorLogsList {
   private readonly api = inject(ErrorLogsApiService);
+  private readonly toast = inject(AppToastService);
+  private readonly permissionService = inject(PermissionService);
+  protected readonly canExport = computed(() => this.permissionService.can({ any: [Permissions.errorLogs.read] }));
 
   protected readonly logs = signal<ErrorLogDto[]>([]);
   protected readonly loading = signal(false);
@@ -109,10 +124,13 @@ export class ErrorLogsList {
       { label: 'Method', value: log.method },
       { label: 'Status code', value: log.statusCode },
       { label: 'Trace ID', value: log.traceId },
+      { label: 'Correlation ID', value: log.traceId },
       { label: 'User', value: log.userName },
       { label: 'Request body', value: log.requestBody, type: 'json' },
+      { label: 'Payload placeholder', value: log.requestBody ?? 'No payload captured', type: 'json' },
       { label: 'Query string', value: log.queryString },
       { label: 'Headers', value: log.headers, type: 'json' },
+      { label: 'Request headers placeholder', value: log.headers ?? {}, type: 'json' },
       { label: 'Environment', value: log.environment },
       { label: 'Machine', value: log.machineName },
       { label: 'Created at', value: log.createdAt, type: 'date' }
@@ -170,6 +188,23 @@ export class ErrorLogsList {
       this.selectedLog.set(log);
       this.detailsVisible.set(true);
     });
+  }
+
+  protected exportRows(fileName: string, rows: ErrorLogDto[]): void {
+    exportCsv(fileName, rows as unknown as ExportRow[]);
+  }
+
+  protected exportRowsJson(fileName: string, rows: ErrorLogDto[]): void {
+    exportJson(fileName, rows as unknown as ExportRow[]);
+  }
+
+  protected copySelectedLog(): void {
+    void navigator.clipboard?.writeText(JSON.stringify(this.selectedLog(), null, 2));
+    this.toast.success('Copied', 'Error details copied to clipboard.');
+  }
+
+  protected markResolvedPlaceholder(): void {
+    this.toast.success('Marked as resolved', 'Placeholder action until an incident endpoint exists.');
   }
 }
 

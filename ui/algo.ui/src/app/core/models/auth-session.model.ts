@@ -6,5 +6,7 @@ export interface AuthSession {
     readonly userId: string;
     readonly email: string;
     readonly displayName: string;
+    readonly roles?: readonly string[];
+    readonly permissions?: readonly string[];
   };
 }

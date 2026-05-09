@@ -17,7 +17,8 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
 
     public (string accessToken, DateTimeOffset accessTokenExpiresAt) CreateAccessToken(
         ApplicationUser user,
-        IReadOnlyList<string> roleNames)
+        IReadOnlyList<string> roleNames,
+        Guid sessionId)
     {
         if (string.IsNullOrWhiteSpace(user.Email))
             throw new InvalidOperationException("User email is required before issuing a token.");
@@ -31,6 +32,7 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
             new(JwtRegisteredClaimNames.Sub, user.Id),
             new(JwtRegisteredClaimNames.Email, user.Email),
             new("display_name", user.DisplayName),
+            new(JwtRegisteredClaimNames.Sid, sessionId.ToString()),
         };
 
         foreach (var role in roleNames)

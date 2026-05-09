@@ -2,7 +2,7 @@ import { HttpClient, HttpParams } from '@angular/common/http';
 import { inject, Injectable } from '@angular/core';
 import { Observable } from 'rxjs';
 
-import { APP_CONFIG } from '../config/app-config.token';
+import { AppConfigService } from '../config/app-config.service';
 
 export type ApiQueryValue =
   | string
@@ -15,7 +15,7 @@ export type ApiQueryValue =
 @Injectable({ providedIn: 'root' })
 export class ApiService {
   private readonly http = inject(HttpClient);
-  private readonly config = inject(APP_CONFIG);
+  private readonly config = inject(AppConfigService);
 
   get<TResponse>(path: string, query?: object): Observable<TResponse> {
     return this.http.get<TResponse>(this.url(path), {
@@ -60,7 +60,7 @@ export class ApiService {
   private url(path: string): string {
     const normalizedPath = path.startsWith('/') ? path : `/${path}`;
 
-    return `${this.config.apiBaseUrl}${normalizedPath}`;
+    return `${this.config.apiBaseUrl()}${normalizedPath}`;
   }
 
   private toHttpParams(query?: object): HttpParams | undefined {

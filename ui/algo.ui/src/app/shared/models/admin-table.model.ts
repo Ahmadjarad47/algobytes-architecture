@@ -23,6 +23,13 @@ export interface AdminRowAction<TData> {
   readonly disabled?: (row: TData) => boolean;
 }
 
+export interface AdminBulkAction {
+  readonly id: string;
+  readonly label: string;
+  readonly icon: string;
+  readonly severity?: 'secondary' | 'info' | 'success' | 'warn' | 'danger' | 'contrast';
+}
+
 export interface AdminDetailItem {
   readonly label: string;
   readonly value: unknown;

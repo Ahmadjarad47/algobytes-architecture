@@ -15,6 +15,8 @@ export interface AuthResponseDto {
     readonly userId: string;
     readonly email: string;
     readonly displayName: string;
+    readonly roles: readonly string[];
+    readonly permissions: readonly string[];
   };
   readonly tokens: {
     readonly accessToken: string;

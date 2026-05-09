@@ -17,7 +17,7 @@ import { TagModule } from 'primeng/tag';
 import { ToolbarModule } from 'primeng/toolbar';
 import { TooltipModule } from 'primeng/tooltip';
 
-import { AdminRowAction, AdminTableColumn } from '../../models/admin-table.model';
+import { AdminBulkAction, AdminRowAction, AdminTableColumn } from '../../models/admin-table.model';
 
 @Component({
   selector: 'app-admin-data-table',
@@ -61,6 +61,42 @@ import { AdminRowAction, AdminTableColumn } from '../../models/admin-table.model
             </p-iconfield>
 
             <div class="flex items-center gap-2">
+              @if (selectedRows.length > 0) {
+                <span class="rounded-full bg-surface-100 px-2 py-1 text-xs font-semibold text-surface-600">
+                  {{ selectedRows.length }} selected
+                </span>
+
+                @for (action of bulkActions(); track action.id) {
+                  <p-button
+                    [icon]="action.icon"
+                    [label]="action.label"
+                    [severity]="action.severity ?? 'secondary'"
+                    size="small"
+                    [outlined]="true"
+                    (onClick)="bulkAction.emit({ actionId: action.id, rows: selectedRows })"
+                  />
+                }
+              }
+
+              @if (showExport()) {
+                <p-button
+                  icon="pi pi-download"
+                  label="CSV"
+                  severity="secondary"
+                  size="small"
+                  [outlined]="true"
+                  (onClick)="exportCsv.emit(selectedRows.length ? selectedRows : value())"
+                />
+                <p-button
+                  icon="pi pi-code"
+                  label="JSON"
+                  severity="secondary"
+                  size="small"
+                  [outlined]="true"
+                  (onClick)="exportJson.emit(selectedRows.length ? selectedRows : value())"
+                />
+              }
+
               <p-button
                 icon="pi pi-refresh"
                 label="Refresh"
@@ -97,17 +133,25 @@ import { AdminRowAction, AdminTableColumn } from '../../models/admin-table.model
         paginatorDropdownScrollHeight="180px"
         [lazy]="lazy()"
         [globalFilterFields]="globalFilterFields()"
+        [(selection)]="selectedRows"
         responsiveLayout="stack"
         breakpoint="960px"
         sortMode="single"
         [showCurrentPageReport]="true"
         currentPageReportTemplate="Showing {first} to {last} of {totalRecords}"
         styleClass="p-datatable-sm p-datatable-gridlines"
-        tableStyleClass="min-w-full"
+        [scrollable]="horizontalScroll()"
+        scrollDirection="horizontal"
+        [tableStyle]="{ 'min-width': tableMinWidth() }"
         (onLazyLoad)="lazyLoad.emit($event)"
       >
         <ng-template #header let-columns>
           <tr>
+            @if (selectable()) {
+              <th class="w-12">
+                <p-tableHeaderCheckbox />
+              </th>
+            }
             @for (column of columns; track column.field) {
               <th
                 [pSortableColumn]="column.sortable ? column.field : undefined"
@@ -141,6 +185,11 @@ import { AdminRowAction, AdminTableColumn } from '../../models/admin-table.model
         <ng-template #body let-rowData let-columns="columns">
           <tr>
             @if (loading()) {
+              @if (selectable()) {
+                <td>
+                  <p-skeleton shape="circle" size="1.25rem" />
+                </td>
+              }
               @for (column of columns; track column.field) {
                 <td>
                   <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-surface-400 md:hidden">
@@ -160,6 +209,11 @@ import { AdminRowAction, AdminTableColumn } from '../../models/admin-table.model
                 </td>
               }
             } @else {
+              @if (selectable()) {
+                <td>
+                  <p-tableCheckbox [value]="rowData" />
+                </td>
+              }
               @for (column of columns; track column.field) {
                 <td>
                   <span class="mb-2 block text-xs font-medium uppercase tracking-wide text-surface-400 md:hidden">
@@ -223,7 +277,7 @@ import { AdminRowAction, AdminTableColumn } from '../../models/admin-table.model
 
         <ng-template #emptymessage>
           <tr>
-            <td [attr.colspan]="columns().length + (actions().length > 0 ? 1 : 0)">
+            <td [attr.colspan]="columns().length + (actions().length > 0 ? 1 : 0) + (selectable() ? 1 : 0)">
               <div class="flex flex-col items-center gap-2 px-6 py-10 text-center">
                 <i class="pi pi-inbox text-2xl text-surface-300"></i>
                 <h3 class="m-0 text-sm font-semibold text-surface-700">{{ emptyTitle() }}</h3>
@@ -258,13 +312,22 @@ export class AdminDataTable {
   readonly showCreate = input(true);
   readonly createLabel = input('Create');
   readonly actions = input<AdminRowAction<any>[]>([]);
+  readonly selectable = input(false);
+  readonly bulkActions = input<AdminBulkAction[]>([]);
+  readonly showExport = input(false);
+  readonly horizontalScroll = input(false);
+  readonly tableMinWidth = input('100%');
 
   readonly create = output<void>();
   readonly refresh = output<void>();
   readonly lazyLoad = output<TableLazyLoadEvent>();
   readonly rowAction = output<{ actionId: string; row: any }>();
+  readonly bulkAction = output<{ actionId: string; rows: any[] }>();
+  readonly exportCsv = output<any[]>();
+  readonly exportJson = output<any[]>();
 
   searchValue = '';
+  selectedRows: any[] = [];
 
   skeletonRows(): Record<string, number>[] {
     return Array.from({ length: Math.min(this.rows(), 10) }, (_, index) => ({ id: index }));

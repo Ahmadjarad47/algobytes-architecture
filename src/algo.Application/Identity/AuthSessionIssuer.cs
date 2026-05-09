@@ -13,18 +13,29 @@ public static class AuthSessionIssuer
         IReadOnlyList<string> roleNames,
         IJwtTokenService jwt,
         IApplicationDbContext db,
+        ISessionContext? sessionContext,
         CancellationToken cancellationToken)
     {
-        var (accessToken, accessExp) = jwt.CreateAccessToken(user, roleNames);
+        var sessionId = Guid.NewGuid();
         var (rawRefresh, refreshHash, refreshExp) = jwt.CreateRefreshToken();
+        var (accessToken, accessExp) = jwt.CreateAccessToken(user, roleNames, sessionId);
 
         db.RefreshTokens.Add(new RefreshToken
         {
-            Id = Guid.NewGuid(),
+            Id = sessionId,
             UserId = user.Id,
             TokenHash = refreshHash,
             ExpiresAt = refreshExp,
             CreatedAt = DateTimeOffset.UtcNow,
+            LastActivityAt = DateTimeOffset.UtcNow,
+            IpAddress = sessionContext?.IpAddress,
+            Location = sessionContext?.Location,
+            Device = sessionContext?.Device,
+            Browser = sessionContext?.Browser,
+            OperatingSystem = sessionContext?.OperatingSystem,
+            UserAgent = sessionContext?.UserAgent,
+            IsSuspicious = sessionContext?.IsSuspicious ?? false,
+            IsTrustedDevice = !(sessionContext?.IsSuspicious ?? false),
         });
 
         await db.SaveChangesAsync(cancellationToken);

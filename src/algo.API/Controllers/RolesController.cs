@@ -61,5 +61,3 @@ public sealed class RolesController(IMediator mediator) : ControllerBase
         return ok ? NoContent() : NotFound();
     }
 }
-
-public sealed record UpdateRoleRequest(string Name);

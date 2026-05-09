@@ -27,6 +27,7 @@
     <ProjectReference Include="..\algo.Application\algo.Application.csproj" />
     <ProjectReference Include="..\algo.Infrastructure\algo.Infrastructure.csproj" />
     <ProjectReference Include="..\algo.Persistence\algo.Persistence.csproj" />
+    <ProjectReference Include="..\algo.RealTime\algo.RealTime.csproj" />
   </ItemGroup>
 
 </Project>

@@ -6,5 +6,8 @@ public static class AccessPolicyActions
     public const string Read = "read";
     public const string Update = "update";
     public const string Delete = "delete";
+    public const string Revoke = "revoke";
+    public const string RevokeAll = "revokeAll";
+    public const string Export = "export";
     public const string Wildcard = "*";
 }

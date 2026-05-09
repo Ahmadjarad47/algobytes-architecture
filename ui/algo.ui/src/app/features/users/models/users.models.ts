@@ -13,6 +13,7 @@ export interface UserListItem {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly lastLoginAt: string | null;
+  readonly isOnline: boolean;
   readonly roles: readonly string[];
 }
 
