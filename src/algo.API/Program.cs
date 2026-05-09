@@ -25,7 +25,7 @@ builder.Host.UseSerilog(SerilogConfiguration.Configure);
 builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication(builder.Configuration);
-builder.Services.AddRealTime();
+builder.Services.AddRealTime(builder.Configuration);
 
 builder.Services.AddControllers(options => options.Filters.Add<ValidationExceptionFilter>())
     .AddJsonOptions(o =>

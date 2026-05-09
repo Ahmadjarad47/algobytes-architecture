@@ -14,4 +14,6 @@ public sealed record UserListItemDto(
     DateTimeOffset UpdatedAt,
     DateTimeOffset? LastLoginAt,
     bool IsOnline,
+    bool TwoFactorEnabled,
+    bool TotpRequiredByAdmin,
     IReadOnlyList<string> Roles);

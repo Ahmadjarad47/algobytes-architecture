@@ -14,4 +14,6 @@ public sealed record UserDetailsDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     DateTimeOffset? LastLoginAt,
+    bool TwoFactorEnabled,
+    bool TotpRequiredByAdmin,
     IReadOnlyList<string> Roles);

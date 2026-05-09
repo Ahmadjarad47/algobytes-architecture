@@ -1,37 +1,40 @@
-using System.Collections.Concurrent;
+using StackExchange.Redis;
 
 namespace algo.RealTime;
 
-public sealed class UserPresenceTracker
+public sealed class UserPresenceTracker(IConnectionMultiplexer redis)
 {
-    private readonly ConcurrentDictionary<string, int> _connectionsByUser = new(StringComparer.Ordinal);
+    private const string OnlineUsersSetKey = "presence:online-users";
+    private const string UserConnectionsCounterPrefix = "presence:user:";
+    private readonly IDatabase _db = redis.GetDatabase();
 
-    public bool SetConnected(string userId)
+    public async Task<bool> SetConnectedAsync(string userId)
     {
-        var count = _connectionsByUser.AddOrUpdate(userId, 1, (_, current) => current + 1);
+        var counterKey = BuildCounterKey(userId);
+        var count = await _db.StringIncrementAsync(counterKey).ConfigureAwait(false);
+        await _db.SetAddAsync(OnlineUsersSetKey, userId).ConfigureAwait(false);
         return count == 1;
     }
 
-    public bool SetDisconnected(string userId)
+    public async Task<bool> SetDisconnectedAsync(string userId)
     {
-        while (true)
+        var counterKey = BuildCounterKey(userId);
+        var count = await _db.StringDecrementAsync(counterKey).ConfigureAwait(false);
+
+        if (count <= 0)
         {
-            if (!_connectionsByUser.TryGetValue(userId, out var current))
-            {
-                return false;
-            }
-
-            if (current <= 1)
-            {
-                return _connectionsByUser.TryRemove(userId, out _);
-            }
-
-            if (_connectionsByUser.TryUpdate(userId, current - 1, current))
-            {
-                return false;
-            }
+            await _db.KeyDeleteAsync(counterKey).ConfigureAwait(false);
+            return await _db.SetRemoveAsync(OnlineUsersSetKey, userId).ConfigureAwait(false);
         }
+
+        return false;
     }
 
-    public IReadOnlyCollection<string> OnlineUserIds() => _connectionsByUser.Keys.ToArray();
+    public async Task<IReadOnlyCollection<string>> OnlineUserIdsAsync()
+    {
+        var members = await _db.SetMembersAsync(OnlineUsersSetKey).ConfigureAwait(false);
+        return members.Select(x => (string)x!).ToArray();
+    }
+
+    private static string BuildCounterKey(string userId) => $"{UserConnectionsCounterPrefix}{userId}:connections";
 }

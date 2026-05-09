@@ -12,14 +12,18 @@ export class AuthFacadeService {
 
   login(request: LoginCommand) {
     return this.authApi.login(request).pipe(
-      tap((response) =>
+      tap((response) => {
+        if (!response.tokens || !response.user) {
+          return;
+        }
+
         this.authService.setSession({
           accessToken: response.tokens.accessToken,
           refreshToken: response.tokens.refresh.token,
           accessTokenExpiresAt: response.tokens.accessTokenExpiresAt,
           user: response.user
-        })
-      )
+        });
+      })
     );
   }
 

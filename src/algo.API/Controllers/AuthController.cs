@@ -24,8 +24,8 @@ public sealed class AuthController(IMediator mediator) : ControllerBase
         mediator.Send(command, cancellationToken);
 
     [HttpPost("login")]
-    [ProducesResponseType(typeof(AuthResponseDto), StatusCodes.Status200OK)]
-    public Task<AuthResponseDto> Login(
+    [ProducesResponseType(typeof(LoginResponseDto), StatusCodes.Status200OK)]
+    public Task<LoginResponseDto> Login(
         [FromBody] LoginCommand command,
         CancellationToken cancellationToken) =>
         mediator.Send(command, cancellationToken);

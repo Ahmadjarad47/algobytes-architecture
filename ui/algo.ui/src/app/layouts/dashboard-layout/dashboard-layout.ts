@@ -12,7 +12,7 @@ import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { MenuItem } from 'primeng/api';
 import { AppConfigService } from '../../core/config/app-config.service';
-import { Permissions } from '../../core/permissions/permission.catalog';
+import { DashboardOverviewReadPermissions, Permissions } from '../../core/permissions/permission.catalog';
 import { PermissionService } from '../../core/permissions/permission.service';
 import { PermissionGate } from '../../core/permissions/permission.types';
 import { AdminActionBusService, AdminGlobalAction } from '../../core/services/admin-action-bus.service';
@@ -299,7 +299,7 @@ export class DashboardLayout {
   protected commandSearch = '';
 
   private readonly allNavigation: Array<{ label: string; path: string; icon: string; badge?: string; feature?: string; gate?: PermissionGate }> = [
-    { label: 'Overview', path: '/dashboard', icon: 'pi pi-home' },
+    { label: 'Overview', path: '/dashboard', icon: 'pi pi-home', gate: { any: DashboardOverviewReadPermissions } },
     { label: 'Users', path: '/users', icon: 'pi pi-users', badge: 'IAM', feature: 'users', gate: { any: [Permissions.users.read] } },
     { label: 'Roles', path: '/roles', icon: 'pi pi-id-card', feature: 'roles', gate: { any: [Permissions.roles.read] } },
     { label: 'Access Policies', path: '/access-policies', icon: 'pi pi-shield', badge: 'Auth', feature: 'accessPolicies', gate: { any: [Permissions.accessPolicies.read] } },

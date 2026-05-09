@@ -18,5 +18,9 @@ internal sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Ap
             .IsRequired();
 
         builder.Property(u => u.LastLoginAt);
+
+        builder.Property(u => u.TotpRequiredByAdmin)
+            .HasDefaultValue(false)
+            .IsRequired();
     }
 }

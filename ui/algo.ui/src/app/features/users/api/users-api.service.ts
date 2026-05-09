@@ -5,6 +5,7 @@ import { ApiService } from '../../../core/api/api.service';
 import {
   AssignRolesRequest,
   CreateUserCommand,
+  SetUserTotpPolicyRequest,
   UpdateUserRequest,
   UserDetails,
   UsersPage,
@@ -58,5 +59,9 @@ export class UsersApiService {
 
   assignRoles(id: string, roles: readonly string[]): Observable<void> {
     return this.api.post<void, AssignRolesRequest>(`/Users/${id}/roles`, { roles });
+  }
+
+  setTotpPolicy(id: string, isRequired: boolean): Observable<void> {
+    return this.api.patch<void, SetUserTotpPolicyRequest>(`/Users/${id}/totp-policy`, { isRequired });
   }
 }

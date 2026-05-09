@@ -94,7 +94,8 @@ Important sections:
 ```json
 {
   "ConnectionStrings": {
-    "Database": "Host=localhost;Port=5432;Database=algo;Username=postgres;Password=root"
+    "Database": "Host=localhost;Port=5432;Database=algo;Username=postgres;Password=root",
+    "Redis": "localhost:6379"
   },
   "Jwt": {
     "Issuer": "algo.bytes",

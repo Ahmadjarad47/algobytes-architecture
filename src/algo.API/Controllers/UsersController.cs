@@ -8,6 +8,7 @@ using algo.Application.Features.Users.Commands.DeactivateUser;
 using algo.Application.Features.Users.Commands.DeleteUser;
 using algo.Application.Features.Users.Commands.LockUser;
 using algo.Application.Features.Users.Commands.RemoveRoles;
+using algo.Application.Features.Users.Commands.SetUserTotpPolicy;
 using algo.Application.Features.Users.Commands.UnlockUser;
 using algo.Application.Features.Users.Commands.UpdateUser;
 using algo.Application.Features.Users.Dtos;
@@ -166,5 +167,17 @@ public sealed class UsersController(IMediator mediator) : ControllerBase
     {
         await mediator.Send(new RemoveRolesCommand(id, body.Roles), cancellationToken);
         return NoContent();
+    }
+
+    [HttpPatch("{id}/totp-policy")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> SetTotpPolicy(
+        string id,
+        [FromBody] SetUserTotpPolicyRequest body,
+        CancellationToken cancellationToken)
+    {
+        var updated = await mediator.Send(new SetUserTotpPolicyCommand(id, body.IsRequired), cancellationToken);
+        return updated ? NoContent() : NotFound();
     }
 }

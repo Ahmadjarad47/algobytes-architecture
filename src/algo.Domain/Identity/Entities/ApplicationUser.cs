@@ -15,6 +15,8 @@ public sealed class ApplicationUser : IdentityUser
     public DateTimeOffset? LastLoginAt { get; set; }
 
     public string? CreatedByUserId { get; set; }
+    
+    public bool TotpRequiredByAdmin { get; set; }
 
     public ICollection<OtpToken> OtpTokens { get; set; } = new List<OtpToken>();
 

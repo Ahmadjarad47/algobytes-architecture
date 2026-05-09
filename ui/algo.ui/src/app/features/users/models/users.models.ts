@@ -14,6 +14,8 @@ export interface UserListItem {
   readonly updatedAt: string;
   readonly lastLoginAt: string | null;
   readonly isOnline: boolean;
+  readonly twoFactorEnabled: boolean;
+  readonly totpRequiredByAdmin: boolean;
   readonly roles: readonly string[];
 }
 
@@ -31,6 +33,8 @@ export interface UserDetails {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly lastLoginAt: string | null;
+  readonly twoFactorEnabled: boolean;
+  readonly totpRequiredByAdmin: boolean;
   readonly roles: readonly string[];
 }
 
@@ -68,6 +72,10 @@ export interface UpdateUserRequest {
 
 export interface AssignRolesRequest {
   readonly roles: readonly string[];
+}
+
+export interface SetUserTotpPolicyRequest {
+  readonly isRequired: boolean;
 }
 
 export type UsersPage = PaginatedResult<UserListItem>;

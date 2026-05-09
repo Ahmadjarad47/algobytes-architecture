@@ -200,6 +200,11 @@ export class UsersList {
       field: 'roles',
       header: 'Roles',
       cellType: 'list'
+    },
+    {
+      field: 'twoFactorEnabled',
+      header: '2FA',
+      cellType: 'boolean'
     }
   ];
 
@@ -213,6 +218,7 @@ export class UsersList {
       ...(canUpdate ? [
         { id: 'edit', label: 'Edit user', icon: 'pi pi-pencil' },
         ...(canReadRoles ? [{ id: 'assign-roles', label: 'Assign roles', icon: 'pi pi-user-plus' } as AdminRowAction<UserListItem>] : []),
+        { id: 'toggle-totp', label: 'Require or disable 2FA', icon: 'pi pi-mobile', severity: 'warn' as const },
         { id: 'toggle-active', label: 'Toggle active', icon: 'pi pi-power-off', severity: 'warn' as const },
         { id: 'toggle-lock', label: 'Lock or unlock', icon: 'pi pi-lock', severity: 'warn' as const },
         { id: 'reset-password', label: 'Reset password', icon: 'pi pi-key' }
@@ -315,6 +321,18 @@ export class UsersList {
         severity: user.isLocked ? 'warn' : 'success'
       },
       { label: 'Roles', value: user.roles, type: 'list' },
+      {
+        label: 'Two-factor authentication',
+        value: user.twoFactorEnabled ? 'Enabled' : 'Disabled',
+        type: 'status',
+        severity: user.twoFactorEnabled ? 'success' : 'secondary'
+      },
+      {
+        label: 'Admin policy',
+        value: user.totpRequiredByAdmin ? 'Required' : 'Optional',
+        type: 'status',
+        severity: user.totpRequiredByAdmin ? 'warn' : 'secondary'
+      },
       { label: 'Created', value: user.createdAt, type: 'date' },
       { label: 'Last login', value: user.lastLoginAt, type: 'date' }
     ];
@@ -327,8 +345,6 @@ export class UsersList {
 
   constructor() {
     this.sessionRealtime.start();
-    this.loadRoles();
-    this.loadUsers(this.lastLazyEvent);
 
     effect(() => {
       const onlineUserIds = this.sessionRealtime.onlineUserIds();
@@ -439,6 +455,15 @@ export class UsersList {
             this.reload();
           }
         );
+        break;
+      case 'toggle-totp':
+        this.api.setTotpPolicy(row.id, !row.totpRequiredByAdmin).subscribe(() => {
+          this.toast.success(
+            !row.totpRequiredByAdmin ? '2FA required' : '2FA disabled',
+            row.displayName
+          );
+          this.reload();
+        });
         break;
       case 'toggle-lock':
         (row.isLocked ? this.api.unlockUser(row.id) : this.api.lockUser(row.id)).subscribe(() => {

@@ -14,7 +14,10 @@ import { FluidModule } from 'primeng/fluid';
 import { InputTextModule } from 'primeng/inputtext';
 import { PasswordModule } from 'primeng/password';
 
+import { Permissions } from '../../../../core/permissions/permission.catalog';
+import { PermissionService } from '../../../../core/permissions/permission.service';
 import { AppToastService } from '../../../../core/services/app-toast.service';
+import { LoginResponseDto } from '../../models/auth.models';
 import { AuthFacadeService } from '../../services/auth-facade.service';
 
 @Component({
@@ -57,10 +60,36 @@ import { AuthFacadeService } from '../../services/auth-facade.service';
                 [toggleMask]="true"
                 inputStyleClass="w-full"
                 styleClass="w-full"
+                [disabled]="totpChallenge() !== null"
               />
               <label>Password</label>
             </p-floatlabel>
           </p-fluid>
+
+          @if (totpChallenge()) {
+            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700">
+              {{ totpChallenge()?.message }}
+            </div>
+
+            @if (totpChallenge()?.setupUri) {
+              <div class="rounded-2xl border border-slate-200 bg-white p-4 text-center">
+                <img
+                  class="mx-auto h-40 w-40 rounded-lg border border-slate-200 p-2"
+                  [src]="qrCodeUrl()"
+                  alt="TOTP setup QR code"
+                />
+                <div class="mt-3 text-xs text-slate-500">Setup key</div>
+                <div class="mt-1 font-mono text-sm text-slate-900">{{ totpChallenge()?.setupKey }}</div>
+              </div>
+            }
+
+            <p-fluid>
+              <p-floatlabel variant="on">
+                <input pInputText type="text" formControlName="totpCode" maxlength="6" class="w-full" />
+                <label>Authenticator code</label>
+              </p-floatlabel>
+            </p-fluid>
+          }
 
           @if (errorMessage()) {
             <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
@@ -93,14 +122,18 @@ export class Login {
   private readonly authFacade = inject(AuthFacadeService);
   private readonly router = inject(Router);
   private readonly toast = inject(AppToastService);
+  private readonly permissionService = inject(PermissionService);
 
   protected readonly form = this.formBuilder.group({
     email: ['', [Validators.required, Validators.email]],
-    password: ['', Validators.required]
+    password: ['', Validators.required],
+    totpCode: ['']
   });
 
   protected readonly submitting = signal(false);
   protected readonly errorMessage = signal('');
+  protected readonly totpChallenge = signal<LoginResponseDto['totpChallenge']>(null);
+  protected readonly qrCodeUrl = signal<string>('');
 
   protected submit(): void {
     if (this.form.invalid || this.submitting()) {
@@ -111,16 +144,68 @@ export class Login {
     this.errorMessage.set('');
 
     this.authFacade
-      .login(this.form.getRawValue())
+      .login({
+        email: this.form.controls.email.value,
+        password: this.form.controls.password.value,
+        totpCode: this.form.controls.totpCode.value?.trim() || undefined
+      })
       .pipe(finalize(() => this.submitting.set(false)))
       .subscribe({
-        next: () => {
+        next: (response) => {
+          if (response.totpChallenge) {
+            this.totpChallenge.set(response.totpChallenge);
+            this.qrCodeUrl.set(
+              response.totpChallenge.setupUri
+                ? `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(response.totpChallenge.setupUri)}`
+                : ''
+            );
+            return;
+          }
+
+          this.totpChallenge.set(null);
+          this.qrCodeUrl.set('');
           this.toast.success('Signed in', 'Welcome back.');
-          void this.router.navigateByUrl('/dashboard');
+          void this.router.navigateByUrl(this.getLandingRoute());
         },
         error: () => {
           this.errorMessage.set('Unable to sign in. Please verify your credentials and backend availability.');
         }
       });
+  }
+
+  private getLandingRoute(): string {
+    if (this.permissionService.can({ any: [Permissions.users.read] })) {
+      return '/users';
+    }
+
+    if (this.permissionService.can({ any: [Permissions.roles.read] })) {
+      return '/roles';
+    }
+
+    if (this.permissionService.can({ any: [Permissions.accessPolicies.read] })) {
+      return '/access-policies';
+    }
+
+    if (this.permissionService.can({ any: [Permissions.sessions.read] })) {
+      return '/active-sessions';
+    }
+
+    if (this.permissionService.can({ any: [Permissions.logs.read] })) {
+      return '/logs';
+    }
+
+    if (this.permissionService.can({ any: [Permissions.errorLogs.read] })) {
+      return '/error-logs';
+    }
+
+    if (this.permissionService.can({ any: [Permissions.settings.read] })) {
+      return '/settings';
+    }
+
+    if (this.permissionService.can({ any: [Permissions.reports.read] })) {
+      return '/reports';
+    }
+
+    return '/access-denied';
   }
 }

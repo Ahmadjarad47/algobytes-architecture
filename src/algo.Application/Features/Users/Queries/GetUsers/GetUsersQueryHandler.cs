@@ -97,6 +97,8 @@ public sealed class GetUsersQueryHandler(
             u.UpdatedAt,
             u.LastLoginAt,
             onlineUserIds.Contains(u.Id),
+            u.TwoFactorEnabled,
+            u.TotpRequiredByAdmin,
             rolesByUser.GetValueOrDefault(u.Id, []))).ToList();
 
         return new PaginatedResult<UserListItemDto>(items, page, size, total);

@@ -16,12 +16,12 @@ public sealed class SessionHub(UserPresenceTracker presenceTracker) : Hub
         {
             await Groups.AddToGroupAsync(Context.ConnectionId, PresenceGroupNames.User(userId));
 
-            if (presenceTracker.SetConnected(userId))
+            if (await presenceTracker.SetConnectedAsync(userId))
             {
                 await Clients.All.SendAsync("userPresenceChanged", new { userId, isOnline = true });
             }
 
-            await Clients.Caller.SendAsync("presenceSnapshot", new { onlineUserIds = presenceTracker.OnlineUserIds() });
+            await Clients.Caller.SendAsync("presenceSnapshot", new { onlineUserIds = await presenceTracker.OnlineUserIdsAsync() });
         }
 
         if (Guid.TryParse(sessionId, out var parsedSessionId))
@@ -35,7 +35,7 @@ public sealed class SessionHub(UserPresenceTracker presenceTracker) : Hub
     public override async Task OnDisconnectedAsync(Exception? exception)
     {
         var userId = Context.User?.FindFirstValue("sub");
-        if (!string.IsNullOrWhiteSpace(userId) && presenceTracker.SetDisconnected(userId))
+        if (!string.IsNullOrWhiteSpace(userId) && await presenceTracker.SetDisconnectedAsync(userId))
         {
             await Clients.All.SendAsync("userPresenceChanged", new { userId, isOnline = false });
         }

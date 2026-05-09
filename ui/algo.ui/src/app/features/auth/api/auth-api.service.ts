@@ -3,7 +3,7 @@ import { Observable } from 'rxjs';
 
 import { ApiService } from '../../../core/api/api.service';
 import {
-  AuthResponseDto,
+  LoginResponseDto,
   LoginCommand,
   OtpVerificationDto,
   RegisterCommand
@@ -13,8 +13,8 @@ import {
 export class AuthApiService {
   private readonly api = inject(ApiService);
 
-  login(request: LoginCommand): Observable<AuthResponseDto> {
-    return this.api.post<AuthResponseDto, LoginCommand>('/Auth/login', request);
+  login(request: LoginCommand): Observable<LoginResponseDto> {
+    return this.api.post<LoginResponseDto, LoginCommand>('/Auth/login', request);
   }
 
   register(request: RegisterCommand): Observable<OtpVerificationDto> {

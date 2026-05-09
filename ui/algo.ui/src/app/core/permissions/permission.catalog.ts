@@ -42,8 +42,7 @@ export const Permissions = {
   }
 } as const;
 
-export const DashboardAnyReadPermissions: readonly AppPermission[] = [
-  Permissions.users.read,
+export const DashboardOverviewReadPermissions: readonly AppPermission[] = [
   Permissions.roles.read,
   Permissions.accessPolicies.read,
   Permissions.sessions.read,

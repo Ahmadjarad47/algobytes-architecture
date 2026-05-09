@@ -2,14 +2,16 @@ import { Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth.guard';
 import { guestGuard } from './core/guards/guest.guard';
+import { landingRouteGuard } from './core/guards/landing-route.guard';
 import { permissionGuard } from './core/guards/permission.guard';
-import { DashboardAnyReadPermissions, Permissions } from './core/permissions/permission.catalog';
+import { DashboardOverviewReadPermissions, Permissions } from './core/permissions/permission.catalog';
 
 export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    redirectTo: 'dashboard'
+    canActivate: [landingRouteGuard],
+    children: []
   },
   {
     path: 'access-denied',
@@ -36,7 +38,7 @@ export const routes: Routes = [
       {
         path: 'dashboard',
         canActivate: [permissionGuard],
-        data: { permission: { any: DashboardAnyReadPermissions } },
+        data: { permission: { any: DashboardOverviewReadPermissions } },
         loadChildren: () =>
           import('./features/dashboard/dashboard.routes').then(
             (m) => m.DASHBOARD_ROUTES
@@ -112,6 +114,7 @@ export const routes: Routes = [
   },
   {
     path: '**',
-    redirectTo: 'dashboard'
+    canActivate: [landingRouteGuard],
+    children: []
   }
 ];

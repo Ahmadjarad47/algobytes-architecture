@@ -3,4 +3,4 @@ using MediatR;
 
 namespace algo.Application.Features.Auth.Commands.Login;
 
-public sealed record LoginCommand(string Email, string Password) : IRequest<AuthResponseDto>;
+public sealed record LoginCommand(string Email, string Password, string? TotpCode = null) : IRequest<LoginResponseDto>;
