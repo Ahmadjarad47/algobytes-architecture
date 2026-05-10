@@ -3,7 +3,9 @@ using Microsoft.AspNetCore.SignalR;
 
 namespace algo.RealTime;
 
-public sealed class SignalRSessionRealtimeNotifier(IHubContext<SessionHub> hubContext) : ISessionRealtimeNotifier
+public sealed class SignalRSessionRealtimeNotifier(
+    IHubContext<SessionHub> hubContext,
+    IOperationalActivityNotifier operationalActivityNotifier) : ISessionRealtimeNotifier
 {
     public async Task NotifySessionsRevokedAsync(
         IReadOnlyCollection<Guid> sessionIds,
@@ -30,5 +32,12 @@ public sealed class SignalRSessionRealtimeNotifier(IHubContext<SessionHub> hubCo
                 new { reason = "All your sessions were revoked by administrator." },
                 cancellationToken);
         }
+
+        await operationalActivityNotifier.NotifyAsync(new OperationalActivityEvent(
+            DateTimeOffset.UtcNow,
+            "warn",
+            "sessions",
+            $"Session revoke broadcast completed for {sessionIds.Count} session(s) and {userIds.Count} user(s)."),
+            cancellationToken);
     }
 }

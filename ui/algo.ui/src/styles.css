@@ -12,7 +12,7 @@
   --surface-inset: #f6f8fc;
   --border-color: rgba(148, 163, 184, 0.22);
   --border-color-strong: rgba(148, 163, 184, 0.34);
-  --text-primary: #0f172a;
+  --text-primary: #242424;
   --text-secondary: #334155;
   --text-muted: #64748b;
   --text-soft: #94a3b8;
@@ -297,7 +297,7 @@ body.app-dark .p-password-input,
 body.app-dark .p-inputnumber-input,
 body.app-dark .p-datepicker-input,
 body.app-dark .p-textarea {
-  background: #0f172a;
+  background: #242424;
   color: var(--text-primary);
   border-color: var(--border-color-strong);
 }
@@ -405,7 +405,7 @@ body.app-dark .p-textarea {
 :root.app-dark .p-datatable .p-datatable-thead > tr > th,
 body.app-dark .p-datatable .p-datatable-thead > tr > th {
   color: var(--text-muted);
-  background: #172033;
+  background: #100d14;
   border-color: var(--border-color);
 }
 
@@ -421,7 +421,7 @@ body.app-dark .p-datatable .p-datatable-thead > tr > th {
 :root.app-dark .p-datatable .p-datatable-tbody > tr > td,
 body.app-dark .p-datatable .p-datatable-tbody > tr > td {
   color: var(--text-primary);
-  background: #111827;
+  background: #100d14;
   border-color: var(--border-color);
 }
 
@@ -431,7 +431,8 @@ body.app-dark .p-datatable .p-datatable-tbody > tr > td {
 
 :root.app-dark .p-datatable .p-datatable-tbody > tr:hover > td,
 body.app-dark .p-datatable .p-datatable-tbody > tr:hover > td {
-  background: #172033;
+  background: #100d14;
+  
 }
 
 .p-datatable .p-column-filter {
@@ -453,7 +454,7 @@ body.app-dark .p-datatable .p-datatable-tbody > tr:hover > td {
 
 :root.app-dark .p-paginator,
 body.app-dark .p-paginator {
-  background: #111827;
+  background: #100d14;
   border-color: var(--border-color);
 }
 
@@ -625,7 +626,7 @@ body.app-dark .app-details-drawer__empty {
 
 :root.app-dark .app-details-drawer__json,
 body.app-dark .app-details-drawer__json {
-  background: #020617;
+  background: #1a1c26;
   color: var(--text-secondary);
 }
 
@@ -674,7 +675,7 @@ body.app-dark .p-column-filter-overlay,
 body.app-dark .p-overlaypanel,
 body.app-dark .p-popover,
 body.app-dark .p-menu {
-  background: #111827;
+  background: #100d14;
   border-color: var(--border-color);
 }
 
@@ -690,7 +691,7 @@ body.app-dark .p-menu {
 :root.app-dark .p-multiselect-overlay,
 body.app-dark .p-select-overlay,
 body.app-dark .p-multiselect-overlay {
-  background: #111827 !important;
+  background: #100d14 !important;
   color: var(--text-secondary);
   border-color: var(--border-color);
 }
@@ -708,7 +709,7 @@ body.app-dark .p-select-list-container,
 body.app-dark .p-multiselect-list-container,
 body.app-dark .p-select-list,
 body.app-dark .p-multiselect-list {
-  background: #111827 !important;
+  background: #100d14 !important;
 }
 
 .p-select-list,
@@ -733,13 +734,13 @@ body.app-dark .p-multiselect-list {
 body.app-dark .p-select-option,
 body.app-dark .p-multiselect-option {
   color: var(--text-secondary);
-  background: #111827;
+  background: #100d14;
 }
 
 .p-select-option:not(.p-select-option-selected):hover,
 .p-multiselect-option:not(.p-multiselect-option-selected):hover {
   background: #f8fafc;
-  color: #0f172a;
+  color: #242424;
 }
 
 :root.app-dark .p-select-option:not(.p-select-option-selected):hover,
@@ -811,7 +812,7 @@ body.app-dark .p-multiselect-option.p-focus {
 :root.app-dark .snapshot-panel,
 body.app-dark .snapshot-panel {
   border-color: var(--border-color);
-  background: linear-gradient(180deg, #172033 0%, #111827 100%);
+  background: linear-gradient(180deg, #100d14 0%, #100d14 100%);
 }
 
 .dashboard-filter-field {
@@ -835,7 +836,7 @@ body.app-dark .snapshot-panel {
   border-radius: var(--radius-md);
   background: #fff;
   padding: 0 10px;
-  color: #0f172a;
+  color: #242424;
   font-size: 12px;
   font-weight: 650;
   outline: none;
@@ -844,7 +845,7 @@ body.app-dark .snapshot-panel {
 :root.app-dark .dashboard-filter-field input,
 body.app-dark .dashboard-filter-field input {
   border-color: var(--border-color-strong);
-  background: #0f172a;
+  background: #242424;
   color: var(--text-primary);
 }
 
@@ -869,7 +870,7 @@ body.app-dark .dashboard-filter-field input {
 :root.app-dark .dashboard-filter-button,
 body.app-dark .dashboard-filter-button {
   border-color: var(--border-color-strong);
-  background: #0f172a;
+  background: #242424;
   color: var(--text-secondary);
 }
 
@@ -884,8 +885,8 @@ body.app-dark .dashboard-filter-button:hover {
 }
 
 .dashboard-filter-button.is-primary {
-  border-color: #0f172a;
-  background: #0f172a;
+  border-color: #242424;
+  background: #242424;
   color: #fff;
 }
 
@@ -915,7 +916,7 @@ body.app-dark .dashboard-filter-button.is-primary {
 
 :root.app-dark .donut-chart::after,
 body.app-dark .donut-chart::after {
-  background: #111827;
+  background: #100d14;
 }
 
 .donut-chart__center {
@@ -928,7 +929,7 @@ body.app-dark .donut-chart::after {
 }
 
 .donut-chart__center span {
-  color: #0f172a;
+  color: #242424;
   font-size: 22px;
   font-weight: 750;
   line-height: 1;
@@ -967,7 +968,7 @@ body.app-dark .mini-stat {
 
 .chart-row strong,
 .mini-stat strong {
-  color: #0f172a;
+  color: #242424;
   font-size: 13px;
   font-weight: 750;
 }
@@ -1022,11 +1023,11 @@ body.app-dark .chart-track {
 :root.app-dark .health-gauge,
 body.app-dark .health-gauge {
   border-color: var(--border-color);
-  background: radial-gradient(circle at 50% 18%, #172033 0 18%, #111827 62%, #0f172a 100%);
+  background: radial-gradient(circle at 50% 18%, #100d14 0 18%, #100d14 62%, #242424 100%);
 }
 
 .health-gauge__value {
-  color: #0f172a;
+  color: #242424;
   font-size: 24px;
   font-weight: 800;
   line-height: 1;
@@ -1100,7 +1101,7 @@ body.app-dark .health-gauge {
 body.app-dark .timeline-chart {
   background:
     linear-gradient(to top, rgba(71, 85, 105, 0.45) 1px, transparent 1px) 0 0 / 100% 25%,
-    #0f172a;
+    #242424;
   border-color: var(--border-color);
 }
 
@@ -1129,14 +1130,14 @@ body.app-dark [class*="text-slate-400"] {
 
 :root.app-dark [class*="bg-white"],
 body.app-dark [class*="bg-white"] {
-  background-color: #111827 !important;
+  background-color: #100d14 !important;
 }
 
 :root.app-dark [class*="bg-slate-50"],
 :root.app-dark [class*="bg-slate-100"],
 body.app-dark [class*="bg-slate-50"],
 body.app-dark [class*="bg-slate-100"] {
-  background-color: #172033 !important;
+  background-color: #100d14 !important;
 }
 
 :root.app-dark [class*="bg-slate-200"],
@@ -1148,7 +1149,7 @@ body.app-dark [class*="bg-slate-200"] {
 :root.app-dark [class*="bg-slate-900"],
 body.app-dark [class*="bg-slate-950"],
 body.app-dark [class*="bg-slate-900"] {
-  background-color: #020617 !important;
+  background-color: #1a1c26 !important;
 }
 
 :root.app-dark [class*="border-slate-200"],

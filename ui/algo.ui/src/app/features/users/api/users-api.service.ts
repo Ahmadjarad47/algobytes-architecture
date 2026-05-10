@@ -8,6 +8,7 @@ import {
   SetUserTotpPolicyRequest,
   UpdateUserRequest,
   UserDetails,
+  UserPermissionGraph,
   UsersPage,
   UsersQuery
 } from '../models/users.models';
@@ -22,6 +23,10 @@ export class UsersApiService {
 
   getUser(id: string): Observable<UserDetails> {
     return this.api.get<UserDetails>(`/Users/${id}`);
+  }
+
+  getUserPermissionGraph(id: string): Observable<UserPermissionGraph> {
+    return this.api.get<UserPermissionGraph>(`/Users/${id}/permission-graph`);
   }
 
   createUser(command: CreateUserCommand): Observable<UserDetails> {

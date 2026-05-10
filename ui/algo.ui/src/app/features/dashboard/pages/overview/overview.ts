@@ -46,6 +46,14 @@ interface PrimeChartConfig {
   readonly options: ChartOptions;
 }
 
+interface OrganismNode {
+  readonly key: string;
+  readonly label: string;
+  readonly value: number;
+  readonly hint: string;
+  readonly state: 'good' | 'watch' | 'bad';
+}
+
 @Component({
   selector: 'app-overview',
   imports: [CommonModule, RouterLink, CardModule, ChartModule, TagModule, TableModule, ButtonModule, DatePipe],
@@ -551,24 +559,34 @@ interface PrimeChartConfig {
                 <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">
                   System health
                 </div>
-                <h3 class="m-0 mt-1 text-sm font-semibold text-slate-950">Latency and signal quality</h3>
+                <h3 class="m-0 mt-1 text-sm font-semibold text-slate-950">Live organism telemetry</h3>
               </div>
               <p-tag [value]="apiHealthLabel()" [severity]="apiHealthSeverity()" />
             </div>
 
-            <div class="grid gap-2">
-              <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                <span class="text-[11px] text-slate-500">Average response</span>
-                <span class="text-[12px] font-semibold text-slate-900">{{ averageLatency() }} ms</span>
+            <div class="organism-shell">
+              <div class="organism-core" [style.boxShadow]="organismCoreShadow()">
+                <div class="organism-core-title">SYSTEM</div>
+                <div class="organism-core-score">{{ organismScore() }}%</div>
               </div>
-              <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                <span class="text-[11px] text-slate-500">Recent 5xx responses</span>
-                <span class="text-[12px] font-semibold text-slate-900">{{ serverErrorCount() }}</span>
-              </div>
-              <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
-                <span class="text-[11px] text-slate-500">Incident ratio</span>
-                <span class="text-[12px] font-semibold text-slate-900">{{ incidentRatioLabel() }}</span>
-              </div>
+
+              @for (node of organismNodes(); track node.key; let i = $index) {
+                <div
+                  class="organism-link"
+                  [style.transform]="'rotate(' + (i * 72) + 'deg)'"
+                  [style.opacity]="0.42 + (node.value / 100) * 0.58"
+                ></div>
+
+                <div
+                  class="organism-node"
+                  [style.transform]="'translate(-50%, -50%) rotate(' + (i * 72) + 'deg) translateX(140px) rotate(' + (-i * 72) + 'deg)'"
+                >
+                  <div class="organism-pulse" [style.transform]="'scale(' + (0.78 + node.value / 200) + ')'"></div>
+                  <div class="organism-node-ring" [ngClass]="'is-' + node.state"></div>
+                  <div class="organism-node-label">{{ node.label }}</div>
+                  <div class="organism-node-value">{{ node.hint }}</div>
+                </div>
+              }
             </div>
           </section>
 
@@ -618,6 +636,23 @@ interface PrimeChartConfig {
       </section>
     </div>
   `,
+  styles: [`
+    .organism-shell { position: relative; min-height: 360px; border-radius: 16px; border: 1px solid #4C4C4E; background: radial-gradient(circle at 28% 18%, #38383A 0%, #29292B 52%, #18181A 100%); overflow: hidden; }
+    .organism-core { position: absolute; left: 50%; top: 50%; width: 122px; height: 122px; transform: translate(-50%, -50%); border-radius: 999px; background: linear-gradient(145deg, #4C4C4E, #38383A); border: 3px solid #4C4C4E; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #f5f5f5; animation: corePulse 2.4s ease-in-out infinite; z-index: 3; }
+    .organism-core-title { font-size: 10px; font-weight: 700; letter-spacing: .08em; opacity: .8; }
+    .organism-core-score { font-size: 22px; font-weight: 800; line-height: 1; }
+    .organism-link { position: absolute; left: 50%; top: 50%; width: 144px; height: 1px; transform-origin: 0 50%; background: linear-gradient(90deg, #4C4C4E, rgba(76,76,78,.2)); z-index: 1; }
+    .organism-node { position: absolute; left: 50%; top: 50%; width: 110px; text-align: center; z-index: 2; color: #f1f1f1; }
+    .organism-pulse { position: absolute; left: 50%; top: 27px; width: 70px; height: 70px; transform: translate(-50%, -50%); border-radius: 999px; background: rgba(76, 76, 78, .2); filter: blur(1px); animation: nodePulse 2s ease-in-out infinite; }
+    .organism-node-ring { margin: 0 auto; width: 70px; height: 70px; border-radius: 999px; border: 3px solid #4C4C4E; background: rgba(24, 24, 26, .92); }
+    .organism-node-ring.is-good { border-color: #4C4C4E; }
+    .organism-node-ring.is-watch { border-color: #38383A; }
+    .organism-node-ring.is-bad { border-color: #29292B; }
+    .organism-node-label { margin-top: 6px; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .04em; }
+    .organism-node-value { margin-top: 2px; font-size: 11px; color: #c7c7c9; }
+    @keyframes corePulse { 0%,100%{ transform: translate(-50%, -50%) scale(1);} 50% { transform: translate(-50%, -50%) scale(1.04);} }
+    @keyframes nodePulse { 0%,100%{ opacity:.35;} 50%{ opacity:.8;} }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Overview {
@@ -1169,6 +1204,34 @@ export class Overview {
     return `${latency} ms average across recent requests`;
   });
 
+  protected readonly organismNodes = computed<readonly OrganismNode[]>(() => {
+    const auth = Math.max(0, 100 - Math.round((this.stats()?.lockedUsers ?? 0) * 8));
+    const api = Math.max(0, 100 - Math.min(95, Math.round(this.averageLatency() / 12) + this.serverErrorCount() * 6));
+    const queue = Math.max(0, 100 - Math.min(95, this.recentErrors().length * 12));
+    const dbLatency = Math.max(0, 100 - Math.min(95, Math.round(this.averageLatency() / 10)));
+    const policyConflicts = Math.max(0, 100 - Math.min(95, this.disabledPolicyCount() * 6 + Math.max(0, this.highPriorityPolicyCount() - this.enabledPolicyCount()) * 8));
+
+    return [
+      this.toOrganismNode('auth', 'Auth health', auth, `${auth}% stable`),
+      this.toOrganismNode('api', 'API health', api, `${this.averageLatency()} ms`),
+      this.toOrganismNode('queue', 'Queue health', queue, `${this.recentErrors().length} incidents`),
+      this.toOrganismNode('db', 'DB latency', dbLatency, `${this.averageLatency()} ms avg`),
+      this.toOrganismNode('policy', 'Policy conflicts', policyConflicts, `${this.disabledPolicyCount()} disabled`)
+    ];
+  });
+
+  protected readonly organismScore = computed(() => {
+    const nodes = this.organismNodes();
+    if (!nodes.length) return 0;
+    return Math.round(nodes.reduce((sum, n) => sum + n.value, 0) / nodes.length);
+  });
+
+  protected readonly organismCoreShadow = computed(() => {
+    const score = this.organismScore();
+    const color = score >= 70 ? 'rgba(52, 211, 153, .55)' : score >= 45 ? 'rgba(251, 191, 36, .5)' : 'rgba(244, 63, 94, .55)';
+    return `0 0 0 12px ${color}, 0 0 36px ${color}`;
+  });
+
   constructor() {
     this.loadOverview();
   }
@@ -1286,6 +1349,16 @@ export class Overview {
     const day = `${date.getDate()}`.padStart(2, '0');
 
     return `${year}-${month}-${day}`;
+  }
+
+  private toOrganismNode(key: string, label: string, value: number, hint: string): OrganismNode {
+    return {
+      key,
+      label,
+      value,
+      hint,
+      state: value >= 70 ? 'good' : value >= 45 ? 'watch' : 'bad'
+    };
   }
 
   protected metricToneClass(tone: DashboardMetric['tone']): string {

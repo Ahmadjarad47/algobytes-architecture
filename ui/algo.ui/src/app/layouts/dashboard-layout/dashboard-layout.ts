@@ -222,6 +222,15 @@ import { AuthFacadeService } from '../../features/auth/services/auth-facade.serv
                       [outlined]="true"
                       (onClick)="openCommandPalette()"
                     />
+                    <p-button
+                      icon="pi pi-terminal"
+                      label="Live console"
+                      severity="secondary"
+                      size="small"
+                      [outlined]="true"
+                      [badge]="activityCountLabel()"
+                      (onClick)="openOperationalConsole()"
+                    />
                     <p-button icon="pi pi-plus" label="New" size="small" (onClick)="newMenu.toggle($event)" />
                     <p-menu #newMenu [model]="newItems()" [popup]="true" appendTo="body" />
                   </div>
@@ -278,6 +287,58 @@ import { AuthFacadeService } from '../../features/auth/services/auth-facade.serv
           </div>
         </div>
       </p-dialog>
+
+      <p-dialog
+        [visible]="operationalConsoleVisible()"
+        header="Live Operational Console"
+        [modal]="false"
+        [draggable]="true"
+        [resizable]="true"
+        [style]="{ width: 'min(68rem, 94vw)' }"
+        styleClass="surface-dialog operational-console-dialog"
+        (visibleChange)="operationalConsoleVisible.set($event)"
+      >
+        <div class="grid gap-3">
+          <div class="flex flex-wrap items-center justify-between gap-2">
+            <div class="flex items-center gap-2">
+              <span
+                class="h-2.5 w-2.5 rounded-full"
+                [class]="sessionRealtime.isConnected() ? 'bg-emerald-400 shadow-[0_0_14px_rgba(52,211,153,.85)]' : 'bg-amber-400'"
+              ></span>
+              <span class="text-[12px] font-semibold text-slate-200">
+                {{ sessionRealtime.isConnected() ? 'stream online' : 'stream reconnecting' }}
+              </span>
+              <p-tag [value]="operationalActivity().length + ' events'" severity="secondary" />
+            </div>
+            <p-button
+              icon="pi pi-trash"
+              label="Clear"
+              severity="secondary"
+              size="small"
+              [outlined]="true"
+              (onClick)="clearOperationalConsole()"
+            />
+          </div>
+
+          <div class="max-h-[62vh] overflow-auto rounded-xl border border-slate-700 bg-[#05070a] p-3 font-mono text-[12px] shadow-inner">
+            @for (event of operationalActivity(); track event.timestamp + event.message) {
+              <div class="grid grid-cols-[88px_72px_90px_1fr] gap-3 border-b border-slate-800/80 py-1.5 last:border-b-0">
+                <span class="text-slate-500">{{ formatActivityTime(event.timestamp) }}</span>
+                <span [class]="activityLevelClass(event.level)">{{ event.level.toUpperCase() }}</span>
+                <span class="text-cyan-300">{{ event.source }}</span>
+                <span class="min-w-0 text-slate-200">
+                  {{ event.message }}
+                  @if (event.traceId) {
+                    <span class="text-slate-500"> trace={{ event.traceId }}</span>
+                  }
+                </span>
+              </div>
+            } @empty {
+              <div class="py-8 text-center text-slate-500">Waiting for websocket activity...</div>
+            }
+          </div>
+        </div>
+      </p-dialog>
     </main>
   `,
   changeDetection: ChangeDetectionStrategy.OnPush
@@ -290,12 +351,18 @@ export class DashboardLayout {
   private readonly appConfig = inject(AppConfigService);
   private readonly permissionService = inject(PermissionService);
   private readonly actionBus = inject(AdminActionBusService);
-  private readonly sessionRealtime = inject(SessionRealtimeService);
+  protected readonly sessionRealtime = inject(SessionRealtimeService);
   protected readonly theme = inject(ThemeService);
   protected readonly config = this.appConfig.config;
 
   protected readonly sidebarCollapsed = signal(this.config().sidebarCollapsed);
   protected readonly commandPaletteVisible = signal(false);
+  protected readonly operationalConsoleVisible = signal(false);
+  protected readonly operationalActivity = this.sessionRealtime.operationalActivity;
+  protected readonly activityCountLabel = computed(() => {
+    const count = this.operationalActivity().length;
+    return count > 99 ? '99+' : count ? `${count}` : undefined;
+  });
   protected commandSearch = '';
 
   private readonly allNavigation: Array<{ label: string; path: string; icon: string; badge?: string; feature?: string; gate?: PermissionGate }> = [
@@ -461,6 +528,33 @@ export class DashboardLayout {
   protected openCommandPalette(): void {
     this.commandSearch = '';
     this.commandPaletteVisible.set(true);
+  }
+
+  protected openOperationalConsole(): void {
+    this.operationalConsoleVisible.set(true);
+  }
+
+  protected clearOperationalConsole(): void {
+    this.sessionRealtime.clearOperationalActivity();
+  }
+
+  protected formatActivityTime(value: string): string {
+    return new Date(value).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+      second: '2-digit'
+    });
+  }
+
+  protected activityLevelClass(level: string): string {
+    switch (level.toLowerCase()) {
+      case 'error':
+        return 'font-semibold text-rose-300';
+      case 'warn':
+        return 'font-semibold text-amber-300';
+      default:
+        return 'font-semibold text-emerald-300';
+    }
   }
 
   protected runCommand(id: string): void {

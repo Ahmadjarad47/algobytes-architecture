@@ -1,4 +1,4 @@
-import { ChangeDetectionStrategy, Component, inject, signal } from '@angular/core';
+import { ChangeDetectionStrategy, Component, effect, inject, signal } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import {
   NonNullableFormBuilder,
@@ -60,7 +60,6 @@ import { AuthFacadeService } from '../../services/auth-facade.service';
                 [toggleMask]="true"
                 inputStyleClass="w-full"
                 styleClass="w-full"
-                [disabled]="totpChallenge() !== null"
               />
               <label>Password</label>
             </p-floatlabel>
@@ -134,6 +133,19 @@ export class Login {
   protected readonly errorMessage = signal('');
   protected readonly totpChallenge = signal<LoginResponseDto['totpChallenge']>(null);
   protected readonly qrCodeUrl = signal<string>('');
+
+  constructor() {
+    effect(() => {
+      const hasChallenge = this.totpChallenge() !== null;
+      const passwordControl = this.form.controls.password;
+
+      if (hasChallenge && passwordControl.enabled) {
+        passwordControl.disable({ emitEvent: false });
+      } else if (!hasChallenge && passwordControl.disabled) {
+        passwordControl.enable({ emitEvent: false });
+      }
+    });
+  }
 
   protected submit(): void {
     if (this.form.invalid || this.submitting()) {

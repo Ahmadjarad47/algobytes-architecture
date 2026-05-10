@@ -5,7 +5,9 @@ using Microsoft.AspNetCore.SignalR;
 namespace algo.RealTime;
 
 [Authorize]
-public sealed class SessionHub(UserPresenceTracker presenceTracker) : Hub
+public sealed class SessionHub(
+    UserPresenceTracker presenceTracker,
+    IOperationalActivityNotifier operationalActivityNotifier) : Hub
 {
     public override async Task OnConnectedAsync()
     {
@@ -19,6 +21,12 @@ public sealed class SessionHub(UserPresenceTracker presenceTracker) : Hub
             if (await presenceTracker.SetConnectedAsync(userId))
             {
                 await Clients.All.SendAsync("userPresenceChanged", new { userId, isOnline = true });
+                await operationalActivityNotifier.NotifyAsync(new OperationalActivityEvent(
+                    DateTimeOffset.UtcNow,
+                    "info",
+                    "websocket",
+                    "User connected to live operations channel.",
+                    UserId: userId));
             }
 
             await Clients.Caller.SendAsync("presenceSnapshot", new { onlineUserIds = await presenceTracker.OnlineUserIdsAsync() });
@@ -38,6 +46,12 @@ public sealed class SessionHub(UserPresenceTracker presenceTracker) : Hub
         if (!string.IsNullOrWhiteSpace(userId) && await presenceTracker.SetDisconnectedAsync(userId))
         {
             await Clients.All.SendAsync("userPresenceChanged", new { userId, isOnline = false });
+            await operationalActivityNotifier.NotifyAsync(new OperationalActivityEvent(
+                DateTimeOffset.UtcNow,
+                "warn",
+                "websocket",
+                "User disconnected from live operations channel.",
+                UserId: userId));
         }
 
         await base.OnDisconnectedAsync(exception);

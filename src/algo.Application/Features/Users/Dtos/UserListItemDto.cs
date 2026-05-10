@@ -16,4 +16,5 @@ public sealed record UserListItemDto(
     bool IsOnline,
     bool TwoFactorEnabled,
     bool TotpRequiredByAdmin,
-    IReadOnlyList<string> Roles);
+    IReadOnlyList<string> Roles,
+    IReadOnlyList<string>? Permissions = null);

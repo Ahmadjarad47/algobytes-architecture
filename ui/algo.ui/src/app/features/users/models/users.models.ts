@@ -38,6 +38,30 @@ export interface UserDetails {
   readonly roles: readonly string[];
 }
 
+export interface UserPermissionGraphNode {
+  readonly id: string;
+  readonly type: 'user' | 'role' | 'policy' | 'resource' | string;
+  readonly label: string;
+  readonly resource?: string | null;
+  readonly action?: string | null;
+  readonly effect?: string | null;
+  readonly conditionJson?: string | null;
+  readonly priority?: number | null;
+  readonly isEnabled?: boolean | null;
+}
+
+export interface UserPermissionGraphEdge {
+  readonly from: string;
+  readonly to: string;
+  readonly type: 'hasRole' | 'hasPolicy' | 'grants' | string;
+}
+
+export interface UserPermissionGraph {
+  readonly userId: string;
+  readonly nodes: readonly UserPermissionGraphNode[];
+  readonly edges: readonly UserPermissionGraphEdge[];
+}
+
 export interface UsersQuery {
   readonly PageNumber: number;
   readonly PageSize: number;

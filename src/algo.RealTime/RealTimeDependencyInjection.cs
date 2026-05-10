@@ -16,6 +16,7 @@ public static class RealTimeDependencyInjection
         services.AddSignalR();
         services.AddSingleton<UserPresenceTracker>();
         services.AddSingleton<ISessionRealtimeNotifier, SignalRSessionRealtimeNotifier>();
+        services.AddSingleton<IOperationalActivityNotifier, SignalROperationalActivityNotifier>();
         return services;
     }
 }

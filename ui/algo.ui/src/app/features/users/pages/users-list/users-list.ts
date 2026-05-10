@@ -2,6 +2,7 @@ import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } 
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { TableLazyLoadEvent } from 'primeng/table';
+import dagre from 'dagre';
 
 import { AdminConfirmDialog } from '../../../../shared/components/admin-confirm-dialog/admin-confirm-dialog';
 import { AdminDataTable } from '../../../../shared/components/admin-data-table/admin-data-table';
@@ -26,7 +27,8 @@ import {
   CreateUserCommand,
   UpdateUserRequest,
   UserDetails,
-  UserListItem
+  UserListItem,
+  UserPermissionGraph
 } from '../../models/users.models';
 import { RolesApiService } from '../../../roles/api/roles-api.service';
 import { RoleDto } from '../../../roles/models/roles.models';
@@ -117,6 +119,65 @@ import { RoleDto } from '../../../roles/models/roles.models';
       (visibleChange)="detailsVisible.set($event)"
     />
 
+    @if (graphVisible()) {
+      <div class="permission-graph-overlay" (click)="closeGraph()">
+        <div class="permission-graph-modal" (click)="$event.stopPropagation()">
+          <div class="permission-graph-header">
+            <h3>Permission Graph - {{ selectedUser()?.displayName ?? 'User' }}</h3>
+            <button type="button" class="permission-graph-close" (click)="closeGraph()">
+              <i class="pi pi-times"></i>
+            </button>
+          </div>
+          <div
+            class="permission-graph-canvas"
+            (wheel)="onGraphWheel($event)"
+            (pointerdown)="onGraphPointerDown($event)"
+            (pointermove)="onGraphPointerMove($event)"
+            (pointerup)="onGraphPointerUp()"
+            (pointerleave)="onGraphPointerUp()"
+          >
+            <div class="permission-graph-toolbar" (pointerdown)="$event.stopPropagation()">
+              <button type="button" class="permission-graph-tool-btn" (click)="zoomOut()">-</button>
+              <button type="button" class="permission-graph-tool-btn" (click)="fitGraph()">Fit</button>
+              <button type="button" class="permission-graph-tool-btn" (click)="zoomIn()">+</button>
+            </div>
+            <svg
+              [attr.viewBox]="graphViewBox()"
+              [attr.width]="graphViewportSize().width"
+              [attr.height]="graphViewportSize().height"
+              preserveAspectRatio="xMidYMid meet"
+              class="permission-graph-svg"
+            >
+              <defs>
+                <marker id="permission-graph-arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+                  <path d="M 0 0 L 10 5 L 0 10 z" class="permission-graph-arrow" />
+                </marker>
+              </defs>
+              <g [attr.transform]="graphTransform()">
+                @for (edge of graphEdges(); track edge.id) {
+                  <path [attr.d]="edge.path" class="permission-graph-edge" />
+                }
+                @for (node of graphNodes(); track node.id) {
+                  <g [attr.transform]="'translate(' + node.x + ' ' + node.y + ')'" class="permission-graph-node-group">
+                    <rect
+                      [attr.x]="-node.width / 2"
+                      [attr.y]="-node.height / 2"
+                      [attr.width]="node.width"
+                      [attr.height]="node.height"
+                      rx="14"
+                      [attr.class]="'permission-graph-node permission-graph-node-' + node.kind"
+                    />
+                    <text x="0" y="-5" class="permission-graph-label" text-anchor="middle">{{ node.label }}</text>
+                    <text x="0" y="17" class="permission-graph-type-label" text-anchor="middle">{{ node.typeLabel }}</text>
+                  </g>
+                }
+              </g>
+            </svg>
+          </div>
+        </div>
+      </div>
+    }
+
     <app-admin-confirm-dialog
       [visible]="deleteDialogVisible()"
       title="Delete user"
@@ -128,6 +189,30 @@ import { RoleDto } from '../../../roles/models/roles.models';
       (confirm)="confirmDelete()"
     />
   `,
+  styles: [`
+    .permission-graph-overlay { position: fixed; inset: 0; z-index: 1300; background: rgba(2,8,23,.82); backdrop-filter: blur(4px); display:flex; align-items:center; justify-content:center; padding:1rem; }
+    .permission-graph-modal { width:min(1200px,98vw); height:min(780px,94vh); background:#15171b; border:1px solid #343a43; border-radius:16px; box-shadow:0 30px 80px rgba(2,6,23,.65); display:flex; flex-direction:column; overflow:hidden; }
+    .permission-graph-header { display:flex; align-items:center; justify-content:space-between; padding:1rem 1.25rem; color:#e5e7eb; border-bottom:1px solid #243043; }
+    .permission-graph-header h3 { margin:0; font-size:1.2rem; font-weight:600; }
+    .permission-graph-close { border:0; background:transparent; color:#94a3b8; cursor:pointer; font-size:1rem; }
+    .permission-graph-close:hover { color:#e2e8f0; }
+    .permission-graph-canvas { position:relative; flex:1; padding:.75rem; overflow:hidden; cursor:grab; touch-action:none; background-color:#101114; background-image:radial-gradient(circle at 1px 1px, rgba(148,163,184,.22) 1px, transparent 0); background-size:24px 24px; }
+    .permission-graph-canvas:active { cursor:grabbing; }
+    .permission-graph-toolbar { position:absolute; top:1rem; right:1rem; z-index:2; display:flex; gap:.4rem; }
+    .permission-graph-tool-btn { border:1px solid #334155; background:#0f172a; color:#e2e8f0; border-radius:10px; padding:.35rem .65rem; font-size:.82rem; cursor:pointer; }
+    .permission-graph-tool-btn:hover { border-color:#38bdf8; color:#f8fafc; }
+    .permission-graph-svg { width:100%; height:100%; display:block; }
+    .permission-graph-edge { fill:none; stroke:#8aa4bf; stroke-width:2.4; opacity:.95; marker-end:url(#permission-graph-arrow); transition:d .35s ease; }
+    .permission-graph-arrow { fill:#8aa4bf; }
+    .permission-graph-node-group { transition:transform .35s ease; }
+    .permission-graph-node { fill:#242932; stroke:#6b7280; stroke-width:2.4; }
+    .permission-graph-node-user { fill:#0f8f82; stroke:#76f1dc; stroke-width:3; }
+    .permission-graph-node-role { fill:#193d6b; stroke:#83b8ff; }
+    .permission-graph-node-policy { fill:#145348; stroke:#5eead4; }
+    .permission-graph-node-resource { fill:#4a2a72; stroke:#d8b4fe; }
+    .permission-graph-label { fill:#ffffff; font-size:15px; font-weight:800; dominant-baseline:middle; pointer-events:none; }
+    .permission-graph-type-label { fill:#d5dbe5; font-size:11px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; dominant-baseline:middle; pointer-events:none; }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class UsersList {
@@ -147,8 +232,19 @@ export class UsersList {
   protected readonly totalRecords = signal(0);
   protected readonly formVisible = signal(false);
   protected readonly detailsVisible = signal(false);
+  protected readonly graphVisible = signal(false);
   protected readonly editingUserId = signal<string | null>(null);
   protected readonly selectedUser = signal<UserDetails | null>(null);
+  protected readonly selectedGraph = signal<UserPermissionGraph | null>(null);
+  protected readonly graphScale = signal(1);
+  protected readonly graphPanX = signal(0);
+  protected readonly graphPanY = signal(0);
+  protected readonly graphIsPanning = signal(false);
+  private panPointerId: number | null = null;
+  private panStartClientX = 0;
+  private panStartClientY = 0;
+  private panStartX = 0;
+  private panStartY = 0;
   protected readonly deleteDialogVisible = signal(false);
   protected readonly deleting = signal(false);
   protected readonly pendingDeleteUser = signal<UserListItem | null>(null);
@@ -215,6 +311,7 @@ export class UsersList {
 
     return [
       { id: 'view', label: 'View details', icon: 'pi pi-eye' },
+      { id: 'permission-graph', label: 'Permission graph', icon: 'pi pi-sitemap' },
       ...(canUpdate ? [
         { id: 'edit', label: 'Edit user', icon: 'pi pi-pencil' },
         ...(canReadRoles ? [{ id: 'assign-roles', label: 'Assign roles', icon: 'pi pi-user-plus' } as AdminRowAction<UserListItem>] : []),
@@ -338,6 +435,55 @@ export class UsersList {
     ];
   });
 
+  protected readonly graphNodes = computed<GraphNode[]>(() => {
+    const graph = this.selectedGraph();
+    if (!graph) return [];
+
+    return layoutPermissionGraph(graph);
+  });
+
+  protected readonly graphViewBox = computed(() => {
+    const size = this.graphViewportSize();
+    return `${size.minX} ${size.minY} ${size.width} ${size.height}`;
+  });
+
+  protected readonly graphTransform = computed(
+    () => `translate(${this.graphPanX()} ${this.graphPanY()}) scale(${this.graphScale()})`
+  );
+
+  protected readonly graphViewportSize = computed(() => {
+    const nodes = this.graphNodes();
+    if (nodes.length === 0) {
+      return { minX: 0, minY: 0, width: 1200, height: 760 };
+    }
+
+    const margin = 80;
+    const minX = Math.min(...nodes.map((node) => node.x - node.width / 2)) - margin;
+    const maxX = Math.max(...nodes.map((node) => node.x + node.width / 2)) + margin;
+    const minY = Math.min(...nodes.map((node) => node.y - node.height / 2)) - margin;
+    const maxY = Math.max(...nodes.map((node) => node.y + node.height / 2)) + margin;
+
+    const width = Math.max(1, maxX - minX);
+    const height = Math.max(1, maxY - minY);
+
+    return { minX, minY, width, height };
+  });
+
+  protected readonly graphEdges = computed<GraphEdge[]>(() => {
+    const graph = this.selectedGraph();
+    if (!graph) return [];
+
+    const byId = new Map(this.graphNodes().map((n) => [n.id, n]));
+    return graph.edges
+      .map((edge, index) => {
+        const from = byId.get(edge.from);
+        const to = byId.get(edge.to);
+        if (!from || !to) return null;
+        return { id: `${edge.type}-${index}`, path: buildEdgePath(from, to) };
+      })
+      .filter((edge): edge is GraphEdge => Boolean(edge));
+  });
+
   private lastLazyEvent: TableLazyLoadEvent = {
     first: 0,
     rows: 25
@@ -440,6 +586,14 @@ export class UsersList {
           isActive: row.isActive
         });
         this.formVisible.set(true);
+        break;
+      case 'permission-graph':
+        this.api.getUser(row.id).subscribe((user) => this.selectedUser.set(user));
+        this.api.getUserPermissionGraph(row.id).subscribe((graph) => {
+          this.selectedGraph.set(graph);
+          this.fitGraph();
+          this.graphVisible.set(true);
+        });
         break;
       case 'assign-roles':
         this.openAssignRoles(row);
@@ -620,6 +774,95 @@ export class UsersList {
       });
   }
 
+  protected closeGraph(): void {
+    this.graphVisible.set(false);
+  }
+
+  protected fitGraph(): void {
+    this.graphScale.set(1);
+    this.graphPanX.set(0);
+    this.graphPanY.set(0);
+  }
+
+  protected zoomIn(): void {
+    const center = this.graphViewportCenter();
+    this.setScaleAroundPoint(this.graphScale() * 1.12, center.x, center.y);
+  }
+
+  protected zoomOut(): void {
+    const center = this.graphViewportCenter();
+    this.setScaleAroundPoint(this.graphScale() / 1.12, center.x, center.y);
+  }
+
+  protected onGraphWheel(event: WheelEvent): void {
+    event.preventDefault();
+
+    const svg = (event.currentTarget as HTMLElement).querySelector('svg');
+    if (!svg) return;
+
+    const rect = svg.getBoundingClientRect();
+    const v = this.graphViewportSize();
+    const worldX = v.minX + ((event.clientX - rect.left) / rect.width) * v.width;
+    const worldY = v.minY + ((event.clientY - rect.top) / rect.height) * v.height;
+    const factor = event.deltaY < 0 ? 1.08 : 1 / 1.08;
+    this.setScaleAroundPoint(this.graphScale() * factor, worldX, worldY);
+  }
+
+  protected onGraphPointerDown(event: PointerEvent): void {
+    if (event.button !== 0) return;
+    this.graphIsPanning.set(true);
+    this.panPointerId = event.pointerId;
+    this.panStartClientX = event.clientX;
+    this.panStartClientY = event.clientY;
+    this.panStartX = this.graphPanX();
+    this.panStartY = this.graphPanY();
+    (event.currentTarget as HTMLElement).setPointerCapture(event.pointerId);
+  }
+
+  protected onGraphPointerMove(event: PointerEvent): void {
+    if (!this.graphIsPanning() || this.panPointerId !== event.pointerId) return;
+    const svg = (event.currentTarget as HTMLElement).querySelector('svg');
+    if (!svg) return;
+
+    const rect = svg.getBoundingClientRect();
+    const v = this.graphViewportSize();
+    const dx = ((event.clientX - this.panStartClientX) / rect.width) * v.width;
+    const dy = ((event.clientY - this.panStartClientY) / rect.height) * v.height;
+    this.graphPanX.set(this.panStartX + dx);
+    this.graphPanY.set(this.panStartY + dy);
+  }
+
+  protected onGraphPointerUp(): void {
+    this.graphIsPanning.set(false);
+    this.panPointerId = null;
+  }
+
+  private setScaleAroundPoint(nextScale: number, worldX: number, worldY: number): void {
+    const clampedScale = Math.max(0.35, Math.min(2.8, nextScale));
+    const currentScale = this.graphScale();
+    if (Math.abs(clampedScale - currentScale) < 0.0001) return;
+
+    const panX = this.graphPanX();
+    const panY = this.graphPanY();
+
+    const screenX = worldX * currentScale + panX;
+    const screenY = worldY * currentScale + panY;
+    const nextPanX = screenX - worldX * clampedScale;
+    const nextPanY = screenY - worldY * clampedScale;
+
+    this.graphScale.set(clampedScale);
+    this.graphPanX.set(nextPanX);
+    this.graphPanY.set(nextPanY);
+  }
+
+  private graphViewportCenter(): { x: number; y: number } {
+    const v = this.graphViewportSize();
+    return {
+      x: v.minX + v.width / 2,
+      y: v.minY + v.height / 2
+    };
+  }
+
   private toCreateUserCommand(): CreateUserCommand {
     const value = this.form.getRawValue();
 
@@ -669,4 +912,126 @@ function toBoolean(value: unknown): boolean | undefined {
   }
 
   return undefined;
+}
+
+type GraphNodeKind = 'user' | 'role' | 'policy' | 'resource';
+
+interface GraphNode {
+  id: string;
+  label: string;
+  kind: GraphNodeKind;
+  typeLabel: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
+interface GraphEdge {
+  id: string;
+  path: string;
+}
+
+function layoutPermissionGraph(graph: UserPermissionGraph): GraphNode[] {
+  const apiUserNode = graph.nodes.find((node) => node.type === 'user');
+  const fallbackUserNode = { id: `user:${graph.userId}`, type: 'user', label: 'USER' };
+  const sourceNodes = apiUserNode ? [...graph.nodes] : [fallbackUserNode, ...graph.nodes];
+  const dagreGraph = new dagre.graphlib.Graph();
+  dagreGraph.setGraph({
+    rankdir: 'TB',
+    align: 'UL',
+    nodesep: 72,
+    ranksep: 96,
+    marginx: 80,
+    marginy: 80
+  });
+  dagreGraph.setDefaultEdgeLabel(() => ({}));
+
+  for (const node of sourceNodes) {
+    const size = graphNodeSize(node.type);
+    dagreGraph.setNode(node.id, size);
+  }
+
+  for (const edge of graph.edges) {
+    dagreGraph.setEdge(edge.from, edge.to);
+  }
+
+  dagre.layout(dagreGraph);
+
+  const positioned = sourceNodes.map((node) => {
+    const layout = dagreGraph.node(node.id) as { x: number; y: number } | undefined;
+    const size = graphNodeSize(node.type);
+
+    return {
+      id: node.id,
+      label: trimLabel(node.label),
+      kind: graphNodeKind(node.type),
+      typeLabel: graphNodeTypeLabel(node.type),
+      x: layout?.x ?? 0,
+      y: layout?.y ?? 0,
+      width: size.width,
+      height: size.height
+    };
+  });
+
+  const minX = Math.min(...positioned.map((node) => node.x - node.width / 2));
+  const maxX = Math.max(...positioned.map((node) => node.x + node.width / 2));
+  const minY = Math.min(...positioned.map((node) => node.y - node.height / 2));
+  const maxY = Math.max(...positioned.map((node) => node.y + node.height / 2));
+  const offsetX = (minX + maxX) / 2;
+  const offsetY = (minY + maxY) / 2;
+
+  return positioned.map((node) => ({
+    ...node,
+    x: node.x - offsetX,
+    y: node.y - offsetY
+  }));
+}
+
+function graphNodeKind(type: string): GraphNodeKind {
+  return type === 'user' || type === 'role' || type === 'policy' || type === 'resource' ? type : 'resource';
+}
+
+function graphNodeSize(type: string): { width: number; height: number } {
+  switch (type) {
+    case 'user':
+      return { width: 180, height: 72 };
+    case 'role':
+      return { width: 168, height: 64 };
+    case 'policy':
+      return { width: 176, height: 64 };
+    case 'resource':
+      return { width: 154, height: 60 };
+    default:
+      return { width: 160, height: 60 };
+  }
+}
+
+function graphNodeTypeLabel(type: string): string {
+  switch (type) {
+    case 'user':
+      return 'Parent user';
+    case 'role':
+      return 'Role';
+    case 'policy':
+      return 'Permission';
+    case 'resource':
+      return 'Resource';
+    default:
+      return 'Node';
+  }
+}
+
+function buildEdgePath(from: GraphNode, to: GraphNode): string {
+  const startX = from.x;
+  const startY = from.y + from.height / 2;
+  const endX = to.x;
+  const endY = to.y - to.height / 2;
+  const midY = startY + (endY - startY) / 2;
+
+  return `M ${startX} ${startY} C ${startX} ${midY}, ${endX} ${midY}, ${endX} ${endY}`;
+}
+
+function trimLabel(value: string): string {
+  return value.length > 20 ? `${value.slice(0, 19)}...` : value;
 }

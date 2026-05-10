@@ -13,9 +13,11 @@ using algo.Application.Features.Users.Commands.UnlockUser;
 using algo.Application.Features.Users.Commands.UpdateUser;
 using algo.Application.Features.Users.Dtos;
 using algo.Application.Features.Users.Queries.GetUserById;
+using algo.Application.Features.Users.Queries.GetUserPermissionGraph;
 using algo.Application.Features.Users.Queries.GetUserRoles;
 using algo.Application.Features.Users.Queries.GetUsers;
 using algo.Application.Features.Users.Queries.GetUsersDashboard;
+using algo.Application.Features.Users.Queries.SearchUsers;
 using MediatR;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
@@ -34,6 +36,13 @@ public sealed class UsersController(IMediator mediator) : ControllerBase
         CancellationToken cancellationToken) =>
         mediator.Send(parameters.ToQuery(), cancellationToken);
 
+    [HttpPost("search")]
+    [ProducesResponseType(typeof(SearchUsersResponseDto), StatusCodes.Status200OK)]
+    public Task<SearchUsersResponseDto> Search(
+        [FromBody] SearchUsersQuery query,
+        CancellationToken cancellationToken) =>
+        mediator.Send(query, cancellationToken);
+
     [HttpGet("dashboard")]
     [ProducesResponseType(typeof(UserDashboardStatsDto), StatusCodes.Status200OK)]
     public Task<UserDashboardStatsDto> Dashboard(CancellationToken cancellationToken) =>
@@ -43,6 +52,11 @@ public sealed class UsersController(IMediator mediator) : ControllerBase
     [ProducesResponseType(typeof(IReadOnlyList<UserRoleDto>), StatusCodes.Status200OK)]
     public Task<IReadOnlyList<UserRoleDto>> GetRoles(string id, CancellationToken cancellationToken) =>
         mediator.Send(new GetUserRolesQuery(id), cancellationToken);
+
+    [HttpGet("{id}/permission-graph")]
+    [ProducesResponseType(typeof(UserPermissionGraphDto), StatusCodes.Status200OK)]
+    public Task<UserPermissionGraphDto> GetPermissionGraph(string id, CancellationToken cancellationToken) =>
+        mediator.Send(new GetUserPermissionGraphQuery(id), cancellationToken);
 
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(UserDetailsDto), StatusCodes.Status200OK)]
