@@ -1,3 +1,5 @@
+import { environment } from '../../../environments/environment';
+
 export type AdminEnvironment = 'Dev' | 'Staging' | 'Prod';
 export type AdminDirection = 'ltr' | 'rtl';
 export type AdminThemeMode = 'light' | 'dark';
@@ -64,8 +66,8 @@ export interface AdminTemplateConfig {
 export const DEFAULT_ADMIN_TEMPLATE_CONFIG: AdminTemplateConfig = {
   appName: 'ALGO.UI',
   workspaceName: 'Workspace Admin Console',
-  environment: 'Dev',
-  apiBaseUrl: 'https://localhost:7259/api',
+  environment: environment.appEnvironment,
+  apiBaseUrl: environment.apiBaseUrl,
   defaultLanguage: 'en',
   timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
   direction: 'ltr',

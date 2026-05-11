@@ -11,6 +11,7 @@ import { MenuModule } from 'primeng/menu';
 import { TagModule } from 'primeng/tag';
 import { TooltipModule } from 'primeng/tooltip';
 import { MenuItem } from 'primeng/api';
+import { firstValueFrom } from 'rxjs';
 import { AppConfigService } from '../../core/config/app-config.service';
 import { DashboardOverviewReadPermissions, Permissions } from '../../core/permissions/permission.catalog';
 import { PermissionService } from '../../core/permissions/permission.service';
@@ -21,6 +22,8 @@ import { AuthService } from '../../core/services/auth.service';
 import { SessionRealtimeService } from '../../core/services/session-realtime.service';
 import { ThemeService } from '../../core/services/theme.service';
 import { AuthFacadeService } from '../../features/auth/services/auth-facade.service';
+import { UsersApiService } from '../../features/users/api/users-api.service';
+import { UserListItem } from '../../features/users/models/users.models';
 
 @Component({
   selector: 'app-dashboard-layout',
@@ -289,6 +292,75 @@ import { AuthFacadeService } from '../../features/auth/services/auth-facade.serv
       </p-dialog>
 
       <p-dialog
+        [visible]="chatConsoleVisible()"
+        header="Direct Messages"
+        [modal]="false"
+        [draggable]="true"
+        [resizable]="true"
+        [style]="{ width: 'min(72rem, 96vw)' }"
+        styleClass="surface-dialog"
+        (visibleChange)="chatConsoleVisible.set($event); onChatDialogVisibilityChange($event)"
+      >
+        <div class="grid grid-cols-1 gap-3 md:grid-cols-[240px_1fr]">
+          <div class="rounded-xl border border-slate-200 bg-slate-50 p-2">
+            <div class="mb-2 text-[12px] font-semibold text-slate-700">Users</div>
+            <div class="max-h-[56vh] overflow-auto">
+              @for (user of chatUsers(); track user.id) {
+                <button
+                  type="button"
+                  class="mb-1 w-full rounded-lg border px-2.5 py-2 text-left text-[12px]"
+                  [class]="selectedChatUserId() === user.id ? 'border-slate-900 bg-slate-900 text-white' : 'border-slate-200 bg-white text-slate-700'"
+                  (click)="selectChatUser(user.id)"
+                >
+                  <div class="font-semibold">{{ user.displayName }}</div>
+                  <div class="text-[11px] opacity-80">{{ user.email ?? user.userName ?? user.id }}</div>
+                </button>
+              } @empty {
+                <div class="text-[12px] text-slate-500">No users found.</div>
+              }
+            </div>
+          </div>
+
+          <div class="grid gap-3">
+            <div class="text-[12px] text-slate-600">
+              @if (typingUsersLabel()) {
+                <span>{{ typingUsersLabel() }}</span>
+              } @else {
+                <span>No one is typing.</span>
+              }
+            </div>
+            <div class="max-h-[48vh] overflow-auto rounded-xl border border-slate-200 bg-slate-50/60 p-3">
+              @for (message of activeChatMessages(); track message.id) {
+                <div class="mb-2 rounded-xl border border-slate-200 bg-white p-2.5 last:mb-0">
+                  <div class="mb-1 flex items-center justify-between gap-2">
+                    <div class="text-[12px] font-semibold text-slate-900">{{ message.senderDisplayName }}</div>
+                    <div class="text-[11px] text-slate-500">{{ formatActivityTime(message.sentAtUtc) }}</div>
+                  </div>
+                  @if (message.replyToMessageId && findChatMessageById(message.replyToMessageId); as repliedTo) {
+                    <div class="mb-1 rounded-lg border-l-2 border-slate-300 bg-slate-50 px-2 py-1 text-[11px] text-slate-600">
+                      Reply to {{ repliedTo.senderDisplayName }}: {{ repliedTo.content }}
+                    </div>
+                  }
+                  <div class="whitespace-pre-wrap text-[13px] text-slate-800">{{ message.content }}</div>
+                  <div class="mt-1.5">
+                    <button type="button" class="text-[11px] font-medium text-slate-600 hover:text-slate-900" (click)="startReply(message.id)">Reply</button>
+                  </div>
+                </div>
+              } @empty {
+                <div class="py-8 text-center text-[12px] text-slate-500">Select a user and start chatting.</div>
+              }
+            </div>
+            <div class="grid gap-2">
+              <input pInputText [(ngModel)]="chatDraft" (input)="onChatInput()" (keydown.enter)="submitChatMessage()" placeholder="Type your message and press Enter" class="w-full" />
+              <div class="flex justify-end">
+                <p-button icon="pi pi-send" label="Send" size="small" [disabled]="!chatDraft.trim() || !selectedChatUserId()" (onClick)="submitChatMessage()" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </p-dialog>
+
+      <p-dialog
         [visible]="operationalConsoleVisible()"
         header="Live Operational Console"
         [modal]="false"
@@ -351,6 +423,7 @@ export class DashboardLayout {
   private readonly appConfig = inject(AppConfigService);
   private readonly permissionService = inject(PermissionService);
   private readonly actionBus = inject(AdminActionBusService);
+  private readonly usersApi = inject(UsersApiService);
   protected readonly sessionRealtime = inject(SessionRealtimeService);
   protected readonly theme = inject(ThemeService);
   protected readonly config = this.appConfig.config;
@@ -358,16 +431,55 @@ export class DashboardLayout {
   protected readonly sidebarCollapsed = signal(this.config().sidebarCollapsed);
   protected readonly commandPaletteVisible = signal(false);
   protected readonly operationalConsoleVisible = signal(false);
+  protected readonly chatConsoleVisible = signal(false);
   protected readonly operationalActivity = this.sessionRealtime.operationalActivity;
+  protected readonly chatUsers = signal<UserListItem[]>([]);
+  protected readonly selectedChatUserId = signal<string | null>(null);
+  protected readonly activeChatMessages = computed(() => {
+    const selected = this.selectedChatUserId();
+    if (!selected) {
+      return [];
+    }
+
+    return this.sessionRealtime.getDirectMessages(selected);
+  });
   protected readonly activityCountLabel = computed(() => {
     const count = this.operationalActivity().length;
     return count > 99 ? '99+' : count ? `${count}` : undefined;
   });
+  protected readonly typingUsersLabel = computed(() => {
+    const selected = this.selectedChatUserId();
+    if (!selected) {
+      return '';
+    }
+    const currentUserId = this.authService.session()?.user?.userId;
+    const typing = this.sessionRealtime.getTypingUsersForTarget(selected).filter((item) => item.userId !== currentUserId);
+
+    if (!typing.length) {
+      return '';
+    }
+
+    const labels = typing.slice(0, 2).map((item) => item.displayName);
+    const suffix = typing.length > 2 ? ` +${typing.length - 2} more` : '';
+    return `${labels.join(', ')} ${typing.length > 1 ? 'are' : 'is'} typing${suffix}`;
+  });
+  protected readonly chatUnreadLabel = computed(() => {
+    if (this.chatConsoleVisible()) {
+      return undefined;
+    }
+
+    const count = Array.from(this.sessionRealtime.directChatByUser().values()).reduce((sum, items) => sum + items.length, 0);
+    return count > 99 ? '99+' : count ? `${count}` : undefined;
+  });
   protected commandSearch = '';
+  protected chatDraft = '';
+  protected readonly replyingToMessage = signal<string | null>(null);
+  private typingTimeoutHandle: ReturnType<typeof setTimeout> | null = null;
 
   private readonly allNavigation: Array<{ label: string; path: string; icon: string; badge?: string; feature?: string; gate?: PermissionGate }> = [
     { label: 'Overview', path: '/dashboard', icon: 'pi pi-home', gate: { any: DashboardOverviewReadPermissions } },
     { label: 'Users', path: '/users', icon: 'pi pi-users', badge: 'IAM', feature: 'users', gate: { any: [Permissions.users.read] } },
+    { label: 'Users Chat', path: '/users/chat', icon: 'pi pi-comments', feature: 'users', gate: { any: [Permissions.users.read] } },
     { label: 'Roles', path: '/roles', icon: 'pi pi-id-card', feature: 'roles', gate: { any: [Permissions.roles.read] } },
     { label: 'Access Policies', path: '/access-policies', icon: 'pi pi-shield', badge: 'Auth', feature: 'accessPolicies', gate: { any: [Permissions.accessPolicies.read] } },
     { label: 'Active Sessions', path: '/active-sessions', icon: 'pi pi-desktop', badge: 'Security', feature: 'activeSessions', gate: { any: [Permissions.sessions.read] } },
@@ -378,10 +490,15 @@ export class DashboardLayout {
 
   protected readonly navigation = computed(() => {
     const features = this.appConfig.features();
-
-    return this.allNavigation.filter((item) =>
+    const filtered = this.allNavigation.filter((item) =>
       (!item.feature || features[item.feature as keyof typeof features]) &&
       this.permissionService.can(item.gate));
+
+    const unread = this.sessionRealtime.totalUnreadCount();
+    return filtered.map((item) =>
+      item.path === '/users/chat'
+        ? { ...item, badge: unread > 99 ? '99+' : unread > 0 ? `${unread}` : undefined }
+        : item);
   });
 
   protected readonly newItems = computed<MenuItem[]>(() => [
@@ -534,8 +651,103 @@ export class DashboardLayout {
     this.operationalConsoleVisible.set(true);
   }
 
+  protected openChatConsole(): void {
+    this.chatConsoleVisible.set(true);
+    void this.loadChatUsers();
+  }
+
   protected clearOperationalConsole(): void {
     this.sessionRealtime.clearOperationalActivity();
+  }
+
+  protected onChatDialogVisibilityChange(isVisible: boolean): void {
+    if (!isVisible) {
+      this.cancelReply();
+      this.chatDraft = '';
+      const selected = this.selectedChatUserId();
+      if (selected) {
+        void this.sessionRealtime.setDirectTyping(selected, false);
+      }
+    }
+  }
+
+  protected onChatInput(): void {
+    const selected = this.selectedChatUserId();
+    if (!selected) {
+      return;
+    }
+    void this.sessionRealtime.setDirectTyping(selected, Boolean(this.chatDraft.trim()));
+
+    if (this.typingTimeoutHandle) {
+      clearTimeout(this.typingTimeoutHandle);
+    }
+
+    this.typingTimeoutHandle = setTimeout(() => {
+      void this.sessionRealtime.setDirectTyping(selected, false);
+    }, 1800);
+  }
+
+  protected async submitChatMessage(): Promise<void> {
+    const content = this.chatDraft.trim();
+    if (!content) {
+      return;
+    }
+
+    try {
+      const selected = this.selectedChatUserId();
+      if (!selected) {
+        this.toast.warn('Select user', 'Please select a user first.');
+        return;
+      }
+      await this.sessionRealtime.sendDirectMessage(selected, content, this.replyingToMessage());
+      this.chatDraft = '';
+      this.replyingToMessage.set(null);
+      if (this.typingTimeoutHandle) {
+        clearTimeout(this.typingTimeoutHandle);
+      }
+      await this.sessionRealtime.setDirectTyping(selected, false);
+    } catch {
+      this.toast.error('Chat send failed', 'Unable to send your message right now.');
+    }
+  }
+
+  protected startReply(messageId: string): void {
+    this.replyingToMessage.set(messageId);
+  }
+
+  protected cancelReply(): void {
+    this.replyingToMessage.set(null);
+  }
+
+  protected findChatMessageById(messageId: string | null | undefined) {
+    if (!messageId) {
+      return null;
+    }
+
+    return this.activeChatMessages().find((item) => item.id === messageId) ?? null;
+  }
+
+  protected async selectChatUser(userId: string): Promise<void> {
+    this.selectedChatUserId.set(userId);
+    await this.sessionRealtime.loadDirectChatHistory(userId);
+  }
+
+  private async loadChatUsers(): Promise<void> {
+    if (this.chatUsers().length) {
+      return;
+    }
+
+    try {
+      const page = await firstValueFrom(this.usersApi.getUsers({ PageNumber: 1, PageSize: 100 }));
+      const currentUserId = this.authService.session()?.user?.userId;
+      const users = page.items.filter((item) => item.id !== currentUserId);
+      this.chatUsers.set(users);
+      if (users.length && !this.selectedChatUserId()) {
+        await this.selectChatUser(users[0].id);
+      }
+    } catch {
+      this.toast.error('Users load failed', 'Unable to load users for chat.');
+    }
   }
 
   protected formatActivityTime(value: string): string {

@@ -1,5 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { RouterLink, RouterLinkActive } from '@angular/router';
 import { finalize } from 'rxjs';
 import { TableLazyLoadEvent } from 'primeng/table';
 import dagre from 'dagre';
@@ -37,12 +38,33 @@ import { RoleDto } from '../../../roles/models/roles.models';
   selector: 'app-users-list',
   imports: [
     ReactiveFormsModule,
+    RouterLink,
+    RouterLinkActive,
     AdminDataTable,
     AdminFormDialog,
     AdminDetailsDrawer,
     AdminConfirmDialog
   ],
   template: `
+    <section class="surface-card dashboard-section mb-3">
+      <div class="flex flex-wrap items-center gap-2">
+        <a
+          routerLink="/users/directory"
+          routerLinkActive="bg-slate-900 text-white"
+          class="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
+        >
+          Directory
+        </a>
+        <a
+          routerLink="/users/chat"
+          routerLinkActive="bg-slate-900 text-white"
+          class="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
+        >
+          Chat
+        </a>
+      </div>
+    </section>
+
     <app-admin-data-table
       title="Users"
       subtitle="Directory management with server-side search, filters, sorting, and paging."
