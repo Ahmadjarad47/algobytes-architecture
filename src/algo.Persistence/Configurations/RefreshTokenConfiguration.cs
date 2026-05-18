@@ -8,6 +8,8 @@ internal sealed class RefreshTokenConfiguration : IEntityTypeConfiguration<Refre
 {
     public void Configure(EntityTypeBuilder<RefreshToken> builder)
     {
+        builder.HasQueryFilter(token => token.User.DeletedAt == null && token.User.TrashedAt == null);
+
         builder.HasKey(t => t.Id);
 
         builder.Property(t => t.UserId).IsRequired();

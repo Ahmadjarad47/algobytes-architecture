@@ -1,5 +1,6 @@
 using algo.Application.Abstractions;
 using algo.Application.Common.AccessPolicy;
+using algo.Application.Common.CustomFields;
 using algo.Application.Features.Users.Dtos;
 using algo.Domain.Identity.Entities;
 using algo.Domain.Identity.Policies;
@@ -14,7 +15,7 @@ namespace algo.Application.Features.Users.Queries.SearchUsers;
 public sealed class SearchUsersQueryHandler(
     IApplicationDbContext db,
     IAccessPolicyEvaluator accessPolicyEvaluator,
-    RoleManager<IdentityRole> roleManager) : IRequestHandler<SearchUsersQuery, SearchUsersResponseDto>
+    RoleManager<ApplicationRole> roleManager) : IRequestHandler<SearchUsersQuery, SearchUsersResponseDto>
 {
     public async Task<SearchUsersResponseDto> Handle(SearchUsersQuery request, CancellationToken cancellationToken)
     {
@@ -60,7 +61,7 @@ public sealed class SearchUsersQueryHandler(
         var items = users.Select(u => new UserListItemDto(
             u.Id, u.Email, u.UserName, u.DisplayName, u.PhoneNumber,
             u.IsActive, u.LockoutEnd.HasValue && u.LockoutEnd > now, u.EmailConfirmed, u.PhoneNumberConfirmed,
-            u.CreatedAt, u.UpdatedAt, u.LastLoginAt, online.Contains(u.Id), u.TwoFactorEnabled, u.TotpRequiredByAdmin,
+            u.CreatedAt, u.UpdatedAt, u.LastLoginAt, u.TrashedAt, u.TrashExpiresAt, u.DeletedAt, JsonDocumentHelpers.CloneToElement(u.CustomFields), online.Contains(u.Id), u.TwoFactorEnabled, u.TotpRequiredByAdmin,
             includes.Contains("roles") || includes.Contains("permissions") ? rolesByUser.GetValueOrDefault(u.Id, []) : [],
             includes.Contains("permissions") ? permsByUser.GetValueOrDefault(u.Id, []) : null)).ToList();
 

@@ -1,3 +1,4 @@
+using algo.Domain.CustomFields;
 using algo.Domain.Identity.Entities;
 using algo.Domain.Identity.Policies;
 using algo.Domain.Logging.Entities;
@@ -10,11 +11,13 @@ public interface IApplicationDbContext
 {
     DbSet<ApplicationUser> Users { get; }
 
-    DbSet<IdentityRole> Roles { get; }
+    DbSet<ApplicationRole> Roles { get; }
 
     DbSet<IdentityUserRole<string>> UserRoles { get; }
 
     DbSet<AccessPolicy> AccessPolicies { get; }
+
+    DbSet<CustomFieldDefinition> CustomFieldDefinitions { get; }
 
     DbSet<OtpToken> OtpTokens { get; }
 

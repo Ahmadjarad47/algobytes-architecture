@@ -8,7 +8,7 @@ internal static class SessionProjection
     public static IQueryable<SessionRow> Project(
         IQueryable<RefreshToken> tokens,
         IQueryable<IdentityUserRole<string>> userRoles,
-        IQueryable<IdentityRole> roles,
+        IQueryable<ApplicationRole> roles,
         string? currentUserId)
     {
         return

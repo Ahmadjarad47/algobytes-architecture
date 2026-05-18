@@ -13,6 +13,10 @@ export interface UserListItem {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly lastLoginAt: string | null;
+  readonly trashedAt: string | null;
+  readonly trashExpiresAt: string | null;
+  readonly deletedAt: string | null;
+  readonly customFields: Record<string, unknown> | null;
   readonly isOnline: boolean;
   readonly twoFactorEnabled: boolean;
   readonly totpRequiredByAdmin: boolean;
@@ -33,6 +37,10 @@ export interface UserDetails {
   readonly createdAt: string;
   readonly updatedAt: string;
   readonly lastLoginAt: string | null;
+  readonly trashedAt: string | null;
+  readonly trashExpiresAt: string | null;
+  readonly deletedAt: string | null;
+  readonly customFields: Record<string, unknown> | null;
   readonly twoFactorEnabled: boolean;
   readonly totpRequiredByAdmin: boolean;
   readonly roles: readonly string[];
@@ -68,10 +76,13 @@ export interface UsersQuery {
   readonly Search?: string;
   readonly SortField?: string;
   readonly SortDirection?: 'Ascending' | 'Descending';
+  readonly CustomFieldFilters?: string;
   readonly IsActive?: boolean;
   readonly IsLocked?: boolean;
   readonly EmailConfirmed?: boolean;
   readonly PhoneNumberConfirmed?: boolean;
+  readonly IncludeTrashed?: boolean;
+  readonly OnlyTrashed?: boolean;
 }
 
 export interface CreateUserCommand {
@@ -84,6 +95,7 @@ export interface CreateUserCommand {
   readonly roles: readonly string[];
   readonly emailConfirmed: boolean;
   readonly isActive: boolean;
+  readonly customFields?: Record<string, unknown> | null;
 }
 
 export interface UpdateUserRequest {
@@ -92,6 +104,7 @@ export interface UpdateUserRequest {
   readonly userName?: string | null;
   readonly isActive?: boolean | null;
   readonly emailConfirmed?: boolean | null;
+  readonly customFields?: Record<string, unknown> | null;
 }
 
 export interface AssignRolesRequest {

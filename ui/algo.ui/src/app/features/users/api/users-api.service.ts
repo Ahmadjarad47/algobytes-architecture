@@ -62,6 +62,10 @@ export class UsersApiService {
     return this.api.delete<void>(`/Users/${id}`);
   }
 
+  restoreUser(id: string): Observable<void> {
+    return this.api.patch<void>(`/Users/${id}/restore`);
+  }
+
   assignRoles(id: string, roles: readonly string[]): Observable<void> {
     return this.api.post<void, AssignRolesRequest>(`/Users/${id}/roles`, { roles });
   }

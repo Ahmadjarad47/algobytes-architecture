@@ -1,12 +1,20 @@
+using System.Text.Json;
+using algo.Domain.CustomFields;
 using Microsoft.AspNetCore.Identity;
 
 namespace algo.Domain.Identity.Entities;
 
-public sealed class ApplicationUser : IdentityUser
+public sealed class ApplicationUser : IdentityUser, IHasCustomFields
 {
     public string DisplayName { get; set; } = string.Empty;
 
     public bool IsActive { get; set; } = true;
+
+    public DateTimeOffset? TrashedAt { get; set; }
+
+    public DateTimeOffset? TrashExpiresAt { get; set; }
+
+    public DateTimeOffset? DeletedAt { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
 
@@ -17,6 +25,8 @@ public sealed class ApplicationUser : IdentityUser
     public string? CreatedByUserId { get; set; }
     
     public bool TotpRequiredByAdmin { get; set; }
+
+    public JsonDocument? CustomFields { get; set; }
 
     public ICollection<OtpToken> OtpTokens { get; set; } = new List<OtpToken>();
 

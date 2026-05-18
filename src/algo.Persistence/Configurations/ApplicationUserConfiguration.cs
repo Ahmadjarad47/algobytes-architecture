@@ -8,6 +8,8 @@ internal sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Ap
 {
     public void Configure(EntityTypeBuilder<ApplicationUser> builder)
     {
+        builder.HasQueryFilter(user => user.DeletedAt == null && user.TrashedAt == null);
+
         builder.Property(u => u.DisplayName)
             .HasMaxLength(256)
             .IsRequired();
@@ -22,5 +24,7 @@ internal sealed class ApplicationUserConfiguration : IEntityTypeConfiguration<Ap
         builder.Property(u => u.TotpRequiredByAdmin)
             .HasDefaultValue(false)
             .IsRequired();
+
+        builder.Property(u => u.CustomFields);
     }
 }

@@ -1,14 +1,12 @@
 using algo.Application.Abstractions;
 using algo.Application.Common.AccessPolicy;
-using algo.Application.Features.Users;
+using algo.Application.Common.Trash;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace algo.Application.Features.Roles.Commands.DeleteRole;
 
 public sealed class DeleteRoleCommandHandler(
-    RoleManager<IdentityRole> roleManager,
     IAccessPolicyEvaluator accessPolicyEvaluator,
     IApplicationDbContext db)
     : IRequestHandler<DeleteRoleCommand, bool>
@@ -21,15 +19,17 @@ public sealed class DeleteRoleCommandHandler(
             AccessPolicyActions.Delete,
             cancellationToken);
 
-        if (!await db.Roles.AsNoTracking().AnyAsync(r => r.Id == request.Id, cancellationToken))
-            return false;
-
-        var role = await roleManager.FindByIdAsync(request.Id);
+        var role = await db.Roles
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(r => r.Id == request.Id && r.DeletedAt == null, cancellationToken);
         if (role is null)
             return false;
 
-        var result = await roleManager.DeleteAsync(role);
-        result.ThrowIfFailed();
+        var utcNow = DateTimeOffset.UtcNow;
+        role.TrashedAt = utcNow;
+        role.TrashExpiresAt = utcNow.Add(TrashRetention.Duration);
+
+        await db.SaveChangesAsync(cancellationToken);
         return true;
     }
 }

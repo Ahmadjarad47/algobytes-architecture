@@ -1,7 +1,9 @@
 using algo.Application.Abstractions;
 using algo.Application.Common.AccessPolicy;
+using algo.Application.Common.CustomFields;
 using algo.Application.Features.Roles.Dtos;
 using algo.Application.Features.Users;
+using algo.Domain.Identity.Entities;
 using FluentValidation;
 using FluentValidation.Results;
 using MediatR;
@@ -11,9 +13,10 @@ using Microsoft.EntityFrameworkCore;
 namespace algo.Application.Features.Roles.Commands.UpdateRole;
 
 public sealed class UpdateRoleCommandHandler(
-    RoleManager<IdentityRole> roleManager,
+    RoleManager<ApplicationRole> roleManager,
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator) : IRequestHandler<UpdateRoleCommand, RoleDetailsDto?>
+    IAccessPolicyEvaluator accessPolicyEvaluator,
+    CustomFieldValueValidator customFieldValueValidator) : IRequestHandler<UpdateRoleCommand, RoleDetailsDto?>
 {
     public async Task<RoleDetailsDto?> Handle(UpdateRoleCommand request, CancellationToken cancellationToken)
     {
@@ -47,10 +50,23 @@ public sealed class UpdateRoleCommandHandler(
             setName.ThrowIfFailed(nameof(UpdateRoleCommand.Name));
         }
 
+        role.CustomFields = await customFieldValueValidator.ValidateAndNormalizeAsync(
+            CustomFieldEntities.Roles,
+            request.CustomFields,
+            cancellationToken);
+
         var update = await roleManager.UpdateAsync(role);
         update.ThrowIfFailed(nameof(UpdateRoleCommand.Name));
 
         var userCount = await db.UserRoles.AsNoTracking().CountAsync(ur => ur.RoleId == role.Id, cancellationToken);
-        return new RoleDetailsDto(role.Id, role.Name!, role.NormalizedName, userCount);
+        return new RoleDetailsDto(
+            role.Id,
+            role.Name!,
+            role.NormalizedName,
+            userCount,
+            role.TrashedAt,
+            role.TrashExpiresAt,
+            role.DeletedAt,
+            JsonDocumentHelpers.CloneToElement(role.CustomFields));
     }
 }

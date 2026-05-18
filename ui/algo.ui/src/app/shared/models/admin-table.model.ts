@@ -50,6 +50,7 @@ export interface AdminFormField {
     | 'email'
     | 'password'
     | 'textarea'
+    | 'json'
     | 'number'
     | 'switch'
     | 'date'
@@ -57,4 +58,5 @@ export interface AdminFormField {
     | 'multiselect';
   readonly placeholder?: string;
   readonly options?: AdminFormFieldOption[];
+  readonly required?: boolean;
 }

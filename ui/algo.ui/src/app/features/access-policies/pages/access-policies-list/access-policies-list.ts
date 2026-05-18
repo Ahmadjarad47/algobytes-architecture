@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { ButtonModule } from 'primeng/button';
 import { DatePickerModule } from 'primeng/datepicker';
@@ -8,6 +8,7 @@ import { FloatLabelModule } from 'primeng/floatlabel';
 import { FluidModule } from 'primeng/fluid';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { InputTextModule } from 'primeng/inputtext';
+import { MultiSelectModule } from 'primeng/multiselect';
 import { SelectModule } from 'primeng/select';
 import { TextareaModule } from 'primeng/textarea';
 import { ToggleSwitchModule } from 'primeng/toggleswitch';
@@ -17,6 +18,7 @@ import { AdminDataTable } from '../../../../shared/components/admin-data-table/a
 import { AdminDetailsDrawer } from '../../../../shared/components/admin-details-drawer/admin-details-drawer';
 import {
   AdminDetailItem,
+  AdminFormField,
   AdminFormFieldOption,
   AdminRowAction,
   AdminTableColumn
@@ -26,6 +28,16 @@ import { AdminActionBusService } from '../../../../core/services/admin-action-bu
 import { Permissions } from '../../../../core/permissions/permission.catalog';
 import { PermissionService } from '../../../../core/permissions/permission.service';
 import { exportCsv, exportJson, ExportRow } from '../../../../shared/utils/export.utils';
+import { CustomFieldDefinitionsApiService } from '../../../custom-fields/api/custom-field-definitions-api.service';
+import { CustomFieldDefinition } from '../../../custom-fields/models/custom-fields.models';
+import {
+  customFieldColumns,
+  customFieldControlKey,
+  customFieldDetailItems,
+  customFieldFormFields,
+  customFieldInitialValues,
+  customFieldsPayload
+} from '../../../custom-fields/utils/custom-field.utils';
 import { AccessPoliciesApiService } from '../../api/access-policies-api.service';
 import { AccessPolicyConditionBuilderComponent } from '../../components/access-policy-condition-builder/access-policy-condition-builder.component';
 import {
@@ -73,22 +85,51 @@ const FALLBACK_POLICY_OPTIONS: AccessPolicyOptionsDto = {
     FluidModule,
     InputNumberModule,
     InputTextModule,
+    MultiSelectModule,
     SelectModule,
     TextareaModule,
     ToggleSwitchModule
   ],
   template: `
+    <section class="surface-card dashboard-section mb-3">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Policy lifecycle</div>
+          <div class="mt-1 text-sm font-semibold text-slate-950">Active policies and trash retention</div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            class="rounded-full px-3 py-1.5 text-xs font-semibold transition"
+            [class]="!showTrashed() ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+            (click)="setTrashView(false)"
+          >
+            Active policies
+          </button>
+          <button
+            type="button"
+            class="rounded-full px-3 py-1.5 text-xs font-semibold transition"
+            [class]="showTrashed() ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'"
+            (click)="setTrashView(true)"
+          >
+            Trash
+          </button>
+        </div>
+      </div>
+    </section>
+
     <app-admin-data-table
       title="Access Policies"
-      subtitle="Policy rules backed by the admin API with reusable list management primitives."
-      [columns]="columns"
+      [subtitle]="tableSubtitle()"
+      [columns]="columns()"
       [value]="policies()"
       [loading]="loading()"
       [lazy]="false"
       [rows]="25"
       [totalRecords]="policies().length"
-      [globalFilterFields]="['resource', 'action', 'subjectKey', 'description']"
-      [showCreate]="canCreate()"
+      [globalFilterFields]="globalFilterFields()"
+      [showCreate]="canCreate() && !showTrashed()"
       [showExport]="canExport()"
       searchPlaceholder="Search policies"
       emptyTitle="No access policies found"
@@ -218,6 +259,66 @@ const FALLBACK_POLICY_OPTIONS: AccessPolicyOptionsDto = {
               (advancedChange)="advancedCondition.set($event)"
               (validateRequested)="validateCondition()"
             />
+
+            @for (field of customFormFields(); track field.key) {
+              <div [class]="field.type === 'json' ? 'md:col-span-2' : ''">
+                @if (field.type === 'switch') {
+                  <label class="flex items-center justify-between rounded-lg border border-surface-200 px-3 py-2.5">
+                    <span class="text-sm font-medium text-surface-700">{{ field.label }}</span>
+                    <p-toggleswitch [formControl]="customFieldControl(field.key)" />
+                  </label>
+                } @else {
+                  <p-floatlabel variant="on">
+                    @switch (field.type) {
+                      @case ('number') {
+                        <p-inputnumber [formControl]="customFieldControl(field.key)" inputStyleClass="w-full" />
+                      }
+                      @case ('date') {
+                        <p-datepicker
+                          [formControl]="customFieldControl(field.key)"
+                          [showIcon]="true"
+                          appendTo="body"
+                          styleClass="w-full"
+                          inputStyleClass="w-full"
+                        />
+                      }
+                      @case ('select') {
+                        <p-select
+                          [formControl]="customFieldControl(field.key)"
+                          [options]="field.options ?? []"
+                          optionLabel="label"
+                          optionValue="value"
+                          appendTo="body"
+                          class="w-full"
+                        />
+                      }
+                      @case ('multiselect') {
+                        <p-multiselect
+                          [formControl]="customFieldControl(field.key)"
+                          [options]="field.options ?? []"
+                          optionLabel="label"
+                          optionValue="value"
+                          appendTo="body"
+                          class="w-full"
+                        />
+                      }
+                      @case ('json') {
+                        <textarea
+                          pTextarea
+                          [formControl]="customFieldControl(field.key)"
+                          rows="5"
+                          class="w-full resize-y font-mono text-xs"
+                        ></textarea>
+                      }
+                      @default {
+                        <input pInputText [formControl]="customFieldControl(field.key)" class="w-full" />
+                      }
+                    }
+                    <label>{{ field.label }}{{ field.required ? ' *' : '' }}</label>
+                  </p-floatlabel>
+                }
+              </div>
+            }
           </div>
         </p-fluid>
 
@@ -250,10 +351,10 @@ const FALLBACK_POLICY_OPTIONS: AccessPolicyOptionsDto = {
 
     <app-admin-confirm-dialog
       [visible]="deleteDialogVisible()"
-      title="Delete policy"
-      [message]="'Delete ' + (pendingDeletePolicy()?.resource ?? 'this policy') + ' policy?'"
-      description="The access rule will be removed from authorization checks. This action cannot be undone."
-      confirmLabel="Delete policy"
+      title="Move policy to trash"
+      [message]="'Move ' + (pendingDeletePolicy()?.resource ?? 'this policy') + ' policy to trash?'"
+      description="The policy will stay in trash for 3 days before final soft delete."
+      confirmLabel="Move to trash"
       [loading]="deleting()"
       (visibleChange)="closeDeleteDialog($event)"
       (confirm)="confirmDelete()"
@@ -263,6 +364,7 @@ const FALLBACK_POLICY_OPTIONS: AccessPolicyOptionsDto = {
 })
 export class AccessPoliciesList {
   private readonly api = inject(AccessPoliciesApiService);
+  private readonly customFieldDefinitionsApi = inject(CustomFieldDefinitionsApiService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly toast = inject(AppToastService);
   private readonly actionBus = inject(AdminActionBusService);
@@ -273,6 +375,7 @@ export class AccessPoliciesList {
   protected readonly saving = signal(false);
   protected readonly formVisible = signal(false);
   protected readonly detailsVisible = signal(false);
+  protected readonly showTrashed = signal(false);
   protected readonly editingPolicyId = signal<string | null>(null);
   protected readonly selectedPolicy = signal<AccessPolicyAdminDto | null>(null);
   protected readonly deleteDialogVisible = signal(false);
@@ -285,8 +388,19 @@ export class AccessPoliciesList {
   protected readonly conditionValidationMessage = signal<string | null>(null);
   protected readonly conditionValidationSeverity = signal<'success' | 'error' | 'info' | 'warn'>('info');
   protected readonly selectedResource = signal('');
+  protected readonly customFieldDefinitions = signal<CustomFieldDefinition[]>([]);
 
-  protected readonly columns: AdminTableColumn[] = [
+  protected readonly globalFilterFields = computed(() => [
+    'resource',
+    'action',
+    'subjectKey',
+    'description',
+    ...this.customFieldDefinitions()
+      .filter((definition) => definition.searchable)
+      .map((definition) => `customFields.${definition.key}`)
+  ]);
+
+  protected readonly baseColumns: AdminTableColumn[] = [
     { field: 'resource', header: 'Resource', sortable: true, filter: true },
     { field: 'action', header: 'Action', sortable: true, filter: true },
     { field: 'subjectKey', header: 'Subject key', filter: true },
@@ -300,22 +414,39 @@ export class AccessPoliciesList {
       filterType: 'boolean',
       cellType: 'boolean'
     },
-    { field: 'validTo', header: 'Valid to', cellType: 'date' }
+    { field: 'validTo', header: 'Valid to', cellType: 'date' },
+    { field: 'trashedAt', header: 'Trashed at', cellType: 'date' },
+    { field: 'trashExpiresAt', header: 'Trash expires', cellType: 'date' }
   ];
+
+  protected readonly columns = computed<AdminTableColumn[]>(() => [
+    ...this.baseColumns,
+    ...customFieldColumns(this.customFieldDefinitions())
+  ]);
 
   protected readonly canCreate = computed(() => this.permissionService.can({ any: [Permissions.accessPolicies.create] }));
   protected readonly canUpdate = computed(() => this.permissionService.can({ any: [Permissions.accessPolicies.update] }));
   protected readonly canDelete = computed(() => this.permissionService.can({ any: [Permissions.accessPolicies.delete] }));
   protected readonly canExport = computed(() => this.permissionService.can({ any: [Permissions.accessPolicies.read] }));
+  protected readonly tableSubtitle = computed(() =>
+    this.showTrashed()
+      ? 'Policies currently in trash. They can be restored for 3 days before final soft delete.'
+      : 'Policy rules backed by the admin API with reusable list management primitives.'
+  );
 
-  protected readonly actions = computed<AdminRowAction<AccessPolicyAdminDto>[]>(() => [
-    { id: 'view', label: 'View policy', icon: 'pi pi-eye' },
-    ...(this.canUpdate() ? [
-      { id: 'edit', label: 'Edit policy', icon: 'pi pi-pencil' } as AdminRowAction<AccessPolicyAdminDto>,
-      { id: 'toggle', label: 'Toggle policy', icon: 'pi pi-shield', severity: 'warn' as const }
-    ] : []),
-    ...(this.canDelete() ? [{ id: 'delete', label: 'Delete policy', icon: 'pi pi-trash', severity: 'danger' as const }] : [])
-  ]);
+  protected readonly actions = computed<AdminRowAction<AccessPolicyAdminDto>[]>(() => this.showTrashed()
+    ? [
+        { id: 'view', label: 'View policy', icon: 'pi pi-eye' },
+        ...(this.canUpdate() ? [{ id: 'restore', label: 'Restore policy', icon: 'pi pi-history', severity: 'success' as const } as AdminRowAction<AccessPolicyAdminDto>] : [])
+      ]
+    : [
+        { id: 'view', label: 'View policy', icon: 'pi pi-eye' },
+        ...(this.canUpdate() ? [
+          { id: 'edit', label: 'Edit policy', icon: 'pi pi-pencil' } as AdminRowAction<AccessPolicyAdminDto>,
+          { id: 'toggle', label: 'Toggle policy', icon: 'pi pi-shield', severity: 'warn' as const }
+        ] : []),
+        ...(this.canDelete() ? [{ id: 'delete', label: 'Delete policy', icon: 'pi pi-trash', severity: 'danger' as const }] : [])
+      ]);
 
   protected readonly resourceOptions = computed(() =>
     this.options().resources.map((resource) => ({
@@ -341,6 +472,7 @@ export class AccessPoliciesList {
   protected readonly effectOptions = computed(() => this.toFormOptions(this.options().effects));
 
   protected readonly subjectTypeOptions = computed(() => this.toFormOptions(this.options().subjectTypes));
+  protected readonly customFormFields = computed<AdminFormField[]>(() => customFieldFormFields(this.customFieldDefinitions()));
 
   protected readonly form = this.formBuilder.group({
     resource: ['', Validators.required],
@@ -379,7 +511,10 @@ export class AccessPoliciesList {
       { label: 'Description', value: policy.description },
       { label: 'Condition JSON', value: policy.conditionJson, type: 'json' },
       { label: 'Valid from', value: policy.validFrom, type: 'date' },
-      { label: 'Valid to', value: policy.validTo, type: 'date' }
+      { label: 'Valid to', value: policy.validTo, type: 'date' },
+      { label: 'Trashed at', value: policy.trashedAt, type: 'date' },
+      { label: 'Trash expires', value: policy.trashExpiresAt, type: 'date' },
+      ...customFieldDetailItems(this.customFieldDefinitions(), policy.customFields)
     ];
   });
 
@@ -397,6 +532,7 @@ export class AccessPoliciesList {
         this.setConditionJson(null);
       }
     });
+    this.loadCustomFieldDefinitions();
     this.loadOptions();
     this.loadPolicies();
     this.actionBus.actions$.subscribe((action) => {
@@ -426,9 +562,18 @@ export class AccessPoliciesList {
   protected loadPolicies(): void {
     this.loading.set(true);
     this.api
-      .getPolicies()
+      .getPolicies({ includeTrashed: this.showTrashed(), onlyTrashed: this.showTrashed() })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe((policies) => this.policies.set(policies));
+  }
+
+  protected setTrashView(showTrashed: boolean): void {
+    if (this.showTrashed() === showTrashed) {
+      return;
+    }
+
+    this.showTrashed.set(showTrashed);
+    this.loadPolicies();
   }
 
   protected openCreate(): void {
@@ -450,6 +595,7 @@ export class AccessPoliciesList {
       validTo: null,
       isEnabled: true
     });
+    this.form.patchValue(customFieldInitialValues(this.customFieldDefinitions(), null));
     this.selectedResource.set(resource);
     this.setConditionJson(null);
     this.clearConditionValidation();
@@ -487,6 +633,7 @@ export class AccessPoliciesList {
           validTo: row.validTo ? new Date(row.validTo) : null,
           isEnabled: row.isEnabled
         });
+        this.form.patchValue(customFieldInitialValues(this.customFieldDefinitions(), row.customFields));
         this.selectedResource.set(row.resource);
         this.setConditionJson(row.conditionJson ?? null);
         this.clearConditionValidation();
@@ -502,6 +649,12 @@ export class AccessPoliciesList {
       case 'delete':
         this.pendingDeletePolicy.set(row);
         this.deleteDialogVisible.set(true);
+        break;
+      case 'restore':
+        this.api.restorePolicy(row.id).subscribe(() => {
+          this.toast.success('Policy restored', row.resource);
+          this.loadPolicies();
+        });
         break;
     }
   }
@@ -525,7 +678,7 @@ export class AccessPoliciesList {
       .deletePolicy(policy.id)
       .pipe(finalize(() => this.deleting.set(false)))
       .subscribe(() => {
-        this.toast.danger('Policy deleted', policy.resource);
+        this.toast.warn('Moved to trash', `${policy.resource} policy will be kept for 3 days.`);
         this.deleteDialogVisible.set(false);
         this.pendingDeletePolicy.set(null);
         this.loadPolicies();
@@ -618,7 +771,8 @@ export class AccessPoliciesList {
       conditionJson: this.conditionJson(),
       validFrom: value.validFrom?.toISOString() ?? null,
       validTo: value.validTo?.toISOString() ?? null,
-      isEnabled: value.isEnabled
+      isEnabled: value.isEnabled,
+      customFields: customFieldsPayload(this.customFieldDefinitions(), value)
     };
   }
 
@@ -648,5 +802,48 @@ export class AccessPoliciesList {
 
   protected exportRowsJson(fileName: string, rows: AccessPolicyAdminDto[]): void {
     exportJson(fileName, rows as unknown as ExportRow[]);
+  }
+
+  protected customFieldControl(key: string): FormControl {
+    return this.form.get(key) as FormControl;
+  }
+
+  private loadCustomFieldDefinitions(): void {
+    this.customFieldDefinitionsApi
+      .getDefinitions('accessPolicies')
+      .subscribe((definitions) => {
+        this.customFieldDefinitions.set(definitions);
+        this.syncCustomFieldControls(definitions);
+      });
+  }
+
+  private syncCustomFieldControls(definitions: readonly CustomFieldDefinition[]): void {
+    const dynamicForm = this.form as any;
+    const activeKeys = new Set(definitions.map((definition) => customFieldControlKey(definition)));
+
+    for (const definition of definitions) {
+      const key = customFieldControlKey(definition);
+      const existing = this.form.get(key) as FormControl | null;
+
+      if (existing) {
+        existing.setValidators(definition.required ? [Validators.required] : []);
+        existing.updateValueAndValidity({ emitEvent: false });
+        continue;
+      }
+
+      dynamicForm.addControl(
+        key,
+        new FormControl(
+          customFieldInitialValues([definition], null)[key],
+          definition.required ? { validators: [Validators.required] } : undefined
+        )
+      );
+    }
+
+    for (const key of Object.keys(this.form.controls).filter((controlKey) => controlKey.startsWith('customField__'))) {
+      if (!activeKeys.has(key)) {
+        dynamicForm.removeControl(key);
+      }
+    }
   }
 }

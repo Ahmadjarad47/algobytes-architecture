@@ -10,6 +10,7 @@ using algo.Persistence.DependencyInjection;
 using algo.RealTime;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using Serilog;
@@ -118,13 +119,15 @@ builder.Services
 
                 var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
                 var now = DateTimeOffset.UtcNow;
-                var isValidSession = db.RefreshTokens.Any(token =>
-                    token.Id == sessionId &&
-                    token.UserId == userId &&
-                    token.RevokedAt == null &&
-                    token.ExpiresAt > now);
+                var userIsAvailable = db.Users.Any(user => user.Id == userId);
+                var session = db.RefreshTokens
+                    .AsNoTracking()
+                    .FirstOrDefault(token => token.Id == sessionId && token.UserId == userId);
+                var isValidSession = session is not null &&
+                    session.RevokedAt == null &&
+                    session.ExpiresAt > now;
 
-                if (!isValidSession)
+                if (!userIsAvailable || !isValidSession)
                 {
                     context.Fail("Session has been revoked or expired.");
                     return Task.CompletedTask;
@@ -250,6 +253,16 @@ app.MapHub<SessionHub>("/hubs/sessions");
 
 using (var scope = app.Services.CreateScope())
 {
+    var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+    if (string.Equals(dbContext.Database.ProviderName, "Microsoft.EntityFrameworkCore.Sqlite", StringComparison.Ordinal))
+    {
+        await dbContext.Database.EnsureCreatedAsync();
+    }
+    else
+    {
+        await dbContext.Database.MigrateAsync();
+    }
+
     await ApplicationDbContextSeeder.SeedAsync(scope.ServiceProvider);
 }
 

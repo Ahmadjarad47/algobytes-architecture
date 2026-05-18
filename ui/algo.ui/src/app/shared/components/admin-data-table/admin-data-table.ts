@@ -344,7 +344,15 @@ export class AdminDataTable {
   }
 
   read(row: Record<string, unknown>, field: string): unknown {
-    return row[field];
+    return field
+      .split('.')
+      .reduce<unknown>((value, segment) => {
+        if (value && typeof value === 'object' && segment in (value as Record<string, unknown>)) {
+          return (value as Record<string, unknown>)[segment];
+        }
+
+        return undefined;
+      }, row);
   }
 
   asDateValue(value: unknown): string | number | Date | null | undefined {

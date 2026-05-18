@@ -1,3 +1,4 @@
+using System.Text.Json;
 using algo.Application.Features.AccessPolicies.Dtos;
 using algo.Domain.Identity.Policies;
 using MediatR;
@@ -15,4 +16,5 @@ public sealed record CreateAccessPolicyCommand(
     bool IsEnabled,
     string? Description,
     DateTime? ValidFrom,
-    DateTime? ValidTo) : IRequest<AccessPolicyAdminDto>;
+    DateTime? ValidTo,
+    JsonElement? CustomFields) : IRequest<AccessPolicyAdminDto>;

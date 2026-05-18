@@ -14,7 +14,7 @@ public static class ApplicationDbContextSeeder
         IServiceProvider services,
         CancellationToken cancellationToken = default)
     {
-        var roleManager = services.GetRequiredService<RoleManager<IdentityRole>>();
+        var roleManager = services.GetRequiredService<RoleManager<ApplicationRole>>();
         var userManager = services.GetRequiredService<UserManager<ApplicationUser>>();
         var dbContext = services.GetRequiredService<ApplicationDbContext>();
         var logger = services.GetRequiredService<ILoggerFactory>()
@@ -26,7 +26,7 @@ public static class ApplicationDbContextSeeder
     }
 
     private static async Task SeedDefaultRolesAsync(
-        RoleManager<IdentityRole> roleManager,
+        RoleManager<ApplicationRole> roleManager,
         CancellationToken cancellationToken)
     {
         foreach (var roleName in DefaultRoles.All)
@@ -38,7 +38,7 @@ public static class ApplicationDbContextSeeder
                 continue;
             }
 
-            await roleManager.CreateAsync(new IdentityRole(roleName));
+            await roleManager.CreateAsync(new ApplicationRole { Name = roleName });
         }
     }
 

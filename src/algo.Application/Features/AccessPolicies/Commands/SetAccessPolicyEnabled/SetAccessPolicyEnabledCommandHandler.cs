@@ -1,5 +1,6 @@
 using algo.Application.Abstractions;
 using algo.Application.Common.AccessPolicy;
+using algo.Application.Common.CustomFields;
 using algo.Application.Features.AccessPolicies.Dtos;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -45,7 +46,10 @@ public sealed class SetAccessPolicyEnabledCommandHandler(
             entity.Description,
             entity.ValidFrom,
             entity.ValidTo,
+            entity.TrashedAt,
+            entity.TrashExpiresAt,
             entity.DeletedAt,
+            JsonDocumentHelpers.CloneToElement(entity.CustomFields),
             entity.CreatedByUserId,
             entity.UpdatedByUserId);
     }

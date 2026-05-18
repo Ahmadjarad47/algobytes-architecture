@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace algo.Application.Features.Users.Dtos;
 
 public sealed record UserDetailsDto(
@@ -14,6 +16,10 @@ public sealed record UserDetailsDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     DateTimeOffset? LastLoginAt,
+    DateTimeOffset? TrashedAt,
+    DateTimeOffset? TrashExpiresAt,
+    DateTimeOffset? DeletedAt,
+    JsonElement? CustomFields,
     bool TwoFactorEnabled,
     bool TotpRequiredByAdmin,
     IReadOnlyList<string> Roles);

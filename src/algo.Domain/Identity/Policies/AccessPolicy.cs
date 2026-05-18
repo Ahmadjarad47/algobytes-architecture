@@ -1,6 +1,9 @@
+using System.Text.Json;
+using algo.Domain.CustomFields;
+
 namespace algo.Domain.Identity.Policies;
 
-public sealed class AccessPolicy
+public sealed class AccessPolicy : IHasCustomFields
 {
     public Guid Id { get; set; }
 
@@ -26,9 +29,15 @@ public sealed class AccessPolicy
 
     public DateTime? ValidTo { get; set; }
 
+    public DateTime? TrashedAt { get; set; }
+
+    public DateTime? TrashExpiresAt { get; set; }
+
     public DateTime? DeletedAt { get; set; }
 
     public string? CreatedByUserId { get; set; }
 
     public string? UpdatedByUserId { get; set; }
+
+    public JsonDocument? CustomFields { get; set; }
 }

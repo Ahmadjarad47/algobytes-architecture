@@ -1,5 +1,6 @@
 using algo.Application.Abstractions;
 using algo.Application.Common.AccessPolicy;
+using algo.Application.Common.CustomFields;
 using algo.Application.Features.AccessPolicies.Dtos;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -21,9 +22,19 @@ public sealed class ListAccessPoliciesQueryHandler(
             AccessPolicyActions.Read,
             cancellationToken);
 
-        var query = db.AccessPolicies
-            .AsNoTracking()
-            .Where(p => p.DeletedAt == null);
+        var query = (request.IncludeTrashed || request.OnlyTrashed
+                ? db.AccessPolicies.IgnoreQueryFilters()
+                : db.AccessPolicies)
+            .AsNoTracking();
+
+        if (request.OnlyTrashed)
+        {
+            query = query.Where(policy => policy.TrashedAt != null && policy.DeletedAt == null);
+        }
+        else if (!request.IncludeTrashed)
+        {
+            query = query.Where(policy => policy.TrashedAt == null && policy.DeletedAt == null);
+        }
 
         return await query
             .OrderBy(p => p.Priority)
@@ -42,7 +53,10 @@ public sealed class ListAccessPoliciesQueryHandler(
                 p.Description,
                 p.ValidFrom,
                 p.ValidTo,
+                p.TrashedAt,
+                p.TrashExpiresAt,
                 p.DeletedAt,
+                JsonDocumentHelpers.CloneToElement(p.CustomFields),
                 p.CreatedByUserId,
                 p.UpdatedByUserId))
             .ToListAsync(cancellationToken);

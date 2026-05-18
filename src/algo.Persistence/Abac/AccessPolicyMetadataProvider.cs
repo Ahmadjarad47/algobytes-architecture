@@ -5,7 +5,6 @@ using algo.Application.Common.AccessPolicy;
 using algo.Domain.Identity.Entities;
 using algo.Domain.Identity.Policies;
 using algo.Domain.Logging.Entities;
-using Microsoft.AspNetCore.Identity;
 
 namespace algo.Persistence.Abac;
 
@@ -64,12 +63,12 @@ public sealed class AccessPolicyMetadataProvider : IAccessPolicyMetadataProvider
 
     private static AccessPolicyEntityMetadata CreateRolesMetadata()
     {
-        var type = typeof(IdentityRole);
+        var type = typeof(ApplicationRole);
         var fields = new Dictionary<string, AccessPolicyFieldMetadata>(StringComparer.OrdinalIgnoreCase)
         {
-            ["id"] = Field(type, nameof(IdentityRole.Id)),
-            ["name"] = Field(type, nameof(IdentityRole.Name)),
-            ["normalizedName"] = Field(type, nameof(IdentityRole.NormalizedName)),
+            ["id"] = Field(type, nameof(ApplicationRole.Id)),
+            ["name"] = Field(type, nameof(ApplicationRole.Name)),
+            ["normalizedName"] = Field(type, nameof(ApplicationRole.NormalizedName)),
         };
 
         return new AccessPolicyEntityMetadata

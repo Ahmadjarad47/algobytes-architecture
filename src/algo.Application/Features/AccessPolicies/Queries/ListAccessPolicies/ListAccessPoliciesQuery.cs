@@ -3,4 +3,6 @@ using MediatR;
 
 namespace algo.Application.Features.AccessPolicies.Queries.ListAccessPolicies;
 
-public sealed record ListAccessPoliciesQuery : IRequest<IReadOnlyList<AccessPolicyAdminDto>>;
+public sealed record ListAccessPoliciesQuery(
+    bool IncludeTrashed = false,
+    bool OnlyTrashed = false) : IRequest<IReadOnlyList<AccessPolicyAdminDto>>;

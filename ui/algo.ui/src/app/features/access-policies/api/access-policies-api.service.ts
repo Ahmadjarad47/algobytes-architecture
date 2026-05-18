@@ -15,8 +15,8 @@ import {
 export class AccessPoliciesApiService {
   private readonly api = inject(ApiService);
 
-  getPolicies(): Observable<AccessPolicyAdminDto[]> {
-    return this.api.get<AccessPolicyAdminDto[]>('/AccessPolicies');
+  getPolicies(query?: { includeTrashed?: boolean; onlyTrashed?: boolean }): Observable<AccessPolicyAdminDto[]> {
+    return this.api.get<AccessPolicyAdminDto[]>('/AccessPolicies', query);
   }
 
   getPolicy(id: string): Observable<AccessPolicyAdminDto> {
@@ -55,6 +55,10 @@ export class AccessPoliciesApiService {
 
   deletePolicy(id: string): Observable<void> {
     return this.api.delete<void>(`/AccessPolicies/${id}`);
+  }
+
+  restorePolicy(id: string): Observable<void> {
+    return this.api.patch<void>(`/AccessPolicies/${id}/restore`);
   }
 
   validateCondition(

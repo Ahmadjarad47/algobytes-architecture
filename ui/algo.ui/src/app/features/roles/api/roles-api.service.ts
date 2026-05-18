@@ -13,8 +13,8 @@ import {
 export class RolesApiService {
   private readonly api = inject(ApiService);
 
-  getRoles(): Observable<RoleDto[]> {
-    return this.api.get<RoleDto[]>('/Roles');
+  getRoles(query?: { includeTrashed?: boolean; onlyTrashed?: boolean }): Observable<RoleDto[]> {
+    return this.api.get<RoleDto[]>('/Roles', query);
   }
 
   getRole(id: string): Observable<RoleDetailsDto> {
@@ -31,5 +31,9 @@ export class RolesApiService {
 
   deleteRole(id: string): Observable<void> {
     return this.api.delete<void>(`/Roles/${id}`);
+  }
+
+  restoreRole(id: string): Observable<void> {
+    return this.api.patch<void>(`/Roles/${id}/restore`);
   }
 }

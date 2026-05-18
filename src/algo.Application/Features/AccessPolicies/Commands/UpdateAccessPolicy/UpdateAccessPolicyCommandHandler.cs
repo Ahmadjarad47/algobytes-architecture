@@ -1,5 +1,6 @@
 using algo.Application.Abstractions;
 using algo.Application.Common.AccessPolicy;
+using algo.Application.Common.CustomFields;
 using algo.Application.Features.AccessPolicies.Dtos;
 using FluentValidation;
 using FluentValidation.Results;
@@ -13,7 +14,8 @@ public sealed class UpdateAccessPolicyCommandHandler(
     IAccessPolicyEvaluator accessPolicyEvaluator,
     IAccessPolicyConditionParser conditionParser,
     IAccessPolicyMetadataProvider metadataProvider,
-    ICurrentUserService currentUser) : IRequestHandler<UpdateAccessPolicyCommand, AccessPolicyAdminDto?>
+    ICurrentUserService currentUser,
+    CustomFieldValueValidator customFieldValueValidator) : IRequestHandler<UpdateAccessPolicyCommand, AccessPolicyAdminDto?>
 {
     public async Task<AccessPolicyAdminDto?> Handle(UpdateAccessPolicyCommand request, CancellationToken cancellationToken)
     {
@@ -81,6 +83,10 @@ public sealed class UpdateAccessPolicyCommandHandler(
         entity.ValidFrom = request.ValidFrom;
         entity.ValidTo = request.ValidTo;
         entity.UpdatedByUserId = currentUser.UserId;
+        entity.CustomFields = await customFieldValueValidator.ValidateAndNormalizeAsync(
+            CustomFieldEntities.AccessPolicies,
+            request.CustomFields,
+            cancellationToken);
 
         await db.SaveChangesAsync(cancellationToken);
 
@@ -97,7 +103,10 @@ public sealed class UpdateAccessPolicyCommandHandler(
             entity.Description,
             entity.ValidFrom,
             entity.ValidTo,
+            entity.TrashedAt,
+            entity.TrashExpiresAt,
             entity.DeletedAt,
+            JsonDocumentHelpers.CloneToElement(entity.CustomFields),
             entity.CreatedByUserId,
             entity.UpdatedByUserId);
     }

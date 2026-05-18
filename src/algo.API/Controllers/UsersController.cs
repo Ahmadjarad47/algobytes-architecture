@@ -8,6 +8,7 @@ using algo.Application.Features.Users.Commands.DeactivateUser;
 using algo.Application.Features.Users.Commands.DeleteUser;
 using algo.Application.Features.Users.Commands.LockUser;
 using algo.Application.Features.Users.Commands.RemoveRoles;
+using algo.Application.Features.Users.Commands.RestoreUser;
 using algo.Application.Features.Users.Commands.SetUserTotpPolicy;
 using algo.Application.Features.Users.Commands.UnlockUser;
 using algo.Application.Features.Users.Commands.UpdateUser;
@@ -91,7 +92,8 @@ public sealed class UsersController(IMediator mediator) : ControllerBase
             body.PhoneNumber,
             body.UserName,
             body.IsActive,
-            body.EmailConfirmed);
+            body.EmailConfirmed,
+            body.CustomFields);
         var result = await mediator.Send(command, cancellationToken);
         return result is null ? NotFound() : Ok(result);
     }
@@ -102,6 +104,15 @@ public sealed class UsersController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
     {
         var ok = await mediator.Send(new DeleteUserCommand(id), cancellationToken);
+        return ok ? NoContent() : NotFound();
+    }
+
+    [HttpPatch("{id}/restore")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Restore(string id, CancellationToken cancellationToken)
+    {
+        var ok = await mediator.Send(new RestoreUserCommand(id), cancellationToken);
         return ok ? NoContent() : NotFound();
     }
 

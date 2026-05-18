@@ -9,4 +9,7 @@ public sealed record GetUsersQuery(
     PaginationRequest Pagination,
     string? Search,
     FilterRequest? Filters,
-    SortRequest? Sort) : IRequest<PaginatedResult<UserListItemDto>>;
+    SortRequest? Sort,
+    IReadOnlyDictionary<string, string?>? CustomFieldFilters = null,
+    bool IncludeTrashed = false,
+    bool OnlyTrashed = false) : IRequest<PaginatedResult<UserListItemDto>>;

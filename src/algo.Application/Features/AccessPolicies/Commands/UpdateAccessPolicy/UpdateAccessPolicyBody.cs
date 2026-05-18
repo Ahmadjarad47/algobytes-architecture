@@ -1,3 +1,4 @@
+using System.Text.Json;
 using algo.Domain.Identity.Policies;
 
 namespace algo.Application.Features.AccessPolicies.Commands.UpdateAccessPolicy;
@@ -13,4 +14,5 @@ public sealed record UpdateAccessPolicyBody(
     bool IsEnabled,
     string? Description,
     DateTime? ValidFrom,
-    DateTime? ValidTo);
+    DateTime? ValidTo,
+    JsonElement? CustomFields);

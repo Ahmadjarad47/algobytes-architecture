@@ -1,6 +1,7 @@
 using algo.Application.Common.Identity;
 using algo.Application.Features.Roles.Commands.CreateRole;
 using algo.Application.Features.Roles.Commands.DeleteRole;
+using algo.Application.Features.Roles.Commands.RestoreRole;
 using algo.Application.Features.Roles.Commands.UpdateRole;
 using algo.Application.Features.Roles.Dtos;
 using algo.Application.Features.Roles.Queries.GetRoleById;
@@ -18,8 +19,11 @@ public sealed class RolesController(IMediator mediator) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<RoleDto>), StatusCodes.Status200OK)]
-    public Task<IReadOnlyList<RoleDto>> List(CancellationToken cancellationToken) =>
-        mediator.Send(new GetRolesQuery(), cancellationToken);
+    public Task<IReadOnlyList<RoleDto>> List(
+        [FromQuery] bool includeTrashed,
+        [FromQuery] bool onlyTrashed,
+        CancellationToken cancellationToken) =>
+        mediator.Send(new GetRolesQuery(includeTrashed, onlyTrashed), cancellationToken);
 
     [HttpGet("{id}")]
     [ProducesResponseType(typeof(RoleDetailsDto), StatusCodes.Status200OK)]
@@ -48,7 +52,7 @@ public sealed class RolesController(IMediator mediator) : ControllerBase
         [FromBody] UpdateRoleRequest body,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new UpdateRoleCommand(id, body.Name), cancellationToken);
+        var result = await mediator.Send(new UpdateRoleCommand(id, body.Name, body.CustomFields), cancellationToken);
         return result is null ? NotFound() : Ok(result);
     }
 
@@ -58,6 +62,15 @@ public sealed class RolesController(IMediator mediator) : ControllerBase
     public async Task<IActionResult> Delete(string id, CancellationToken cancellationToken)
     {
         var ok = await mediator.Send(new DeleteRoleCommand(id), cancellationToken);
+        return ok ? NoContent() : NotFound();
+    }
+
+    [HttpPatch("{id}/restore")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Restore(string id, CancellationToken cancellationToken)
+    {
+        var ok = await mediator.Send(new RestoreRoleCommand(id), cancellationToken);
         return ok ? NoContent() : NotFound();
     }
 }

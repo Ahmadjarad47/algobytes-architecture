@@ -1,5 +1,5 @@
 import { ChangeDetectionStrategy, Component, computed, effect, inject, signal } from '@angular/core';
-import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { FormControl, NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { RouterLink, RouterLinkActive } from '@angular/router';
 import { finalize } from 'rxjs';
 import { TableLazyLoadEvent } from 'primeng/table';
@@ -23,6 +23,16 @@ import { Permissions } from '../../../../core/permissions/permission.catalog';
 import { PermissionService } from '../../../../core/permissions/permission.service';
 import { SessionRealtimeService } from '../../../../core/services/session-realtime.service';
 import { downloadCsvTemplate, exportCsv, exportJson, ExportRow } from '../../../../shared/utils/export.utils';
+import { CustomFieldDefinitionsApiService } from '../../../custom-fields/api/custom-field-definitions-api.service';
+import { CustomFieldDefinition } from '../../../custom-fields/models/custom-fields.models';
+import {
+  customFieldColumns,
+  customFieldControlKey,
+  customFieldDetailItems,
+  customFieldFormFields,
+  customFieldInitialValues,
+  customFieldsPayload
+} from '../../../custom-fields/utils/custom-field.utils';
 import { UsersApiService } from '../../api/users-api.service';
 import {
   CreateUserCommand,
@@ -47,37 +57,58 @@ import { RoleDto } from '../../../roles/models/roles.models';
   ],
   template: `
     <section class="surface-card dashboard-section mb-3">
-      <div class="flex flex-wrap items-center gap-2">
-        <a
-          routerLink="/users/directory"
-          routerLinkActive="bg-slate-900 text-white"
-          class="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
-        >
-          Directory
-        </a>
-        <a
-          routerLink="/users/chat"
-          routerLinkActive="bg-slate-900 text-white"
-          class="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
-        >
-          Chat
-        </a>
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div class="flex flex-wrap items-center gap-2">
+          <a
+            routerLink="/users/directory"
+            routerLinkActive="bg-slate-900 text-white"
+            class="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
+          >
+            Directory
+          </a>
+          <a
+            routerLink="/users/chat"
+            routerLinkActive="bg-slate-900 text-white"
+            class="rounded-full px-3 py-1.5 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
+          >
+            Chat
+          </a>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            class="rounded-full px-3 py-1.5 text-xs font-semibold transition"
+            [class]="!showTrashed() ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+            (click)="setTrashView(false)"
+          >
+            Active users
+          </button>
+          <button
+            type="button"
+            class="rounded-full px-3 py-1.5 text-xs font-semibold transition"
+            [class]="showTrashed() ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'"
+            (click)="setTrashView(true)"
+          >
+            Trash
+          </button>
+        </div>
       </div>
     </section>
 
     <app-admin-data-table
       title="Users"
-      subtitle="Directory management with server-side search, filters, sorting, and paging."
-      [columns]="columns"
+      [subtitle]="tableSubtitle()"
+      [columns]="columns()"
       [value]="users()"
       [loading]="loading()"
       [lazy]="true"
       [rows]="pageSize()"
       [first]="first()"
       [totalRecords]="totalRecords()"
-      [globalFilterFields]="['displayName', 'email', 'userName']"
+      [globalFilterFields]="globalFilterFields()"
       [selectable]="true"
-      [showCreate]="canCreate()"
+      [showCreate]="canCreate() && !showTrashed()"
       [bulkActions]="bulkActions()"
       [showExport]="canExport()"
       searchPlaceholder="Search users"
@@ -202,10 +233,10 @@ import { RoleDto } from '../../../roles/models/roles.models';
 
     <app-admin-confirm-dialog
       [visible]="deleteDialogVisible()"
-      title="Delete user"
-      [message]="'Delete ' + (pendingDeleteUser()?.displayName ?? 'this user') + '?'"
-      description="The user account will be removed from the directory. This action cannot be undone."
-      confirmLabel="Delete user"
+      title="Move user to trash"
+      [message]="'Move ' + (pendingDeleteUser()?.displayName ?? 'this user') + ' to trash?'"
+      description="The user will stay in trash for 3 days and can be restored before final soft delete."
+      confirmLabel="Move to trash"
       [loading]="deleting()"
       (visibleChange)="closeDeleteDialog($event)"
       (confirm)="confirmDelete()"
@@ -239,6 +270,7 @@ import { RoleDto } from '../../../roles/models/roles.models';
 })
 export class UsersList {
   private readonly api = inject(UsersApiService);
+  private readonly customFieldDefinitionsApi = inject(CustomFieldDefinitionsApiService);
   private readonly rolesApi = inject(RolesApiService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly toast = inject(AppToastService);
@@ -255,6 +287,7 @@ export class UsersList {
   protected readonly formVisible = signal(false);
   protected readonly detailsVisible = signal(false);
   protected readonly graphVisible = signal(false);
+  protected readonly showTrashed = signal(false);
   protected readonly editingUserId = signal<string | null>(null);
   protected readonly selectedUser = signal<UserDetails | null>(null);
   protected readonly selectedGraph = signal<UserPermissionGraph | null>(null);
@@ -276,8 +309,23 @@ export class UsersList {
   protected readonly roles = signal<RoleDto[]>([]);
   protected readonly canCreate = computed(() => this.permissionService.can({ any: [Permissions.users.create] }));
   protected readonly canExport = computed(() => this.permissionService.can({ any: [Permissions.users.read] }));
+  protected readonly customFieldDefinitions = signal<CustomFieldDefinition[]>([]);
+  protected readonly tableSubtitle = computed(() =>
+    this.showTrashed()
+      ? 'Users currently in trash. They are retained for 3 days before final soft delete.'
+      : 'Directory management with server-side search, filters, sorting, and paging.'
+  );
 
-  protected readonly columns: AdminTableColumn[] = [
+  protected readonly globalFilterFields = computed(() => [
+    'displayName',
+    'email',
+    'userName',
+    ...this.customFieldDefinitions()
+      .filter((definition) => definition.searchable)
+      .map((definition) => `customFields.${definition.key}`)
+  ]);
+
+  protected readonly baseColumns: AdminTableColumn[] = [
     { field: 'displayName', header: 'Display name', sortable: true },
     { field: 'email', header: 'Email' },
     { field: 'userName', header: 'Username' },
@@ -310,6 +358,16 @@ export class UsersList {
       cellType: 'date'
     },
     {
+      field: 'trashedAt',
+      header: 'Trashed at',
+      cellType: 'date'
+    },
+    {
+      field: 'trashExpiresAt',
+      header: 'Trash expires',
+      cellType: 'date'
+    },
+    {
       field: 'isOnline',
       header: 'Online',
       cellType: 'boolean'
@@ -326,10 +384,23 @@ export class UsersList {
     }
   ];
 
+  protected readonly columns = computed<AdminTableColumn[]>(() => [
+    ...this.baseColumns,
+    ...customFieldColumns(this.customFieldDefinitions())
+  ]);
+
   protected readonly actions = computed<AdminRowAction<UserListItem>[]>(() => {
     const canUpdate = this.permissionService.can({ any: [Permissions.users.update] });
     const canDelete = this.permissionService.can({ any: [Permissions.users.delete] });
     const canReadRoles = this.permissionService.can({ any: [Permissions.roles.read] });
+    const showingTrash = this.showTrashed();
+
+    if (showingTrash) {
+      return [
+        { id: 'view', label: 'View details', icon: 'pi pi-eye' },
+        ...(canUpdate ? [{ id: 'restore', label: 'Restore user', icon: 'pi pi-history', severity: 'success' as const }] : [])
+      ];
+    }
 
     return [
       { id: 'view', label: 'View details', icon: 'pi pi-eye' },
@@ -350,6 +421,12 @@ export class UsersList {
     const canUpdate = this.permissionService.can({ any: [Permissions.users.update] });
     const canDelete = this.permissionService.can({ any: [Permissions.users.delete] });
     const canExport = this.permissionService.can({ any: [Permissions.users.read] });
+
+    if (this.showTrashed()) {
+      return [
+        ...(canExport ? [{ id: 'export-selected', label: 'Export selected', icon: 'pi pi-download' }] : [])
+      ];
+    }
 
     return [
       ...(canUpdate ? [
@@ -394,7 +471,8 @@ export class UsersList {
             { key: 'confirmPassword', label: 'Confirm password', type: 'password' } as const
           ]),
       { key: 'emailConfirmed', label: 'Email confirmed', type: 'switch' },
-      { key: 'isActive', label: 'Active', type: 'switch' }
+      { key: 'isActive', label: 'Active', type: 'switch' },
+      ...customFieldFormFields(this.customFieldDefinitions())
     ];
   });
 
@@ -453,7 +531,10 @@ export class UsersList {
         severity: user.totpRequiredByAdmin ? 'warn' : 'secondary'
       },
       { label: 'Created', value: user.createdAt, type: 'date' },
-      { label: 'Last login', value: user.lastLoginAt, type: 'date' }
+      { label: 'Last login', value: user.lastLoginAt, type: 'date' },
+      { label: 'Trashed at', value: user.trashedAt, type: 'date' },
+      { label: 'Trash expires', value: user.trashExpiresAt, type: 'date' },
+      ...customFieldDetailItems(this.customFieldDefinitions(), user.customFields)
     ];
   });
 
@@ -513,6 +594,11 @@ export class UsersList {
 
   constructor() {
     this.sessionRealtime.start();
+    this.loadCustomFieldDefinitions();
+
+    effect(() => {
+      this.syncCustomFieldControls(this.customFieldDefinitions());
+    });
 
     effect(() => {
       const onlineUserIds = this.sessionRealtime.onlineUserIds();
@@ -532,6 +618,9 @@ export class UsersList {
   protected loadUsers(event: TableLazyLoadEvent): void {
     this.lastLazyEvent = event;
     const query = toTableQuery(event, this.pageSize());
+    const customFieldFilters = Object.fromEntries(
+      Object.entries(query.filters ?? {}).filter(([key, value]) => key.startsWith('customFields.') && value !== null && value !== undefined && value !== '')
+    );
 
     this.loading.set(true);
     this.pageSize.set(query.pageSize);
@@ -544,9 +633,12 @@ export class UsersList {
         Search: query.search,
         SortField: query.sortField,
         SortDirection: query.sortDirection,
+        CustomFieldFilters: Object.keys(customFieldFilters).length > 0 ? JSON.stringify(customFieldFilters) : undefined,
         IsActive: toBoolean(query.filters?.['isActive']),
         IsLocked: toBoolean(query.filters?.['isLocked']),
-        EmailConfirmed: toBoolean(query.filters?.['emailConfirmed'])
+        EmailConfirmed: toBoolean(query.filters?.['emailConfirmed']),
+        IncludeTrashed: this.showTrashed(),
+        OnlyTrashed: this.showTrashed()
       })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe({
@@ -565,6 +657,15 @@ export class UsersList {
     this.loadUsers(this.lastLazyEvent);
   }
 
+  protected setTrashView(showTrashed: boolean): void {
+    if (this.showTrashed() === showTrashed) {
+      return;
+    }
+
+    this.showTrashed.set(showTrashed);
+    this.loadUsers(this.lastLazyEvent);
+  }
+
   protected openCreate(): void {
     this.editingUserId.set(null);
     this.form.reset({
@@ -577,6 +678,7 @@ export class UsersList {
       emailConfirmed: false,
       isActive: true
     });
+    this.form.patchValue(customFieldInitialValues(this.customFieldDefinitions(), null));
     this.formVisible.set(true);
   }
 
@@ -607,6 +709,7 @@ export class UsersList {
           emailConfirmed: row.emailConfirmed,
           isActive: row.isActive
         });
+        this.form.patchValue(customFieldInitialValues(this.customFieldDefinitions(), row.customFields));
         this.formVisible.set(true);
         break;
       case 'permission-graph':
@@ -654,6 +757,12 @@ export class UsersList {
       case 'delete':
         this.pendingDeleteUser.set(row);
         this.deleteDialogVisible.set(true);
+        break;
+      case 'restore':
+        this.api.restoreUser(row.id).subscribe(() => {
+          this.toast.success('User restored', row.displayName);
+          this.reload();
+        });
         break;
     }
   }
@@ -764,7 +873,7 @@ export class UsersList {
       .deleteUser(user.id)
       .pipe(finalize(() => this.deleting.set(false)))
       .subscribe(() => {
-        this.toast.danger('User deleted', user.displayName);
+        this.toast.warn('Moved to trash', `${user.displayName} will be kept for 3 days.`);
         this.deleteDialogVisible.set(false);
         this.pendingDeleteUser.set(null);
         this.reload();
@@ -897,7 +1006,8 @@ export class UsersList {
       confirmPassword: value.confirmPassword,
       roles: [],
       emailConfirmed: value.emailConfirmed,
-      isActive: value.isActive
+      isActive: value.isActive,
+      customFields: customFieldsPayload(this.customFieldDefinitions(), value)
     };
   }
 
@@ -923,8 +1033,45 @@ export class UsersList {
       userName: value.userName,
       phoneNumber: value.phoneNumber || null,
       isActive: value.isActive,
-      emailConfirmed: value.emailConfirmed
+      emailConfirmed: value.emailConfirmed,
+      customFields: customFieldsPayload(this.customFieldDefinitions(), value)
     };
+  }
+
+  private loadCustomFieldDefinitions(): void {
+    this.customFieldDefinitionsApi
+      .getDefinitions('users')
+      .subscribe((definitions) => this.customFieldDefinitions.set(definitions));
+  }
+
+  private syncCustomFieldControls(definitions: readonly CustomFieldDefinition[]): void {
+    const dynamicForm = this.form as any;
+    const activeKeys = new Set(definitions.map((definition) => customFieldControlKey(definition)));
+
+    for (const definition of definitions) {
+      const key = customFieldControlKey(definition);
+      const existing = this.form.get(key) as FormControl | null;
+
+      if (existing) {
+        existing.setValidators(definition.required ? [Validators.required] : []);
+        existing.updateValueAndValidity({ emitEvent: false });
+        continue;
+      }
+
+      dynamicForm.addControl(
+        key,
+        new FormControl(
+          customFieldInitialValues([definition], null)[key],
+          definition.required ? { validators: [Validators.required] } : undefined
+        )
+      );
+    }
+
+    for (const key of Object.keys(this.form.controls).filter((controlKey) => controlKey.startsWith('customField__'))) {
+      if (!activeKeys.has(key)) {
+        dynamicForm.removeControl(key);
+      }
+    }
   }
 }
 

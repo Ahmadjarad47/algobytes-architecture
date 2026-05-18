@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace algo.Application.Features.Users.Dtos;
 
 public sealed record UserListItemDto(
@@ -13,6 +15,10 @@ public sealed record UserListItemDto(
     DateTimeOffset CreatedAt,
     DateTimeOffset UpdatedAt,
     DateTimeOffset? LastLoginAt,
+    DateTimeOffset? TrashedAt,
+    DateTimeOffset? TrashExpiresAt,
+    DateTimeOffset? DeletedAt,
+    JsonElement? CustomFields,
     bool IsOnline,
     bool TwoFactorEnabled,
     bool TotpRequiredByAdmin,

@@ -1,3 +1,4 @@
+using System.Text.Json;
 using algo.Application.Features.Users.Dtos;
 using MediatR;
 
@@ -12,4 +13,5 @@ public sealed record CreateUserCommand(
     string ConfirmPassword,
     IReadOnlyList<string>? Roles,
     bool EmailConfirmed,
-    bool IsActive) : IRequest<UserDetailsDto>;
+    bool IsActive,
+    JsonElement? CustomFields) : IRequest<UserDetailsDto>;

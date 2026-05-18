@@ -12,6 +12,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 
@@ -121,11 +122,17 @@ public sealed class AuthorizationBehaviorTests : IClassFixture<AuthorizationBeha
                 connection.Open();
 
                 services.RemoveAll<DbContextOptions<ApplicationDbContext>>();
+                services.RemoveAll<DbContextOptions>();
+                services.RemoveAll<IDbContextOptionsConfiguration<ApplicationDbContext>>();
                 services.RemoveAll<ApplicationDbContext>();
 
                 services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connection));
                 services.AddScoped<algo.Application.Abstractions.IApplicationDbContext>(sp =>
                     sp.GetRequiredService<ApplicationDbContext>());
+
+                using var scope = services.BuildServiceProvider().CreateScope();
+                var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+                db.Database.EnsureCreated();
             });
         }
 
@@ -134,14 +141,14 @@ public sealed class AuthorizationBehaviorTests : IClassFixture<AuthorizationBeha
             await EnsureInitializedAsync();
 
             using var scope = Services.CreateScope();
-            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<IdentityRole>>();
+            var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<ApplicationRole>>();
             var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
             var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
 
             const string roleName = "LogsReader";
             if (!await roleManager.RoleExistsAsync(roleName))
             {
-                var roleResult = await roleManager.CreateAsync(new IdentityRole(roleName));
+                var roleResult = await roleManager.CreateAsync(new ApplicationRole { Name = roleName });
                 Assert.True(roleResult.Succeeded, string.Join("; ", roleResult.Errors.Select(e => e.Description)));
             }
 

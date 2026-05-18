@@ -1,5 +1,6 @@
 using algo.Application.Abstractions;
 using algo.Application.Common.AccessPolicy;
+using algo.Application.Common.CustomFields;
 using algo.Application.Features.Users;
 using algo.Application.Features.Users.Dtos;
 using algo.Domain.Identity.Entities;
@@ -13,7 +14,8 @@ namespace algo.Application.Features.Users.Commands.UpdateUser;
 public sealed class UpdateUserCommandHandler(
     UserManager<ApplicationUser> userManager,
     IAccessPolicyEvaluator accessPolicyEvaluator,
-    IApplicationDbContext db)
+    IApplicationDbContext db,
+    CustomFieldValueValidator customFieldValueValidator)
     : IRequestHandler<UpdateUserCommand, UserDetailsDto?>
 {
     public async Task<UserDetailsDto?> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
@@ -51,6 +53,11 @@ public sealed class UpdateUserCommandHandler(
 
         if (request.EmailConfirmed is { } emailConfirmed)
             user.EmailConfirmed = emailConfirmed;
+
+        user.CustomFields = await customFieldValueValidator.ValidateAndNormalizeAsync(
+            CustomFieldEntities.Users,
+            request.CustomFields,
+            cancellationToken);
 
         user.UpdatedAt = DateTimeOffset.UtcNow;
 

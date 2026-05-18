@@ -10,6 +10,8 @@ internal sealed class AccessPolicyConfiguration : IEntityTypeConfiguration<Acces
     {
         builder.ToTable("access_policies");
 
+        builder.HasQueryFilter(policy => policy.DeletedAt == null && policy.TrashedAt == null);
+
         builder.HasKey(p => p.Id);
 
         builder.Property(p => p.Resource).HasMaxLength(128).IsRequired();
@@ -20,6 +22,7 @@ internal sealed class AccessPolicyConfiguration : IEntityTypeConfiguration<Acces
         builder.Property(p => p.Description).HasMaxLength(1024);
         builder.Property(p => p.CreatedByUserId).HasMaxLength(450);
         builder.Property(p => p.UpdatedByUserId).HasMaxLength(450);
+        builder.Property(p => p.CustomFields);
 
         builder.HasIndex(p => new { p.Resource, p.Action, p.IsEnabled });
         builder.HasIndex(p => new { p.SubjectType, p.SubjectKey, p.IsEnabled });

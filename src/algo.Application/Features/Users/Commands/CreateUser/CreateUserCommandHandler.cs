@@ -1,5 +1,6 @@
 using algo.Application.Abstractions;
 using algo.Application.Common.AccessPolicy;
+using algo.Application.Common.CustomFields;
 using algo.Application.Features.Users;
 using algo.Application.Features.Users.Dtos;
 using algo.Domain.Identity.Entities;
@@ -15,7 +16,8 @@ public sealed class CreateUserCommandHandler(
     IApplicationDbContext db,
     IAccessPolicyEvaluator accessPolicyEvaluator,
     UserManager<ApplicationUser> userManager,
-    RoleManager<IdentityRole> roleManager) : IRequestHandler<CreateUserCommand, UserDetailsDto>
+    RoleManager<ApplicationRole> roleManager,
+    CustomFieldValueValidator customFieldValueValidator) : IRequestHandler<CreateUserCommand, UserDetailsDto>
 {
     public async Task<UserDetailsDto> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
@@ -53,6 +55,10 @@ public sealed class CreateUserCommandHandler(
             CreatedAt = utc,
             UpdatedAt = utc,
             LockoutEnabled = true,
+            CustomFields = await customFieldValueValidator.ValidateAndNormalizeAsync(
+                CustomFieldEntities.Users,
+                request.CustomFields,
+                cancellationToken)
         };
 
         var createResult = await userManager.CreateAsync(user, request.Password);

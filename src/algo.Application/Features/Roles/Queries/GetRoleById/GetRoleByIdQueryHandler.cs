@@ -1,8 +1,8 @@
 using algo.Application.Abstractions;
 using algo.Application.Common.AccessPolicy;
+using algo.Application.Common.CustomFields;
 using algo.Application.Features.Roles.Dtos;
 using MediatR;
-using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace algo.Application.Features.Roles.Queries.GetRoleById;
@@ -19,7 +19,10 @@ public sealed class GetRoleByIdQueryHandler(
             AccessPolicyActions.Read,
             cancellationToken);
 
-        var role = await db.Roles.AsNoTracking().FirstOrDefaultAsync(r => r.Id == request.Id, cancellationToken);
+        var role = await db.Roles
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .FirstOrDefaultAsync(r => r.Id == request.Id && r.DeletedAt == null, cancellationToken);
         if (role is null)
             return null;
 
@@ -27,6 +30,14 @@ public sealed class GetRoleByIdQueryHandler(
             .AsNoTracking()
             .CountAsync(ur => ur.RoleId == role.Id, cancellationToken);
 
-        return new RoleDetailsDto(role.Id, role.Name!, role.NormalizedName, userCount);
+        return new RoleDetailsDto(
+            role.Id,
+            role.Name!,
+            role.NormalizedName,
+            userCount,
+            role.TrashedAt,
+            role.TrashExpiresAt,
+            role.DeletedAt,
+            JsonDocumentHelpers.CloneToElement(role.CustomFields));
     }
 }

@@ -1,6 +1,8 @@
 using algo.Application.Abstractions;
 using algo.Application.Common.AccessPolicy;
+using algo.Application.Common.CustomFields;
 using algo.Application.Features.Roles.Dtos;
+using algo.Domain.Identity.Entities;
 using MediatR;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -9,7 +11,7 @@ namespace algo.Application.Features.Roles.Queries.GetRoles;
 
 public sealed class GetRolesQueryHandler(
     IApplicationDbContext db,
-    RoleManager<IdentityRole> roleManager,
+    RoleManager<ApplicationRole> roleManager,
     IAccessPolicyEvaluator accessPolicyEvaluator)
     : IRequestHandler<GetRolesQuery, IReadOnlyList<RoleDto>>
 {
@@ -21,13 +23,32 @@ public sealed class GetRolesQueryHandler(
             AccessPolicyActions.Read,
             cancellationToken);
 
-        var query = roleManager.Roles
-            .AsNoTracking()
-            .AsQueryable();
+        IQueryable<ApplicationRole> query = request.IncludeTrashed || request.OnlyTrashed
+            ? db.Roles.IgnoreQueryFilters().AsNoTracking()
+            : roleManager.Roles.AsNoTracking().AsQueryable();
 
-        return await query
+        if (request.OnlyTrashed)
+        {
+            query = query.Where(role => role.TrashedAt != null && role.DeletedAt == null);
+        }
+        else if (!request.IncludeTrashed)
+        {
+            query = query.Where(role => role.TrashedAt == null && role.DeletedAt == null);
+        }
+
+        var roles = await query
             .OrderBy(r => r.Name)
-            .Select(r => new RoleDto(r.Id, r.Name!, r.NormalizedName))
             .ToListAsync(cancellationToken);
+
+        return roles
+            .Select(role => new RoleDto(
+                role.Id,
+                role.Name!,
+                role.NormalizedName,
+                role.TrashedAt,
+                role.TrashExpiresAt,
+                role.DeletedAt,
+                JsonDocumentHelpers.CloneToElement(role.CustomFields)))
+            .ToList();
     }
 }

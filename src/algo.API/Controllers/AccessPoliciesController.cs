@@ -1,4 +1,5 @@
 using algo.Application.Features.AccessPolicies.Commands.CreateAccessPolicy;
+using algo.Application.Features.AccessPolicies.Commands.RestoreAccessPolicy;
 using algo.Application.Features.AccessPolicies.Commands.SetAccessPolicyEnabled;
 using algo.Application.Features.AccessPolicies.Commands.SoftDeleteAccessPolicy;
 using algo.Application.Features.AccessPolicies.Commands.UpdateAccessPolicy;
@@ -20,8 +21,11 @@ public sealed class AccessPoliciesController(IMediator mediator) : ControllerBas
 {
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<AccessPolicyAdminDto>), StatusCodes.Status200OK)]
-    public Task<IReadOnlyList<AccessPolicyAdminDto>> List(CancellationToken cancellationToken) =>
-        mediator.Send(new ListAccessPoliciesQuery(), cancellationToken);
+    public Task<IReadOnlyList<AccessPolicyAdminDto>> List(
+        [FromQuery] bool includeTrashed,
+        [FromQuery] bool onlyTrashed,
+        CancellationToken cancellationToken) =>
+        mediator.Send(new ListAccessPoliciesQuery(includeTrashed, onlyTrashed), cancellationToken);
 
     [HttpGet("options")]
     [ProducesResponseType(typeof(AccessPolicyOptionsDto), StatusCodes.Status200OK)]
@@ -64,7 +68,8 @@ public sealed class AccessPoliciesController(IMediator mediator) : ControllerBas
             body.IsEnabled,
             body.Description,
             body.ValidFrom,
-            body.ValidTo);
+            body.ValidTo,
+            body.CustomFields);
         var result = await mediator.Send(command, cancellationToken);
         return result is null ? NotFound() : Ok(result);
     }
@@ -87,6 +92,15 @@ public sealed class AccessPoliciesController(IMediator mediator) : ControllerBas
     public async Task<IActionResult> SoftDelete(Guid id, CancellationToken cancellationToken)
     {
         var ok = await mediator.Send(new SoftDeleteAccessPolicyCommand(id), cancellationToken);
+        return ok ? NoContent() : NotFound();
+    }
+
+    [HttpPatch("{id:guid}/restore")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Restore(Guid id, CancellationToken cancellationToken)
+    {
+        var ok = await mediator.Send(new RestoreAccessPolicyCommand(id), cancellationToken);
         return ok ? NoContent() : NotFound();
     }
 

@@ -1,5 +1,6 @@
 using algo.Application.Abstractions;
 using algo.Application.Common.AccessPolicy;
+using algo.Application.Common.CustomFields;
 using algo.Application.Features.AccessPolicies.Dtos;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
@@ -20,6 +21,7 @@ public sealed class GetAccessPolicyByIdQueryHandler(
             cancellationToken);
 
         var query = db.AccessPolicies
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(p => p.Id == request.Id && p.DeletedAt == null);
 
@@ -37,7 +39,10 @@ public sealed class GetAccessPolicyByIdQueryHandler(
                 p.Description,
                 p.ValidFrom,
                 p.ValidTo,
+                p.TrashedAt,
+                p.TrashExpiresAt,
                 p.DeletedAt,
+                JsonDocumentHelpers.CloneToElement(p.CustomFields),
                 p.CreatedByUserId,
                 p.UpdatedByUserId))
             .FirstOrDefaultAsync(cancellationToken);

@@ -85,16 +85,34 @@ public sealed class GetErrorLogsQueryHandler(
             query = query.Where(x => EF.Functions.ILike(x.Message, pattern));
         }
 
-        var desc = request.Sort.Direction == SortDirection.Descending;
-        query = desc ? query.OrderByDescending(x => x.Timestamp) : query.OrderBy(x => x.Timestamp);
-
         var page = Math.Max(1, request.Pagination.PageNumber);
         var size = Math.Max(1, request.Pagination.PageSize);
-        var total = await query.CountAsync(cancellationToken);
-        var rows = await query
-            .Skip((page - 1) * size)
-            .Take(size)
-            .ToListAsync(cancellationToken);
+        var desc = request.Sort.Direction == SortDirection.Descending;
+
+        List<ErrorLog> rows;
+        int total;
+        if (db is DbContext context && string.Equals(context.Database.ProviderName, "Microsoft.EntityFrameworkCore.Sqlite", StringComparison.Ordinal))
+        {
+            var materialized = await query.ToListAsync(cancellationToken);
+            var ordered = desc
+                ? materialized.OrderByDescending(log => log.Timestamp)
+                : materialized.OrderBy(log => log.Timestamp);
+
+            total = materialized.Count;
+            rows = ordered
+                .Skip((page - 1) * size)
+                .Take(size)
+                .ToList();
+        }
+        else
+        {
+            query = desc ? query.OrderByDescending(x => x.Timestamp) : query.OrderBy(x => x.Timestamp);
+            total = await query.CountAsync(cancellationToken);
+            rows = await query
+                .Skip((page - 1) * size)
+                .Take(size)
+                .ToListAsync(cancellationToken);
+        }
 
         var items = rows.Select(x => x.Adapt<ErrorLogDto>()).ToList();
         return new PaginatedResult<ErrorLogDto>(items, page, size, total);

@@ -1,5 +1,7 @@
 using algo.Domain.Identity.Policies;
 
+using System.Text.Json;
+
 namespace algo.Application.Features.AccessPolicies.Dtos;
 
 public sealed record AccessPolicyAdminDto(
@@ -15,6 +17,9 @@ public sealed record AccessPolicyAdminDto(
     string? Description,
     DateTime? ValidFrom,
     DateTime? ValidTo,
+    DateTime? TrashedAt,
+    DateTime? TrashExpiresAt,
     DateTime? DeletedAt,
+    JsonElement? CustomFields,
     string? CreatedByUserId,
     string? UpdatedByUserId);

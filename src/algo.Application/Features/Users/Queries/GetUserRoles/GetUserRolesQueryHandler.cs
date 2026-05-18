@@ -21,7 +21,10 @@ public sealed class GetUserRolesQueryHandler(
             AccessPolicyActions.Read,
             cancellationToken);
 
-        IQueryable<ApplicationUser> scoped = db.Users.AsNoTracking().Where(u => u.Id == request.UserId);
+        IQueryable<ApplicationUser> scoped = db.Users
+            .IgnoreQueryFilters()
+            .AsNoTracking()
+            .Where(u => u.Id == request.UserId && u.DeletedAt == null);
         scoped = await accessPolicyEvaluator.ApplyAsync(
             scoped,
             AccessPolicyResources.Users,

@@ -1,5 +1,6 @@
 using algo.Application.Abstractions;
 using algo.Application.Common.AccessPolicy;
+using algo.Application.Common.CustomFields;
 using algo.Application.Features.AccessPolicies.Dtos;
 using algo.Domain.Identity.Policies;
 using FluentValidation;
@@ -13,7 +14,8 @@ public sealed class CreateAccessPolicyCommandHandler(
     IAccessPolicyEvaluator accessPolicyEvaluator,
     IAccessPolicyConditionParser conditionParser,
     IAccessPolicyMetadataProvider metadataProvider,
-    ICurrentUserService currentUser) : IRequestHandler<CreateAccessPolicyCommand, AccessPolicyAdminDto>
+    ICurrentUserService currentUser,
+    CustomFieldValueValidator customFieldValueValidator) : IRequestHandler<CreateAccessPolicyCommand, AccessPolicyAdminDto>
 {
     public async Task<AccessPolicyAdminDto> Handle(
         CreateAccessPolicyCommand request,
@@ -84,6 +86,10 @@ public sealed class CreateAccessPolicyCommandHandler(
             ValidTo = request.ValidTo,
             CreatedByUserId = currentUser.UserId,
             UpdatedByUserId = currentUser.UserId,
+            CustomFields = await customFieldValueValidator.ValidateAndNormalizeAsync(
+                CustomFieldEntities.AccessPolicies,
+                request.CustomFields,
+                cancellationToken)
         };
 
         db.AccessPolicies.Add(entity);
@@ -102,7 +108,10 @@ public sealed class CreateAccessPolicyCommandHandler(
             entity.Description,
             entity.ValidFrom,
             entity.ValidTo,
+            entity.TrashedAt,
+            entity.TrashExpiresAt,
             entity.DeletedAt,
+            JsonDocumentHelpers.CloneToElement(entity.CustomFields),
             entity.CreatedByUserId,
             entity.UpdatedByUserId);
     }

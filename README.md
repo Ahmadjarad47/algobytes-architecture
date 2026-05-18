@@ -2,7 +2,7 @@
 
 Advanced full-stack architecture template for scalable backend and frontend
 applications with user management, authentication, RBAC permissions, role
-management, audit logs, and system monitoring.
+management, dynamic custom fields, audit logs, and system monitoring.
 
 ## Overview
 
@@ -16,10 +16,28 @@ The template is designed for teams that need a strong foundation for:
 - User registration, login, OTP verification, refresh tokens, and password reset
 - Role-based access control and role management
 - Attribute-based access policies for fine-grained authorization
+- Dynamic custom fields for users, roles, and access policies
 - User administration, locking, unlocking, activation, and role assignment
+- Trash and restore lifecycle for users, roles, and access policies
 - Audit-style application logs and error logs
 - Dashboard, reporting, settings, and monitoring screens
 - Clean backend layering with test projects ready for expansion
+
+## What's New
+
+This branch expands the admin platform in two major areas:
+
+- Dynamic custom field definitions can now be created per entity type for
+  `users`, `roles`, and `accessPolicies`.
+- Custom field values are stored as JSON/JSONB and projected into create, edit,
+  list, filter, sort, and details experiences.
+- Users, roles, and access policies now support a trash lifecycle with restore
+  actions and a 3-day retention window before final soft delete.
+- The settings page now includes an admin surface for managing custom field
+  definitions without code changes.
+
+These changes are wired through the API, application layer, persistence layer,
+Entity Framework migrations, and Angular admin UI.
 
 ## Repository Structure
 
@@ -50,6 +68,7 @@ algo.bytes/
 - JWT bearer authentication
 - MediatR, FluentValidation, and Mapster
 - Serilog structured logging
+- PostgreSQL JSONB-backed custom field querying
 - Scalar API reference
 
 ### Frontend
@@ -136,6 +155,40 @@ OTP peppers into environment variables or a secure secret store.
 4. Open the frontend at `http://localhost:4200`.
 5. Use Scalar at `https://localhost:7259/scalar` to inspect and test API
    endpoints.
+
+## Feature Highlights
+
+### Dynamic Custom Fields
+
+- `CustomFieldDefinitionsController` exposes CRUD endpoints at
+  `api/custom-field-definitions`.
+- Definitions support field metadata such as type, required, searchable,
+  filterable, sortable, and visibility flags.
+- Supported entity targets are users, roles, and access policies.
+- Angular admin screens consume the same definitions to render table columns,
+  detail views, and form payloads consistently.
+
+### Trash and Restore Lifecycle
+
+- Users, roles, and access policies now move to trash first instead of
+  disappearing immediately.
+- Restore endpoints are available on:
+  - `PATCH /api/users/{id}/restore`
+  - `PATCH /api/roles/{id}/restore`
+  - `PATCH /api/accesspolicies/{id}/restore`
+- Listing endpoints can include or isolate trashed records for admin review.
+- The current retention window is 3 days, defined in
+  `src/algo.Application/Common/Trash/TrashRetention.cs`.
+
+### Search, Filter, and Sort
+
+- User, role, and access policy management screens now carry custom field data
+  through their DTOs and edit flows.
+- User queries support custom-field-aware search, filtering, and sorting when
+  running against PostgreSQL JSONB-backed storage.
+- The settings experience includes create, edit, and delete workflows for field
+  definitions so teams can evolve metadata without schema changes to core
+  entities.
 
 ## Testing
 

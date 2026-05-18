@@ -11,7 +11,10 @@ export interface AccessPolicyAdminDto {
   readonly description: string | null;
   readonly validFrom: string | null;
   readonly validTo: string | null;
+  readonly trashedAt: string | null;
+  readonly trashExpiresAt: string | null;
   readonly deletedAt: string | null;
+  readonly customFields: Record<string, unknown> | null;
   readonly createdByUserId: string | null;
   readonly updatedByUserId: string | null;
 }
@@ -28,6 +31,7 @@ export interface CreateAccessPolicyCommand {
   readonly description: string | null;
   readonly validFrom: string | null;
   readonly validTo: string | null;
+  readonly customFields?: Record<string, unknown> | null;
 }
 
 export type UpdateAccessPolicyBody = CreateAccessPolicyCommand;

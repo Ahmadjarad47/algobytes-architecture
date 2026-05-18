@@ -1,3 +1,5 @@
+using System.Text.Json;
+
 namespace algo.Application.Features.Users.Commands.UpdateUser;
 
 public sealed record UpdateUserRequest(
@@ -5,4 +7,5 @@ public sealed record UpdateUserRequest(
     string? PhoneNumber,
     string? UserName,
     bool? IsActive,
-    bool? EmailConfirmed);
+    bool? EmailConfirmed,
+    JsonElement? CustomFields);

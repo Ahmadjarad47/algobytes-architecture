@@ -12,7 +12,7 @@ namespace algo.Application.Features.Users.Commands.AssignRoles;
 
 public sealed class AssignRolesCommandHandler(
     UserManager<ApplicationUser> userManager,
-    RoleManager<IdentityRole> roleManager,
+    RoleManager<ApplicationRole> roleManager,
     IApplicationDbContext db,
     IAccessPolicyEvaluator accessPolicyEvaluator) : IRequestHandler<AssignRolesCommand, Unit>
 {

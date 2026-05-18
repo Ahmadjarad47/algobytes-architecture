@@ -1,5 +1,6 @@
 using System.Reflection;
 using algo.Application.Behaviors;
+using algo.Application.Common.CustomFields;
 using algo.Application.Configuration;
 using algo.Application.Features.Auth.Mapping;
 using algo.Application.Features.ErrorLogs.Mapping;
@@ -27,6 +28,7 @@ public static class ServiceCollectionExtensions
         services.AddValidatorsFromAssembly(assembly);
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(LoggingBehavior<,>));
         services.AddTransient(typeof(IPipelineBehavior<,>), typeof(ValidationBehavior<,>));
+        services.AddScoped<CustomFieldValueValidator>();
 
         new AuthMappingConfig().Register(TypeAdapterConfig.GlobalSettings);
         new UsersMappingConfig().Register(TypeAdapterConfig.GlobalSettings);

@@ -81,6 +81,14 @@ import { AdminFormField } from '../../models/admin-table.model';
                           class="w-full resize-y"
                         ></textarea>
                       }
+                      @case ('json') {
+                        <textarea
+                          pTextarea
+                          [formControl]="control(field.key)"
+                          rows="5"
+                          class="w-full resize-y font-mono text-xs"
+                        ></textarea>
+                      }
                       @case ('number') {
                         <p-inputnumber [formControl]="control(field.key)" inputStyleClass="w-full" />
                       }
@@ -117,7 +125,7 @@ import { AdminFormField } from '../../models/admin-table.model';
                         <input pInputText [formControl]="control(field.key)" class="w-full" />
                       }
                     }
-                    <label>{{ field.label }}</label>
+                    <label>{{ field.label }}{{ field.required ? ' *' : '' }}</label>
                   </p-floatlabel>
                 }
               </div>

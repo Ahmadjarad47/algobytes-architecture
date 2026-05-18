@@ -1,3 +1,4 @@
+using System.Text.Json;
 using algo.Application.Features.Users.Dtos;
 using MediatR;
 
@@ -9,4 +10,5 @@ public sealed record UpdateUserCommand(
     string? PhoneNumber,
     string? UserName,
     bool? IsActive,
-    bool? EmailConfirmed) : IRequest<UserDetailsDto?>;
+    bool? EmailConfirmed,
+    JsonElement? CustomFields) : IRequest<UserDetailsDto?>;

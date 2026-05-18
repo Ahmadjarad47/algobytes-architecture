@@ -3,6 +3,7 @@ using algo.Domain.Identity.Entities;
 using algo.Persistence.Abac;
 using algo.Persistence.Context;
 using algo.Persistence.Interceptors;
+using algo.Persistence.Services;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
@@ -37,7 +38,7 @@ public static class ServiceCollectionExtensions
                 }
             });
 
-        services.AddIdentity<ApplicationUser, IdentityRole>(options =>
+        services.AddIdentity<ApplicationUser, ApplicationRole>(options =>
             {
                 options.User.RequireUniqueEmail = true;
                 options.Password.RequiredLength = 8;
@@ -51,6 +52,8 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IApplicationDbContext>(sp =>
             sp.GetRequiredService<ApplicationDbContext>());
+        services.AddScoped<ICustomFieldIndexManager, CustomFieldIndexManager>();
+        services.AddHostedService<TrashFinalizationService>();
 
         services.AddSingleton<IAccessPolicyMetadataProvider, AccessPolicyMetadataProvider>();
         services.AddScoped<IAccessPolicyRuleStore, AccessPolicyRuleStore>();
