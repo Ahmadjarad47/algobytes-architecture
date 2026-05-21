@@ -33,6 +33,8 @@ import {
   CustomFieldType,
   UpdateCustomFieldDefinitionBody
 } from '../../../custom-fields/models/custom-fields.models';
+import { StorageSettingsApiService } from '../../../storage/api/storage-settings-api.service';
+import { FileScanResult, StorageSettings } from '../../../storage/models/storage.models';
 
 @Component({
   selector: 'app-settings-home',
@@ -208,6 +210,157 @@ import {
             <p-button label="Create webhook" icon="pi pi-send" size="small" severity="secondary" [outlined]="true" (onClick)="placeholder('Webhook')" />
           </div>
         </article>
+
+        <article class="surface-card dashboard-section xl:col-span-2">
+          <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h3 class="settings-title">File storage</h3>
+              <p class="m-0 text-[12px] text-slate-500">
+                Reads Amazon S3 storage settings from the database and lets you manage the scanner flow from one place.
+              </p>
+            </div>
+            <div class="flex flex-wrap gap-2">
+              <p-tag value="Amazon S3" severity="contrast" />
+              <p-tag [value]="storageSettings()?.source === 'database' ? 'DB-backed' : 'Not loaded'" [severity]="storageSettings() ? 'success' : 'warn'" />
+            </div>
+          </div>
+
+          <div class="mt-4 settings-grid">
+            <label class="settings-field md:col-span-2">
+              <span>S3 endpoint URL</span>
+              <input pInputText [formControl]="storageForm.controls.endpointUrl" placeholder="https://s3.amazonaws.com" />
+            </label>
+            <label class="settings-field">
+              <span>Access key</span>
+              <input pInputText [formControl]="storageForm.controls.accessKey" placeholder="AKIA..." />
+            </label>
+            <label class="settings-field">
+              <span>Secret key</span>
+              <input pInputText type="password" [formControl]="storageForm.controls.secretKey" placeholder="Leave blank to keep current secret" />
+            </label>
+            <label class="settings-field">
+              <span>Bucket</span>
+              <input pInputText [formControl]="storageForm.controls.bucketName" placeholder="app-files" />
+            </label>
+            <label class="settings-field">
+              <span>Region</span>
+              <input pInputText [formControl]="storageForm.controls.region" placeholder="us-east-1" />
+            </label>
+            <label class="settings-field md:col-span-2">
+              <span>Folder / key prefix</span>
+              <input pInputText [formControl]="storageForm.controls.folder" placeholder="uploads/documents" />
+            </label>
+            <label class="settings-switch">
+              <span>Use path-style URLs</span>
+              <p-toggleswitch [formControl]="storageForm.controls.usePathStyle" />
+            </label>
+            <div class="settings-list-row md:col-span-2">
+              <span>Stored secret</span>
+              <small>{{ storageSettings()?.storage?.secretKeyMasked || 'Not available' }}</small>
+            </div>
+          </div>
+
+          <div class="mt-4 flex flex-wrap gap-2">
+            <p-button
+              label="Reload storage config"
+              icon="pi pi-refresh"
+              size="small"
+              severity="secondary"
+              [outlined]="true"
+              [loading]="storageLoading()"
+              (onClick)="loadStorageSettings()"
+            />
+            <p-button
+              label="Save storage config"
+              icon="pi pi-save"
+              size="small"
+              [loading]="storageSaving()"
+              [disabled]="storageForm.invalid || !canUpdate()"
+              (onClick)="saveStorageSettings()"
+            />
+          </div>
+
+          <div class="mt-6 border-t border-slate-200 pt-4">
+            <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+              <div>
+                <div class="settings-list-title">File scanner</div>
+                <p class="m-0 text-[12px] text-slate-500">
+                  Scan files before they are accepted into the S3 folder.
+                </p>
+              </div>
+              @if (storageSettings()?.updatedAt; as updatedAt) {
+                <small class="text-slate-500">Updated {{ updatedAt | date: 'medium' }}</small>
+              }
+            </div>
+
+            <div class="mt-3 settings-grid">
+              <label class="settings-switch">
+                <span>Scanner enabled</span>
+                <p-toggleswitch [formControl]="storageForm.controls.scannerEnabled" />
+              </label>
+              <label class="settings-field">
+                <span>Scanner provider</span>
+                <input pInputText [formControl]="storageForm.controls.scannerProvider" placeholder="clamav" />
+              </label>
+              <label class="settings-field md:col-span-2">
+                <span>Scanner endpoint URL</span>
+                <input pInputText [formControl]="storageForm.controls.scannerEndpointUrl" placeholder="https://scanner.internal/api/scan" />
+              </label>
+              <label class="settings-field">
+                <span>Scanner API key</span>
+                <input pInputText [formControl]="storageForm.controls.scannerApiKey" placeholder="Read from DB or set a new key" />
+              </label>
+              <label class="settings-field">
+                <span>Quarantine folder</span>
+                <input pInputText [formControl]="storageForm.controls.quarantineFolder" placeholder="quarantine" />
+              </label>
+            </div>
+
+            <div class="mt-4 flex flex-col gap-3 rounded-2xl border border-slate-200 bg-slate-50/70 p-4">
+              <div class="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+                <div>
+                  <div class="text-sm font-semibold text-slate-950">Scanner test</div>
+                  <div class="text-[12px] text-slate-500">
+                    Pick a file and send it to the configured scanner endpoint.
+                  </div>
+                </div>
+                <div class="text-[12px] text-slate-500">
+                  {{ selectedScanFileName() || 'No file selected' }}
+                </div>
+              </div>
+
+              <div class="flex flex-wrap items-center gap-2">
+                <label class="dashboard-filter-button flex cursor-pointer items-center gap-2">
+                  <i class="pi pi-file"></i>
+                  Choose file
+                  <input type="file" class="hidden" (change)="onScannerFileSelected($event)" />
+                </label>
+                <p-button
+                  label="Run scan"
+                  icon="pi pi-shield"
+                  size="small"
+                  [loading]="scannerRunning()"
+                  [disabled]="!selectedScanFile()"
+                  (onClick)="runScanner()"
+                />
+              </div>
+
+              @if (lastScanResult(); as result) {
+                <div class="rounded-2xl border border-slate-200 bg-white p-3">
+                  <div class="flex flex-wrap items-center justify-between gap-2">
+                    <strong class="text-sm text-slate-950">{{ result.fileName }}</strong>
+                    <p-tag [value]="result.status.toUpperCase()" [severity]="scanSeverity(result)" />
+                  </div>
+                  <div class="mt-2 grid gap-1 text-[12px] text-slate-600">
+                    <div>Engine: {{ result.engine }}</div>
+                    <div>Message: {{ result.message }}</div>
+                    <div>Scanned: {{ result.scannedAt | date: 'medium' }}</div>
+                  </div>
+                </div>
+              }
+            </div>
+          </div>
+        </article>
       </section>
 
       <section class="surface-card dashboard-section">
@@ -282,6 +435,7 @@ import {
 export class SettingsHome {
   private readonly configService = inject(AppConfigService);
   private readonly customFieldDefinitionsApi = inject(CustomFieldDefinitionsApiService);
+  private readonly storageSettingsApi = inject(StorageSettingsApiService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly permissionService = inject(PermissionService);
   private readonly toast = inject(AppToastService);
@@ -298,6 +452,13 @@ export class SettingsHome {
   protected readonly customFieldDeleteVisible = signal(false);
   protected readonly editingCustomFieldId = signal<string | null>(null);
   protected readonly pendingCustomFieldDelete = signal<CustomFieldDefinition | null>(null);
+  protected readonly storageSettings = signal<StorageSettings | null>(null);
+  protected readonly storageLoading = signal(false);
+  protected readonly storageSaving = signal(false);
+  protected readonly selectedScanFile = signal<File | null>(null);
+  protected readonly selectedScanFileName = computed(() => this.selectedScanFile()?.name ?? '');
+  protected readonly scannerRunning = signal(false);
+  protected readonly lastScanResult = signal<FileScanResult | null>(null);
 
   protected readonly environmentOptions = optionList<AdminEnvironment>(['Dev', 'Staging', 'Prod']);
   protected readonly directionOptions = optionList<AdminDirection>(['ltr', 'rtl']);
@@ -357,6 +518,20 @@ export class SettingsHome {
     defaultValueJson: [''],
     validationJson: ['']
   });
+  protected readonly storageForm = this.formBuilder.group({
+    endpointUrl: ['', Validators.required],
+    accessKey: ['', Validators.required],
+    secretKey: [''],
+    bucketName: ['', Validators.required],
+    region: ['', Validators.required],
+    folder: ['', Validators.required],
+    usePathStyle: [false],
+    scannerEnabled: [true],
+    scannerProvider: ['clamav', Validators.required],
+    scannerEndpointUrl: [''],
+    scannerApiKey: [''],
+    quarantineFolder: ['']
+  });
 
   protected readonly customFieldFormFields = computed<AdminFormField[]>(() => [
     {
@@ -390,6 +565,8 @@ export class SettingsHome {
     effect(() => {
       this.loadCustomFieldDefinitions();
     });
+
+    this.loadStorageSettings();
   }
 
   protected patch(patch: Partial<AdminTemplateConfig>): void {
@@ -587,6 +764,112 @@ export class SettingsHome {
     }
     this.configService.reset();
     this.toast.success('Settings reset', 'Template defaults restored.');
+  }
+
+  protected loadStorageSettings(): void {
+    this.storageLoading.set(true);
+    this.storageSettingsApi
+      .getSettings()
+      .pipe(finalize(() => this.storageLoading.set(false)))
+      .subscribe({
+        next: (settings) => {
+          this.storageSettings.set(settings);
+          this.storageForm.reset({
+            endpointUrl: settings.storage.endpointUrl,
+            accessKey: settings.storage.accessKey,
+            secretKey: '',
+            bucketName: settings.storage.bucketName,
+            region: settings.storage.region,
+            folder: settings.storage.folder,
+            usePathStyle: settings.storage.usePathStyle,
+            scannerEnabled: settings.scanner.enabled,
+            scannerProvider: settings.scanner.provider,
+            scannerEndpointUrl: settings.scanner.endpointUrl ?? '',
+            scannerApiKey: settings.scanner.apiKey ?? '',
+            quarantineFolder: settings.scanner.quarantineFolder ?? ''
+          });
+        },
+        error: () => {
+          this.toast.error('Storage settings unavailable', 'Could not load S3 and file scanner settings from the database.');
+        }
+      });
+  }
+
+  protected saveStorageSettings(): void {
+    if (!this.canUpdate() || this.storageForm.invalid || this.storageSaving()) {
+      return;
+    }
+
+    const value = this.storageForm.getRawValue();
+
+    this.storageSaving.set(true);
+    this.storageSettingsApi
+      .updateSettings({
+        storage: {
+          endpointUrl: value.endpointUrl.trim(),
+          accessKey: value.accessKey.trim(),
+          secretKey: value.secretKey.trim(),
+          bucketName: value.bucketName.trim(),
+          region: value.region.trim(),
+          folder: value.folder.trim(),
+          usePathStyle: value.usePathStyle
+        },
+        scanner: {
+          enabled: value.scannerEnabled,
+          provider: value.scannerProvider.trim(),
+          endpointUrl: value.scannerEndpointUrl.trim() || null,
+          apiKey: value.scannerApiKey.trim() || null,
+          quarantineFolder: value.quarantineFolder.trim() || null
+        }
+      })
+      .pipe(finalize(() => this.storageSaving.set(false)))
+      .subscribe((settings) => {
+        this.storageSettings.set(settings);
+        this.storageForm.controls.secretKey.setValue('');
+        this.toast.success('Storage settings saved', 'Amazon S3 and scanner configuration updated from the database record.');
+      });
+  }
+
+  protected onScannerFileSelected(event: Event): void {
+    const input = event.target as HTMLInputElement | null;
+    const file = input?.files?.item(0) ?? null;
+
+    this.selectedScanFile.set(file);
+    this.lastScanResult.set(null);
+  }
+
+  protected runScanner(): void {
+    const file = this.selectedScanFile();
+    if (!file || this.scannerRunning()) {
+      return;
+    }
+
+    this.scannerRunning.set(true);
+    this.storageSettingsApi
+      .scanFile(file)
+      .pipe(finalize(() => this.scannerRunning.set(false)))
+      .subscribe({
+        next: (result) => {
+          this.lastScanResult.set(result);
+          this.toast.success('File scanned', `${result.fileName} returned ${result.status}.`);
+        },
+        error: () => {
+          this.toast.error('Scan failed', 'The file scanner endpoint did not accept the file.');
+        }
+      });
+  }
+
+  protected scanSeverity(result: FileScanResult): 'success' | 'danger' | 'warn' | 'secondary' {
+    switch (result.status) {
+      case 'clean':
+        return 'success';
+      case 'infected':
+        return 'danger';
+      case 'pending':
+        return 'warn';
+      default:
+        return 'secondary';
+    }
   }
 
   private parseOptionalJson(value: string): unknown {

@@ -1,0 +1,333 @@
+2026-05-18 08:20:13.481 -08:00 [WRN] Sensitive data logging is enabled. Log entries and exception messages may include sensitive application data; this mode should only be enabled during development.
+2026-05-18 08:20:14.815 -08:00 [INF] Admin wildcard access policy already exists
+2026-05-18 08:20:15.247 -08:00 [INF] Now listening on: https://localhost:7259
+2026-05-18 08:20:15.250 -08:00 [INF] Now listening on: http://localhost:5244
+2026-05-18 08:20:15.308 -08:00 [INF] Application started. Press Ctrl+C to shut down.
+2026-05-18 08:20:15.309 -08:00 [INF] Hosting environment: Development
+2026-05-18 08:20:15.310 -08:00 [INF] Content root path: C:\PrivateProject\algo.bytes\src\algo.API
+2026-05-18 08:20:44.414 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:20:44.414 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:20:44.414 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:20:44.654 -08:00 [ERR] JWT authentication failed
+Microsoft.IdentityModel.Tokens.SecurityTokenExpiredException: IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): '17-05-2026 19:27:46', Current time (UTC): '18-05-2026 16:20:44'.
+   at Microsoft.IdentityModel.Tokens.ValidatorUtilities.ValidateLifetime(Nullable`1 notBefore, Nullable`1 expires, SecurityToken securityToken, TokenValidationParameters validationParameters)
+   at Microsoft.IdentityModel.Tokens.Validators.ValidateLifetime(Nullable`1 notBefore, Nullable`1 expires, SecurityToken securityToken, TokenValidationParameters validationParameters)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateTokenPayloadAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateJWSAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+2026-05-18 08:20:44.654 -08:00 [ERR] JWT authentication failed
+Microsoft.IdentityModel.Tokens.SecurityTokenExpiredException: IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): '17-05-2026 19:27:46', Current time (UTC): '18-05-2026 16:20:44'.
+   at Microsoft.IdentityModel.Tokens.ValidatorUtilities.ValidateLifetime(Nullable`1 notBefore, Nullable`1 expires, SecurityToken securityToken, TokenValidationParameters validationParameters)
+   at Microsoft.IdentityModel.Tokens.Validators.ValidateLifetime(Nullable`1 notBefore, Nullable`1 expires, SecurityToken securityToken, TokenValidationParameters validationParameters)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateTokenPayloadAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateJWSAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+2026-05-18 08:20:44.654 -08:00 [ERR] JWT authentication failed
+Microsoft.IdentityModel.Tokens.SecurityTokenExpiredException: IDX10223: Lifetime validation failed. The token is expired. ValidTo (UTC): '17-05-2026 19:27:46', Current time (UTC): '18-05-2026 16:20:44'.
+   at Microsoft.IdentityModel.Tokens.ValidatorUtilities.ValidateLifetime(Nullable`1 notBefore, Nullable`1 expires, SecurityToken securityToken, TokenValidationParameters validationParameters)
+   at Microsoft.IdentityModel.Tokens.Validators.ValidateLifetime(Nullable`1 notBefore, Nullable`1 expires, SecurityToken securityToken, TokenValidationParameters validationParameters)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateTokenPayloadAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+   at Microsoft.IdentityModel.JsonWebTokens.JsonWebTokenHandler.ValidateJWSAsync(JsonWebToken jsonWebToken, TokenValidationParameters validationParameters, BaseConfiguration configuration)
+2026-05-18 08:20:44.722 -08:00 [WRN] JWT challenge. Error=invalid_token, Description=The token expired at '05/17/2026 19:27:46'
+2026-05-18 08:20:44.722 -08:00 [WRN] JWT challenge. Error=invalid_token, Description=The token expired at '05/17/2026 19:27:46'
+2026-05-18 08:20:44.722 -08:00 [WRN] JWT challenge. Error=invalid_token, Description=The token expired at '05/17/2026 19:27:46'
+2026-05-18 08:20:44.734 -08:00 [INF] HTTP POST /hubs/sessions/negotiate completed with 401 in 405 ms (0HNLKV5KLK6L8:00000001)
+2026-05-18 08:20:44.734 -08:00 [INF] HTTP GET /api/custom-field-definitions completed with 401 in 405 ms (0HNLKV5KLK6L7:00000009)
+2026-05-18 08:20:44.734 -08:00 [INF] HTTP GET /api/Users completed with 401 in 405 ms (0HNLKV5KLK6L7:00000007)
+2026-05-18 08:20:51.225 -08:00 [INF] Authorization header exists: false
+2026-05-18 08:20:51.294 -08:00 [INF] MediatR handling started LoginCommand
+2026-05-18 08:20:51.830 -08:00 [INF] MediatR handling completed LoginCommand in 535 ms
+2026-05-18 08:20:51.845 -08:00 [INF] HTTP POST /api/Auth/login completed with 200 in 622 ms (0HNLKV5KLK6L7:0000000D)
+2026-05-18 08:20:51.867 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:20:51.870 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:20:51.874 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:20:51.951 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:20:51.951 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:20:51.951 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:20:51.959 -08:00 [INF] HTTP POST /hubs/sessions/negotiate completed with 200 in 92 ms (0HNLKV5KLK6L8:00000003)
+2026-05-18 08:20:51.965 -08:00 [INF] MediatR handling started ListCustomFieldDefinitionsQuery
+2026-05-18 08:20:51.987 -08:00 [INF] MediatR handling started GetUsersQuery
+2026-05-18 08:20:51.988 -08:00 [INF] MediatR handling completed ListCustomFieldDefinitionsQuery in 23 ms
+2026-05-18 08:20:51.994 -08:00 [INF] HTTP GET /api/custom-field-definitions completed with 200 in 124 ms (0HNLKV5KLK6L7:00000013)
+2026-05-18 08:20:52.006 -08:00 [INF] Access policy check started for users:read
+2026-05-18 08:20:52.029 -08:00 [INF] Access policy evaluation for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:20:52.042 -08:00 [INF] Access policy query filter started for users:read
+2026-05-18 08:20:52.046 -08:00 [INF] Access policy query filter for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0
+2026-05-18 08:20:52.120 -08:00 [INF] MediatR handling completed GetUsersQuery in 132 ms
+2026-05-18 08:20:52.129 -08:00 [INF] HTTP GET /api/Users completed with 200 in 255 ms (0HNLKV5KLK6L7:00000017)
+2026-05-18 08:20:52.172 -08:00 [INF] Authorization header exists: false
+2026-05-18 08:20:52.176 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:20:59.120 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:20:59.123 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:20:59.125 -08:00 [INF] MediatR handling started GetUsersQuery
+2026-05-18 08:20:59.126 -08:00 [INF] Access policy check started for users:read
+2026-05-18 08:20:59.130 -08:00 [INF] Access policy evaluation for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:20:59.132 -08:00 [INF] Access policy query filter started for users:read
+2026-05-18 08:20:59.134 -08:00 [INF] Access policy query filter for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0
+2026-05-18 08:20:59.152 -08:00 [INF] MediatR handling completed GetUsersQuery in 27 ms
+2026-05-18 08:20:59.154 -08:00 [INF] HTTP GET /api/Users completed with 200 in 34 ms (0HNLKV5KLK6L7:0000001B)
+2026-05-18 08:21:00.630 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:21:00.633 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:21:00.636 -08:00 [INF] MediatR handling started GetUsersQuery
+2026-05-18 08:21:00.643 -08:00 [INF] Access policy check started for users:read
+2026-05-18 08:21:00.645 -08:00 [INF] Access policy evaluation for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:21:00.647 -08:00 [INF] Access policy query filter started for users:read
+2026-05-18 08:21:00.648 -08:00 [INF] Access policy query filter for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0
+2026-05-18 08:21:00.654 -08:00 [INF] MediatR handling completed GetUsersQuery in 17 ms
+2026-05-18 08:21:00.655 -08:00 [INF] HTTP GET /api/Users completed with 200 in 25 ms (0HNLKV5KLK6L7:0000001F)
+2026-05-18 08:21:08.982 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:21:08.982 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:21:08.982 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:21:08.982 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:21:08.986 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:21:08.986 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:21:08.988 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:21:08.989 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:21:08.997 -08:00 [INF] MediatR handling started GetUsersDashboardQuery
+2026-05-18 08:21:08.997 -08:00 [INF] MediatR handling started ListAccessPoliciesQuery
+2026-05-18 08:21:09.000 -08:00 [INF] Access policy check started for accessPolicies:read
+2026-05-18 08:21:09.001 -08:00 [INF] Access policy check started for users:read
+2026-05-18 08:21:09.001 -08:00 [INF] Access policy evaluation for accessPolicies:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:21:09.003 -08:00 [INF] Access policy evaluation for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:21:09.006 -08:00 [INF] Access policy query filter started for users:read
+2026-05-18 08:21:09.008 -08:00 [INF] Access policy query filter for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0
+2026-05-18 08:21:09.009 -08:00 [INF] MediatR handling started GetLogsQuery
+2026-05-18 08:21:09.009 -08:00 [INF] MediatR handling started GetErrorLogsQuery
+2026-05-18 08:21:09.018 -08:00 [INF] MediatR handling completed ListAccessPoliciesQuery in 21 ms
+2026-05-18 08:21:09.020 -08:00 [INF] Access policy check started for logs:read
+2026-05-18 08:21:09.020 -08:00 [INF] Access policy check started for errorLogs:read
+2026-05-18 08:21:09.021 -08:00 [INF] Access policy evaluation for logs:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:21:09.022 -08:00 [INF] Access policy evaluation for errorLogs:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:21:09.030 -08:00 [INF] HTTP GET /api/AccessPolicies completed with 200 in 47 ms (0HNLKV5KLK6L7:0000002F)
+2026-05-18 08:21:09.051 -08:00 [INF] MediatR handling completed GetErrorLogsQuery in 41 ms
+2026-05-18 08:21:09.054 -08:00 [INF] HTTP GET /api/error-logs completed with 200 in 72 ms (0HNLKV5KLK6L7:0000002D)
+2026-05-18 08:21:09.070 -08:00 [INF] MediatR handling completed GetUsersDashboardQuery in 72 ms
+2026-05-18 08:21:09.077 -08:00 [INF] HTTP GET /api/Users/dashboard completed with 200 in 94 ms (0HNLKV5KLK6L7:00000029)
+2026-05-18 08:21:09.146 -08:00 [INF] MediatR handling completed GetLogsQuery in 137 ms
+2026-05-18 08:21:09.159 -08:00 [INF] HTTP GET /api/Logs completed with 200 in 177 ms (0HNLKV5KLK6L7:0000002B)
+2026-05-18 08:21:09.881 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:21:09.881 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:21:09.885 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:21:09.885 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:21:09.886 -08:00 [INF] MediatR handling started ListCustomFieldDefinitionsQuery
+2026-05-18 08:21:09.888 -08:00 [INF] MediatR handling completed ListCustomFieldDefinitionsQuery in 2 ms
+2026-05-18 08:21:09.889 -08:00 [INF] HTTP GET /api/custom-field-definitions completed with 200 in 8 ms (0HNLKV5KLK6L7:00000035)
+2026-05-18 08:21:09.892 -08:00 [INF] MediatR handling started GetRolesQuery
+2026-05-18 08:21:09.894 -08:00 [INF] Access policy check started for roles:read
+2026-05-18 08:21:09.896 -08:00 [INF] Access policy evaluation for roles:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:21:09.910 -08:00 [INF] MediatR handling completed GetRolesQuery in 17 ms
+2026-05-18 08:21:09.914 -08:00 [INF] HTTP GET /api/Roles completed with 200 in 32 ms (0HNLKV5KLK6L7:00000037)
+2026-05-18 08:21:20.589 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:21:20.590 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:21:20.592 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:21:20.592 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:21:20.594 -08:00 [INF] MediatR handling started GetLogsQuery
+2026-05-18 08:21:20.594 -08:00 [INF] MediatR handling started GetLogsQuery
+2026-05-18 08:21:20.595 -08:00 [INF] Access policy check started for logs:read
+2026-05-18 08:21:20.595 -08:00 [INF] Access policy check started for logs:read
+2026-05-18 08:21:20.597 -08:00 [INF] Access policy evaluation for logs:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:21:20.597 -08:00 [INF] Access policy evaluation for logs:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:21:20.619 -08:00 [INF] MediatR handling completed GetLogsQuery in 25 ms
+2026-05-18 08:21:20.620 -08:00 [INF] MediatR handling completed GetLogsQuery in 26 ms
+2026-05-18 08:21:20.621 -08:00 [INF] HTTP GET /api/Logs completed with 200 in 31 ms (0HNLKV5KLK6L7:0000003D)
+2026-05-18 08:21:20.624 -08:00 [INF] HTTP GET /api/Logs completed with 200 in 33 ms (0HNLKV5KLK6L7:0000003F)
+2026-05-18 08:21:29.578 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:21:29.580 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:21:29.582 -08:00 [INF] MediatR handling started ListCustomFieldDefinitionsQuery
+2026-05-18 08:21:29.583 -08:00 [INF] MediatR handling completed ListCustomFieldDefinitionsQuery in 1 ms
+2026-05-18 08:21:29.584 -08:00 [INF] HTTP GET /api/custom-field-definitions completed with 200 in 6 ms (0HNLKV5KLK6L7:00000043)
+2026-05-18 08:22:33.552 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:22:33.556 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:22:33.557 -08:00 [INF] MediatR handling started ListCustomFieldDefinitionsQuery
+2026-05-18 08:22:33.559 -08:00 [INF] MediatR handling completed ListCustomFieldDefinitionsQuery in 2 ms
+2026-05-18 08:22:33.561 -08:00 [INF] HTTP GET /api/custom-field-definitions completed with 200 in 8 ms (0HNLKV5KLK6L9:00000003)
+2026-05-18 08:22:33.561 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:22:33.567 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:22:33.568 -08:00 [INF] MediatR handling started GetUsersQuery
+2026-05-18 08:22:33.569 -08:00 [INF] Access policy check started for users:read
+2026-05-18 08:22:33.571 -08:00 [INF] Access policy evaluation for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:22:33.573 -08:00 [INF] Access policy query filter started for users:read
+2026-05-18 08:22:33.574 -08:00 [INF] Access policy query filter for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0
+2026-05-18 08:22:33.579 -08:00 [INF] MediatR handling completed GetUsersQuery in 11 ms
+2026-05-18 08:22:33.581 -08:00 [INF] HTTP GET /api/Users completed with 200 in 19 ms (0HNLKV5KLK6L9:00000007)
+2026-05-18 08:22:38.357 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:22:38.360 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:22:38.373 -08:00 [INF] MediatR handling started DeleteUserCommand
+2026-05-18 08:22:38.378 -08:00 [INF] Access policy check started for users:delete
+2026-05-18 08:22:38.380 -08:00 [INF] Access policy evaluation for users:delete. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:22:38.382 -08:00 [INF] Access policy query filter started for users:delete
+2026-05-18 08:22:38.383 -08:00 [INF] Access policy query filter for users:delete. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0
+2026-05-18 08:22:38.416 -08:00 [INF] MediatR handling completed DeleteUserCommand in 43 ms
+2026-05-18 08:22:38.418 -08:00 [INF] HTTP DELETE /api/Users/bd9830c5-d955-4267-a903-64f47d983607 completed with 204 in 60 ms (0HNLKV5KLK6L9:0000000B)
+2026-05-18 08:22:38.426 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:22:38.428 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:22:38.429 -08:00 [INF] MediatR handling started GetUsersQuery
+2026-05-18 08:22:38.429 -08:00 [INF] Access policy check started for users:read
+2026-05-18 08:22:38.431 -08:00 [INF] Access policy evaluation for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:22:38.432 -08:00 [INF] Access policy query filter started for users:read
+2026-05-18 08:22:38.434 -08:00 [INF] Access policy query filter for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0
+2026-05-18 08:22:38.438 -08:00 [INF] MediatR handling completed GetUsersQuery in 8 ms
+2026-05-18 08:22:38.439 -08:00 [INF] HTTP GET /api/Users completed with 200 in 13 ms (0HNLKV5KLK6L9:0000000D)
+2026-05-18 08:22:45.848 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:22:45.850 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:22:45.852 -08:00 [INF] MediatR handling started GetUsersQuery
+2026-05-18 08:22:45.852 -08:00 [INF] Access policy check started for users:read
+2026-05-18 08:22:45.854 -08:00 [INF] Access policy evaluation for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:22:45.855 -08:00 [INF] Access policy query filter started for users:read
+2026-05-18 08:22:45.857 -08:00 [INF] Access policy query filter for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0
+2026-05-18 08:22:46.392 -08:00 [INF] MediatR handling completed GetUsersQuery in 540 ms
+2026-05-18 08:22:46.394 -08:00 [INF] HTTP GET /api/Users completed with 200 in 545 ms (0HNLKV5KLK6L9:00000011)
+2026-05-18 08:22:49.273 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:22:49.276 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:22:49.286 -08:00 [INF] MediatR handling started GetUserByIdQuery
+2026-05-18 08:22:49.293 -08:00 [INF] Access policy check started for users:read
+2026-05-18 08:22:49.294 -08:00 [INF] Access policy evaluation for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:22:49.297 -08:00 [INF] Access policy query filter started for users:read
+2026-05-18 08:22:49.299 -08:00 [INF] Access policy query filter for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0
+2026-05-18 08:22:49.322 -08:00 [INF] MediatR handling completed GetUserByIdQuery in 35 ms
+2026-05-18 08:22:49.327 -08:00 [INF] HTTP GET /api/Users/bd9830c5-d955-4267-a903-64f47d983607 completed with 200 in 54 ms (0HNLKV5KLK6L9:00000015)
+2026-05-18 08:22:50.774 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:22:50.777 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:22:50.778 -08:00 [INF] MediatR handling started GetUsersQuery
+2026-05-18 08:22:50.778 -08:00 [INF] Access policy check started for users:read
+2026-05-18 08:22:50.780 -08:00 [INF] Access policy evaluation for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:22:50.782 -08:00 [INF] Access policy query filter started for users:read
+2026-05-18 08:22:50.783 -08:00 [INF] Access policy query filter for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0
+2026-05-18 08:22:50.788 -08:00 [INF] MediatR handling completed GetUsersQuery in 10 ms
+2026-05-18 08:22:50.789 -08:00 [INF] HTTP GET /api/Users completed with 200 in 14 ms (0HNLKV5KLK6L9:00000019)
+2026-05-18 08:24:20.644 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:20.647 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:20.648 -08:00 [INF] MediatR handling started GetUsersQuery
+2026-05-18 08:24:20.649 -08:00 [INF] Access policy check started for users:read
+2026-05-18 08:24:20.651 -08:00 [INF] Access policy evaluation for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:24:20.653 -08:00 [INF] Access policy query filter started for users:read
+2026-05-18 08:24:20.654 -08:00 [INF] Access policy query filter for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0
+2026-05-18 08:24:20.660 -08:00 [INF] MediatR handling completed GetUsersQuery in 11 ms
+2026-05-18 08:24:20.661 -08:00 [INF] HTTP GET /api/Users completed with 200 in 16 ms (0HNLKV5KLK6L9:0000001D)
+2026-05-18 08:24:22.368 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:22.368 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:22.371 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:22.371 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:22.372 -08:00 [INF] MediatR handling started GetUsersQuery
+2026-05-18 08:24:22.372 -08:00 [INF] MediatR handling started ListCustomFieldDefinitionsQuery
+2026-05-18 08:24:22.373 -08:00 [INF] Access policy check started for users:read
+2026-05-18 08:24:22.375 -08:00 [INF] Access policy evaluation for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:24:22.375 -08:00 [INF] MediatR handling completed ListCustomFieldDefinitionsQuery in 2 ms
+2026-05-18 08:24:22.377 -08:00 [INF] Access policy query filter started for users:read
+2026-05-18 08:24:22.377 -08:00 [INF] HTTP GET /api/custom-field-definitions completed with 200 in 8 ms (0HNLKV5KLK6L9:00000023)
+2026-05-18 08:24:22.378 -08:00 [INF] Access policy query filter for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0
+2026-05-18 08:24:22.385 -08:00 [INF] MediatR handling completed GetUsersQuery in 13 ms
+2026-05-18 08:24:22.387 -08:00 [INF] HTTP GET /api/Users completed with 200 in 18 ms (0HNLKV5KLK6L9:00000025)
+2026-05-18 08:24:23.332 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:23.332 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:23.332 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:23.332 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:23.334 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:23.335 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:23.335 -08:00 [INF] MediatR handling started GetUsersDashboardQuery
+2026-05-18 08:24:23.335 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:23.336 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:23.336 -08:00 [INF] Access policy check started for users:read
+2026-05-18 08:24:23.337 -08:00 [INF] MediatR handling started GetErrorLogsQuery
+2026-05-18 08:24:23.337 -08:00 [INF] MediatR handling started ListAccessPoliciesQuery
+2026-05-18 08:24:23.341 -08:00 [INF] Access policy evaluation for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:24:23.340 -08:00 [INF] Access policy check started for errorLogs:read
+2026-05-18 08:24:23.337 -08:00 [INF] MediatR handling started GetLogsQuery
+2026-05-18 08:24:23.341 -08:00 [INF] Access policy check started for accessPolicies:read
+2026-05-18 08:24:23.342 -08:00 [INF] Access policy query filter started for users:read
+2026-05-18 08:24:23.343 -08:00 [INF] Access policy evaluation for errorLogs:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:24:23.343 -08:00 [INF] Access policy check started for logs:read
+2026-05-18 08:24:23.344 -08:00 [INF] Access policy evaluation for accessPolicies:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:24:23.345 -08:00 [INF] Access policy query filter for users:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0
+2026-05-18 08:24:23.348 -08:00 [INF] Access policy evaluation for logs:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:24:23.349 -08:00 [INF] MediatR handling completed ListAccessPoliciesQuery in 12 ms
+2026-05-18 08:24:23.351 -08:00 [INF] MediatR handling completed GetErrorLogsQuery in 13 ms
+2026-05-18 08:24:23.354 -08:00 [INF] HTTP GET /api/AccessPolicies completed with 200 in 21 ms (0HNLKV5KLK6L9:00000035)
+2026-05-18 08:24:23.354 -08:00 [INF] HTTP GET /api/error-logs completed with 200 in 22 ms (0HNLKV5KLK6L9:00000033)
+2026-05-18 08:24:23.355 -08:00 [INF] MediatR handling completed GetLogsQuery in 17 ms
+2026-05-18 08:24:23.359 -08:00 [INF] MediatR handling completed GetUsersDashboardQuery in 24 ms
+2026-05-18 08:24:23.360 -08:00 [INF] HTTP GET /api/Logs completed with 200 in 28 ms (0HNLKV5KLK6L9:00000031)
+2026-05-18 08:24:23.361 -08:00 [INF] HTTP GET /api/Users/dashboard completed with 200 in 29 ms (0HNLKV5KLK6L9:0000002F)
+2026-05-18 08:24:28.712 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:28.712 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:28.712 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:28.715 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:28.715 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:28.716 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:28.717 -08:00 [INF] MediatR handling started ListAccessPoliciesQuery
+2026-05-18 08:24:28.716 -08:00 [INF] MediatR handling started ListCustomFieldDefinitionsQuery
+2026-05-18 08:24:28.718 -08:00 [INF] Access policy check started for accessPolicies:read
+2026-05-18 08:24:28.719 -08:00 [INF] MediatR handling completed ListCustomFieldDefinitionsQuery in 2 ms
+2026-05-18 08:24:28.721 -08:00 [INF] HTTP GET /api/custom-field-definitions completed with 200 in 9 ms (0HNLKV5KLK6L9:0000003D)
+2026-05-18 08:24:28.721 -08:00 [INF] Access policy evaluation for accessPolicies:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:24:28.725 -08:00 [INF] MediatR handling started GetAccessPolicyOptionsQuery
+2026-05-18 08:24:28.726 -08:00 [INF] MediatR handling completed ListAccessPoliciesQuery in 9 ms
+2026-05-18 08:24:28.727 -08:00 [INF] HTTP GET /api/AccessPolicies completed with 200 in 15 ms (0HNLKV5KLK6L9:00000041)
+2026-05-18 08:24:28.728 -08:00 [INF] Access policy check started for accessPolicies:read
+2026-05-18 08:24:28.730 -08:00 [INF] Access policy evaluation for accessPolicies:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:24:28.743 -08:00 [INF] MediatR handling completed GetAccessPolicyOptionsQuery in 17 ms
+2026-05-18 08:24:28.755 -08:00 [INF] HTTP GET /api/AccessPolicies/options completed with 200 in 42 ms (0HNLKV5KLK6L9:0000003F)
+2026-05-18 08:24:42.495 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:42.497 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:42.505 -08:00 [INF] MediatR handling started SoftDeleteAccessPolicyCommand
+2026-05-18 08:24:42.508 -08:00 [INF] Access policy check started for accessPolicies:delete
+2026-05-18 08:24:42.510 -08:00 [INF] Access policy evaluation for accessPolicies:delete. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=7, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:24:42.562 -08:00 [INF] MediatR handling completed SoftDeleteAccessPolicyCommand in 57 ms
+2026-05-18 08:24:42.563 -08:00 [INF] HTTP DELETE /api/AccessPolicies/550d7f29-d905-4007-951a-c2cbf9a7c88f completed with 204 in 68 ms (0HNLKV5KLK6L9:00000045)
+2026-05-18 08:24:42.571 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:42.573 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:42.574 -08:00 [INF] MediatR handling started ListAccessPoliciesQuery
+2026-05-18 08:24:42.575 -08:00 [INF] Access policy check started for accessPolicies:read
+2026-05-18 08:24:42.576 -08:00 [INF] Access policy evaluation for accessPolicies:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=6, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:24:42.578 -08:00 [INF] MediatR handling completed ListAccessPoliciesQuery in 4 ms
+2026-05-18 08:24:42.579 -08:00 [INF] HTTP GET /api/AccessPolicies completed with 200 in 8 ms (0HNLKV5KLK6L9:00000049)
+2026-05-18 08:24:46.791 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:46.794 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:46.794 -08:00 [INF] MediatR handling started ListAccessPoliciesQuery
+2026-05-18 08:24:46.795 -08:00 [INF] Access policy check started for accessPolicies:read
+2026-05-18 08:24:46.797 -08:00 [INF] Access policy evaluation for accessPolicies:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=6, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:24:46.803 -08:00 [INF] MediatR handling completed ListAccessPoliciesQuery in 8 ms
+2026-05-18 08:24:46.804 -08:00 [INF] HTTP GET /api/AccessPolicies completed with 200 in 12 ms (0HNLKV5KLK6L9:0000004D)
+2026-05-18 08:24:51.883 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:51.885 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:51.886 -08:00 [INF] MediatR handling started ListAccessPoliciesQuery
+2026-05-18 08:24:51.886 -08:00 [INF] Access policy check started for accessPolicies:read
+2026-05-18 08:24:51.888 -08:00 [INF] Access policy evaluation for accessPolicies:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=6, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:24:51.889 -08:00 [INF] MediatR handling completed ListAccessPoliciesQuery in 3 ms
+2026-05-18 08:24:51.890 -08:00 [INF] HTTP GET /api/AccessPolicies completed with 200 in 7 ms (0HNLKV5KLK6L9:00000051)
+2026-05-18 08:24:56.899 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:56.903 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:56.912 -08:00 [INF] MediatR handling started GetSessionsQuery
+2026-05-18 08:24:56.917 -08:00 [INF] Access policy check started for sessions:read
+2026-05-18 08:24:56.918 -08:00 [INF] Access policy evaluation for sessions:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=6, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:24:56.986 -08:00 [INF] MediatR handling completed GetSessionsQuery in 74 ms
+2026-05-18 08:24:56.994 -08:00 [INF] HTTP GET /api/Sessions completed with 200 in 95 ms (0HNLKV5KLK6L9:00000055)
+2026-05-18 08:24:57.209 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:57.212 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:24:57.213 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:57.214 -08:00 [INF] MediatR handling started GetSessionsQuery
+2026-05-18 08:24:57.215 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:24:57.215 -08:00 [INF] Access policy check started for sessions:read
+2026-05-18 08:24:57.216 -08:00 [INF] MediatR handling started GetSessionsQuery
+2026-05-18 08:24:57.218 -08:00 [INF] Access policy evaluation for sessions:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=6, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:24:57.218 -08:00 [INF] Access policy check started for sessions:read
+2026-05-18 08:24:57.222 -08:00 [INF] Access policy evaluation for sessions:read. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=6, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:24:57.223 -08:00 [INF] MediatR handling completed GetSessionsQuery in 8 ms
+2026-05-18 08:24:57.224 -08:00 [INF] HTTP GET /api/Sessions completed with 200 in 15 ms (0HNLKV5KLK6L9:00000059)
+2026-05-18 08:24:57.226 -08:00 [INF] MediatR handling completed GetSessionsQuery in 9 ms
+2026-05-18 08:24:57.227 -08:00 [INF] HTTP GET /api/Sessions completed with 200 in 15 ms (0HNLKV5KLK6L9:0000005B)
+2026-05-18 08:25:03.683 -08:00 [INF] Authorization header exists: true
+2026-05-18 08:25:03.685 -08:00 [INF] JWT token validated. IsAuthenticated=true
+2026-05-18 08:25:03.695 -08:00 [INF] MediatR handling started RevokeSessionCommand
+2026-05-18 08:25:03.697 -08:00 [INF] Access policy check started for sessions:revoke
+2026-05-18 08:25:03.699 -08:00 [INF] Access policy evaluation for sessions:revoke. UserId=790c2c93-d8e6-4b61-8a11-e4190a1c0805, Roles=[Admin], ActiveRules=6, SubjectMatched=1, ResourceActionMatched=1, Allows=1, Denies=0, Decision=Allowed
+2026-05-18 08:25:03.717 -08:00 [INF] MediatR handling completed RevokeSessionCommand in 22 ms
+2026-05-18 08:25:03.718 -08:00 [INF] HTTP POST /api/Sessions/44517f6b-7cc6-4fb4-965e-bfb50fd16519/revoke completed with 204 in 35 ms (0HNLKV5KLK6L9:0000005F)
+2026-05-18 08:25:03.729 -08:00 [INF] HTTP CONNECT /hubs/sessions completed with 200 in 251557 ms (0HNLKV5KLK6L8:00000005)
+2026-05-18 08:25:03.741 -08:00 [INF] Authorization header exists: false
+2026-05-18 08:25:03.742 -08:00 [WRN] JWT challenge. Error=null, Description=null
+2026-05-18 08:25:03.743 -08:00 [INF] HTTP GET /api/Sessions completed with 401 in 2 ms (0HNLKV5KLK6L9:00000061)
+2026-05-18 08:25:03.903 -08:00 [INF] Authorization header exists: false
+2026-05-18 08:25:03.903 -08:00 [INF] Authorization header exists: false
+2026-05-18 08:25:03.904 -08:00 [WRN] JWT challenge. Error=null, Description=null
+2026-05-18 08:25:03.904 -08:00 [WRN] JWT challenge. Error=null, Description=null
+2026-05-18 08:25:03.905 -08:00 [INF] HTTP GET /api/Sessions completed with 401 in 2 ms (0HNLKV5KLK6L9:00000063)
+2026-05-18 08:25:03.906 -08:00 [INF] HTTP GET /api/Sessions completed with 401 in 2 ms (0HNLKV5KLK6L9:00000065)

@@ -39,6 +39,10 @@ testem.log
 /typings
 __screenshots__/
 
+# Keep the shared Angular serve logs visible to Git even though the repo root ignores *.log.
+!ng-serve.log
+!ng-serve.err.log
+
 # System files
 .DS_Store
 Thumbs.db
