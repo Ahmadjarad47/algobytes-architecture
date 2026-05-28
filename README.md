@@ -25,16 +25,26 @@ The template is designed for teams that need a strong foundation for:
 
 ## What's New
 
-This branch expands the admin platform in two major areas:
+This branch expands the admin platform in production-readiness, security, and
+admin customization areas:
 
 - Dynamic custom field definitions can now be created per entity type for
   `users`, `roles`, and `accessPolicies`.
 - Custom field values are stored as JSON/JSONB and projected into create, edit,
   list, filter, sort, and details experiences.
+- Registration can render visible user custom fields, so admins can add fields
+  such as `Gender` without changing the auth page code.
 - Users, roles, and access policies now support a trash lifecycle with restore
   actions and a 3-day retention window before final soft delete.
 - The settings page now includes an admin surface for managing custom field
   definitions without code changes.
+- All controllers are exposed under `/api/v1`, with consistent RFC 7807
+  Problem Details error responses.
+- Production health probes are available at `/health/live` and `/health/ready`,
+  with readiness checks for PostgreSQL and Redis.
+- Sensitive authentication and token endpoints use ASP.NET Core rate limiting.
+- Settings includes an auth page designer for visually customizing login and
+  create-account screens with a live preview.
 
 These changes are wired through the API, application layer, persistence layer,
 Entity Framework migrations, and Angular admin UI.
@@ -114,6 +124,19 @@ Scalar API documentation is available in development at:
 https://localhost:7259/scalar
 ```
 
+Controller endpoints are versioned under:
+
+```text
+https://localhost:7259/api/v1
+```
+
+Health probes are available at:
+
+```text
+https://localhost:7259/health/live
+https://localhost:7259/health/ready
+```
+
 ### Frontend
 
 See [ui/algo.ui/README.md](ui/algo.ui/README.md) for frontend setup,
@@ -142,7 +165,9 @@ Backend configuration lives in:
 
 Frontend API configuration lives in:
 
-- `ui/algo.ui/src/app/core/config/app-config.token.ts`
+- `ui/algo.ui/src/environments/environment.ts`
+- `ui/algo.ui/src/environments/environment.prod.ts`
+- dashboard Settings, where admins can update the local API base URL
 
 For production, move secrets such as database passwords, JWT signing keys, and
 OTP peppers into environment variables or a secure secret store.
@@ -156,26 +181,46 @@ OTP peppers into environment variables or a secure secret store.
 5. Use Scalar at `https://localhost:7259/scalar` to inspect and test API
    endpoints.
 
+## Docker
+
+Start the full stack with Docker Compose from the repository root:
+
+```bash
+docker compose up --build
+```
+
+The Docker stack exposes:
+
+- Frontend at `http://localhost:4200`
+- Backend API at `http://localhost:5244`
+- PostgreSQL at `localhost:5432`
+- Redis at `localhost:6379`
+
+The compose file wires the backend to the bundled PostgreSQL and Redis
+containers and builds the Angular frontend as a production SSR image.
+
 ## Feature Highlights
 
 ### Dynamic Custom Fields
 
 - `CustomFieldDefinitionsController` exposes CRUD endpoints at
-  `api/custom-field-definitions`.
+  `/api/v1/custom-field-definitions`.
 - Definitions support field metadata such as type, required, searchable,
   filterable, sortable, and visibility flags.
 - Supported entity targets are users, roles, and access policies.
 - Angular admin screens consume the same definitions to render table columns,
   detail views, and form payloads consistently.
+- Visible user custom fields are also projected into the public registration
+  page through `/api/v1/Auth/registration-fields`.
 
 ### Trash and Restore Lifecycle
 
 - Users, roles, and access policies now move to trash first instead of
   disappearing immediately.
 - Restore endpoints are available on:
-  - `PATCH /api/users/{id}/restore`
-  - `PATCH /api/roles/{id}/restore`
-  - `PATCH /api/accesspolicies/{id}/restore`
+  - `PATCH /api/v1/users/{id}/restore`
+  - `PATCH /api/v1/roles/{id}/restore`
+  - `PATCH /api/v1/accesspolicies/{id}/restore`
 - Listing endpoints can include or isolate trashed records for admin review.
 - The current retention window is 3 days, defined in
   `src/algo.Application/Common/Trash/TrashRetention.cs`.
@@ -189,6 +234,27 @@ OTP peppers into environment variables or a secure secret store.
 - The settings experience includes create, edit, and delete workflows for field
   definitions so teams can evolve metadata without schema changes to core
   entities.
+
+### Auth Page Designer
+
+- Dashboard Settings includes a visual auth page designer for the login and
+  create-account screens.
+- Admins can tune background colors, accent color, accent size and opacity,
+  card background, border, radius, shadow, login/register widths, and button
+  colors.
+- The same configuration is consumed by the live preview, `/auth/login`, and
+  `/auth/register`.
+
+### API Hardening
+
+- Liveness and readiness endpoints are available at `/health/live` and
+  `/health/ready`.
+- Readiness checks include PostgreSQL and Redis.
+- API errors use consistent `application/problem+json` responses for validation,
+  authentication, authorization, not found, conflict, rate limit, and unhandled
+  error cases.
+- Login, registration/OTP, forgot/reset password, and refresh token flows are
+  protected by ASP.NET Core rate limiting policies.
 
 ## Testing
 

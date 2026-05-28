@@ -50,6 +50,10 @@ Example conventions currently used:
 - RBAC permissions with default roles and permissions
 - Access policy management for fine-grained authorization rules
 - Access policy condition parsing, validation, and evaluation
+- Versioned v1 HTTP endpoints with RFC 7807 Problem Details errors
+- Rate limiting for sensitive authentication and token endpoints
+- Liveness and readiness health checks for the API process, PostgreSQL, and Redis
+- Public registration field projection for visible user custom fields
 - Application request logging and structured Serilog output
 - Error logging and searchable log endpoints
 - Pagination, filtering, and sorting helpers
@@ -64,6 +68,7 @@ Example conventions currently used:
 - PostgreSQL with Npgsql
 - ASP.NET Core Identity
 - JWT bearer authentication
+- ASP.NET Core rate limiting and Problem Details
 - MediatR
 - FluentValidation
 - Mapster
@@ -129,6 +134,22 @@ The API launch profiles expose:
 
 ## API Documentation
 
+All controller endpoints are versioned under `/api/v1`.
+
+Error responses use `application/problem+json` with RFC 7807 fields and a
+`traceId` extension. Validation failures use `ValidationProblemDetails` so
+clients receive a consistent `errors` object for validation, authentication,
+authorization, not found, conflict, rate limit, and unexpected error paths.
+
+## Health Checks
+
+The API exposes production health probes:
+
+- `GET /health/live` checks that the ASP.NET Core process is running.
+- `GET /health/ready` checks application readiness, including PostgreSQL and Redis connectivity.
+
+Both endpoints return JSON and use the standard health check status codes, including `503 Service Unavailable` when readiness dependencies are unhealthy.
+
 In development, OpenAPI and Scalar are enabled.
 
 Open Scalar in the browser:
@@ -139,6 +160,26 @@ https://localhost:7259/scalar
 
 The API uses JWT bearer security. After login, paste the access token into the
 Scalar bearer token authorization field.
+
+## Security Controls
+
+The template includes security controls that map cleanly to OWASP ASVS-style
+verification areas:
+
+- Password reset uses OTP codes, avoids account enumeration, and revokes active
+  refresh tokens after a successful reset.
+- Refresh token rotation revokes the used token and stores the replacement hash.
+- Session revoke endpoints exist for single-session, selected-session,
+  user-session, and all-except-current revocation workflows.
+- Sensitive authentication endpoints are rate limited: login, registration/OTP,
+  resend OTP, forgot/reset password, and refresh token.
+- Audit and error logging capture request context while redacting sensitive
+  headers and token/password-like values.
+- Authorization-sensitive APIs are protected by JWT bearer auth plus access
+  policy evaluation in application handlers.
+- Step-up authentication is represented by admin-required TOTP policy and
+  confirmation fields on current-session revocation flows; add integration
+  tests around these flows before production rollout.
 
 ## Database
 
@@ -183,5 +224,11 @@ The API currently includes controllers for:
 - Access policies
 - Application logs
 - Error logs
+
+Useful operational endpoints:
+
+- `GET /health/live`
+- `GET /health/ready`
+- `GET /api/v1/Auth/registration-fields`
 
 Use Scalar for the full current endpoint list and request/response contracts.

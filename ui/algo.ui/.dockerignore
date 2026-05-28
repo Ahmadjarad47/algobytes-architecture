@@ -1,0 +1,6 @@
+node_modules
+dist
+.angular
+
+ng-serve.log
+ng-serve.err.log

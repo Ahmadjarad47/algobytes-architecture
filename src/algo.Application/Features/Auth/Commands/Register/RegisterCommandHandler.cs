@@ -1,4 +1,5 @@
 using algo.Application.Abstractions;
+using algo.Application.Common.CustomFields;
 using algo.Application.Configuration;
 using algo.Application.Features.Auth.Dtos;
 using algo.Domain.Identity.Entities;
@@ -16,17 +17,24 @@ public sealed class RegisterCommandHandler(
     IApplicationDbContext db,
     IOtpService otpService,
     IEmailService emailService,
+    CustomFieldValueValidator customFieldValueValidator,
     IOptions<OtpOptions> otpOptions) : IRequestHandler<RegisterCommand, OtpVerificationDto>
 {
     private readonly OtpOptions _otp = otpOptions.Value;
 
     public async Task<OtpVerificationDto> Handle(RegisterCommand request, CancellationToken cancellationToken)
     {
+        var customFields = await customFieldValueValidator.ValidateAndNormalizeAsync(
+            CustomFieldEntities.Users,
+            request.CustomFields,
+            cancellationToken);
+
         var user = new ApplicationUser
         {
             UserName = request.Email,
             Email = request.Email,
             DisplayName = request.DisplayName,
+            CustomFields = customFields,
             EmailConfirmed = false,
             CreatedAt = DateTimeOffset.UtcNow,
             UpdatedAt = DateTimeOffset.UtcNow,

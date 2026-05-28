@@ -7,8 +7,11 @@ policies, logs, reports, settings, and monitoring workflows.
 ## Features
 
 - Login and registration screens
+- Admin-configurable login and registration visuals through the Settings auth
+  page designer
+- Registration forms can render visible user custom fields from the backend
 - Auth and guest route guards
-- JWT-aware API access through HTTP interceptors
+- JWT-aware `/api/v1` API access through HTTP interceptors
 - Dashboard layout with protected feature areas
 - User management pages and API services
 - Role management pages and API services
@@ -85,7 +88,7 @@ http://localhost:4200
 The app expects the backend API at:
 
 ```text
-https://localhost:7259/api
+https://localhost:7259/api/v1
 ```
 
 ## API Configuration
@@ -93,16 +96,32 @@ https://localhost:7259/api
 The API base URL is configured in:
 
 ```text
-src/app/core/config/app-config.token.ts
+src/environments/environment.ts
+src/environments/environment.prod.ts
 ```
 
 Default value:
 
 ```ts
-apiBaseUrl: 'https://localhost:7259/api'
+apiBaseUrl: 'https://localhost:7259/api/v1'
 ```
 
-Update this value when pointing the frontend to a different backend host.
+Update this value when pointing the frontend to a different backend host. The
+dashboard Settings page also stores a local API base URL override for admin
+testing.
+
+## Auth Page Designer
+
+Admins can customize the login and create-account screens from:
+
+```text
+Dashboard -> Settings -> Auth page designer
+```
+
+The designer controls background colors, accent color, accent size and opacity,
+card background, card border, card radius, card shadow, login/register card
+widths, and button colors. The same settings drive the live preview,
+`/auth/login`, and `/auth/register`.
 
 ## Available Scripts
 

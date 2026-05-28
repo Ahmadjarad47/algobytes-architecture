@@ -25,18 +25,27 @@ public sealed class ValidationExceptionFilter : IExceptionFilter
                 ? StatusCodes.Status401Unauthorized
                 : StatusCodes.Status403Forbidden;
 
-            context.Result = new ObjectResult(new
-            {
+            var problem = ProblemDetailsResponse.CreateValidation(
+                context.HttpContext,
                 errors,
-                redirectUrl = AuthRedirectResponse.BuildLoginRedirectUrl(context.HttpContext),
-            })
+                statusCode,
+                hasAuthenticationError ? "Unauthorized." : "Forbidden.");
+            problem.Extensions["redirectUrl"] = AuthRedirectResponse.BuildLoginRedirectUrl(context.HttpContext);
+
+            context.Result = new ObjectResult(problem)
             {
                 StatusCode = statusCode,
             };
         }
         else
         {
-            context.Result = new BadRequestObjectResult(new { errors });
+            var problem = ProblemDetailsResponse.CreateValidation(
+                context.HttpContext,
+                errors,
+                StatusCodes.Status400BadRequest,
+                "Validation failed.");
+
+            context.Result = new BadRequestObjectResult(problem);
         }
 
         context.ExceptionHandled = true;

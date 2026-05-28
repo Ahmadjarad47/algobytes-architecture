@@ -9,10 +9,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace algo.API.Controllers;
 
-[ApiController]
 [Authorize]
-[Route("api/custom-field-definitions")]
-public sealed class CustomFieldDefinitionsController(IMediator mediator) : ControllerBase
+[Route("api/v1/custom-field-definitions")]
+public sealed class CustomFieldDefinitionsController(IMediator mediator) : BaseController(mediator)
 {
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<CustomFieldDefinitionDto>), StatusCodes.Status200OK)]

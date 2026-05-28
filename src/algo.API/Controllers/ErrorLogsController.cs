@@ -9,10 +9,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace algo.API.Controllers;
 
-[ApiController]
+//[ApiController]
 [Authorize]
-[Route("api/error-logs")]
-public sealed class ErrorLogsController(IMediator mediator) : ControllerBase
+[Route("api/v1/error-logs")]
+public sealed class ErrorLogsController(IMediator mediator) : BaseController(mediator)
 {
     [HttpGet]
     [ProducesResponseType(typeof(PaginatedResult<ErrorLogDto>), StatusCodes.Status200OK)]

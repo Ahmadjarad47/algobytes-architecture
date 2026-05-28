@@ -1,8 +1,8 @@
 using System.Net;
 using System.Text.Json;
+using algo.API.Security;
 using algo.Domain.Logging.Entities;
 using algo.Persistence.Context;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Hosting;
 
 namespace algo.API.Middleware;
@@ -52,22 +52,15 @@ public sealed class ExceptionHandlingMiddleware(
             var errorLog = BuildErrorLog(context, ex, environment, statusCode);
             await PersistErrorLogAsync(dbContext, errorLog, context.RequestAborted);
 
-            context.Response.StatusCode = (int)HttpStatusCode.InternalServerError;
-            context.Response.ContentType = "application/problem+json";
+            var problem = ProblemDetailsResponse.Create(
+                context,
+                (int)HttpStatusCode.InternalServerError,
+                "An unexpected error occurred.",
+                environment.IsDevelopment()
+                    ? ex.Message
+                    : "An error occurred while processing your request.");
 
-            var problem = new ProblemDetails
-            {
-                Status = context.Response.StatusCode,
-                Title = "An unexpected error occurred.",
-                Type = "https://httpstatuses.com/500",
-                Instance = context.Request.Path.Value,
-            };
-
-            problem.Detail = environment.IsDevelopment()
-                ? ex.Message
-                : "An error occurred while processing your request.";
-
-            await context.Response.WriteAsync(JsonSerializer.Serialize(problem, JsonOptions));
+            await ProblemDetailsResponse.WriteAsync(context, problem, context.RequestAborted);
         }
     }
 
@@ -78,6 +71,7 @@ public sealed class ExceptionHandlingMiddleware(
     {
         try
         {
+            dbContext.ChangeTracker.Clear();
             dbContext.ErrorLogs.Add(errorLog);
             await dbContext.SaveChangesAsync(cancellationToken);
         }

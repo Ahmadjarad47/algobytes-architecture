@@ -16,9 +16,15 @@ import { PasswordModule } from 'primeng/password';
 
 import { Permissions } from '../../../../core/permissions/permission.catalog';
 import { PermissionService } from '../../../../core/permissions/permission.service';
+import { AppConfigService } from '../../../../core/config/app-config.service';
 import { AppToastService } from '../../../../core/services/app-toast.service';
 import { LoginResponseDto } from '../../models/auth.models';
 import { AuthFacadeService } from '../../services/auth-facade.service';
+import {
+  authButtonStyle,
+  authCardStyle,
+  authPageBackground
+} from '../../utils/auth-page-style.utils';
 
 @Component({
   selector: 'app-login',
@@ -34,13 +40,13 @@ import { AuthFacadeService } from '../../services/auth-facade.service';
     PasswordModule
   ],
   template: `
-    <main class="grid min-h-dvh place-items-center bg-[radial-gradient(circle_at_top_left,_rgba(132,204,22,0.18),_transparent_30%),linear-gradient(180deg,_#f8fafc,_#eef2f7)] px-4">
-      <p-card styleClass="w-full max-w-md rounded-3xl border border-white/70 bg-white/90 shadow-xl backdrop-blur">
+    <main class="auth-page-shell grid min-h-dvh place-items-center px-4" [style.--auth-background-image]="authBackground()">
+      <p-card styleClass="w-full border backdrop-blur" [style]="authCardStyle()">
         <div class="mb-8">
-          <div class="text-xs font-semibold uppercase tracking-[0.22em] text-lime-700">algo.ui</div>
-          <h1 class="m-0 mt-3 text-3xl font-semibold text-surface-950">Welcome back</h1>
+          <div class="text-xs font-semibold uppercase tracking-[0.22em]" [style.color]="authDesign().accentColor">{{ authPage().brandLabel }}</div>
+          <h1 class="m-0 mt-3 text-3xl font-semibold text-surface-950">{{ authPage().loginTitle }}</h1>
           <p class="m-0 mt-2 text-sm text-surface-500">
-            Sign in to manage users, roles, policies, and operational logs.
+            {{ authPage().loginSubtitle }}
           </p>
         </div>
 
@@ -98,22 +104,28 @@ import { AuthFacadeService } from '../../services/auth-facade.service';
 
           <p-button
             type="submit"
-            label="Sign in"
+            [label]="authPage().loginSubmitLabel"
             [fluid]="true"
+            [style]="authButtonStyle()"
             [loading]="submitting()"
             [disabled]="form.invalid || submitting()"
           />
         </form>
 
         <div class="mt-6 text-sm text-surface-500">
-          New here?
-          <a routerLink="/auth/register" class="font-semibold text-surface-900 no-underline">
-            Create an account
+          {{ authPage().registerPrompt }}
+          <a routerLink="/auth/register" class="font-semibold no-underline" [style.color]="authDesign().accentColor">
+            {{ authPage().registerLinkLabel }}
           </a>
         </div>
       </p-card>
     </main>
   `,
+  styles: [`
+    :host .auth-page-shell {
+      background-image: var(--auth-background-image);
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class Login {
@@ -122,6 +134,7 @@ export class Login {
   private readonly router = inject(Router);
   private readonly toast = inject(AppToastService);
   private readonly permissionService = inject(PermissionService);
+  private readonly configService = inject(AppConfigService);
 
   protected readonly form = this.formBuilder.group({
     email: ['', [Validators.required, Validators.email]],
@@ -133,6 +146,8 @@ export class Login {
   protected readonly errorMessage = signal('');
   protected readonly totpChallenge = signal<LoginResponseDto['totpChallenge']>(null);
   protected readonly qrCodeUrl = signal<string>('');
+  protected readonly authPage = this.configService.authPage;
+  protected readonly authDesign = this.configService.authPageDesign;
 
   constructor() {
     effect(() => {
@@ -183,6 +198,18 @@ export class Login {
           this.errorMessage.set('Unable to sign in. Please verify your credentials and backend availability.');
         }
       });
+  }
+
+  protected authBackground(): string {
+    return authPageBackground(this.authDesign());
+  }
+
+  protected authCardStyle(): Record<string, string> {
+    return authCardStyle(this.authDesign(), this.authDesign().loginCardWidthRem);
+  }
+
+  protected authButtonStyle(): Record<string, string> {
+    return authButtonStyle(this.authDesign());
   }
 
   private getLandingRoute(): string {

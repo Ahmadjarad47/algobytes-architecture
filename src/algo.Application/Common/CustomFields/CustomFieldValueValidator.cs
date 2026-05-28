@@ -204,9 +204,27 @@ public sealed class CustomFieldValueValidator(IApplicationDbContext db)
 
         return definition.OptionsJson.RootElement
             .EnumerateArray()
-            .Where(item => item.ValueKind == JsonValueKind.String)
-            .Select(item => item.GetString() ?? string.Empty)
+            .Select(ReadOptionValue)
+            .Where(value => value is not null)
+            .Select(value => value ?? string.Empty)
             .ToHashSet(StringComparer.OrdinalIgnoreCase);
+    }
+
+    private static string? ReadOptionValue(JsonElement item)
+    {
+        if (item.ValueKind == JsonValueKind.String)
+        {
+            return item.GetString() ?? string.Empty;
+        }
+
+        if (item.ValueKind == JsonValueKind.Object &&
+            item.TryGetProperty("value", out var valueElement) &&
+            valueElement.ValueKind == JsonValueKind.String)
+        {
+            return valueElement.GetString() ?? string.Empty;
+        }
+
+        return null;
     }
 
     private static ValidationException Missing(CustomFieldDefinition definition) => new(new[]

@@ -14,10 +14,9 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace algo.API.Controllers;
 
-[ApiController]
 [Authorize]
-[Route("api/[controller]")]
-public sealed class AccessPoliciesController(IMediator mediator) : ControllerBase
+public sealed class AccessPoliciesController(IMediator mediator)
+    : BaseController(mediator)
 {
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<AccessPolicyAdminDto>), StatusCodes.Status200OK)]

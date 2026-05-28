@@ -1,0 +1,15 @@
+.git
+.github
+.vs
+artifacts
+tests
+
+**/bin
+**/obj
+**/node_modules
+**/dist
+**/.angular
+
+ui/algo.ui/ng-serve.log
+ui/algo.ui/ng-serve.err.log
+src/algo.API/logs

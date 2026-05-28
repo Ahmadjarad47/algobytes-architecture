@@ -1,6 +1,16 @@
 @algo.API_HostAddress = http://localhost:5244
 
-GET {{algo.API_HostAddress}}/weatherforecast/
+GET {{algo.API_HostAddress}}/health/live
 Accept: application/json
+
+###
+
+POST {{algo.API_HostAddress}}/api/v1/Auth/login
+Content-Type: application/json
+
+{
+  "email": "admin@example.com",
+  "password": "ChangeMe123!"
+}
 
 ###

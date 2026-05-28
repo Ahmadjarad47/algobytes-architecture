@@ -11,10 +11,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace algo.API.Controllers;
 
-[ApiController]
+//[ApiController]
 [Authorize]
-[Route("api/[controller]")]
-public sealed class SessionsController(IMediator mediator) : ControllerBase
+//[Route("api/v1/[controller]")]
+public sealed class SessionsController(IMediator mediator) : BaseController(mediator)
 {
     [HttpGet]
     [ProducesResponseType(typeof(ActiveSessionsResponseDto), StatusCodes.Status200OK)]

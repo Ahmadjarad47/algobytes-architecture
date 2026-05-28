@@ -35,6 +35,35 @@ export interface AdminWebhookConfig {
   readonly enabled: boolean;
 }
 
+export interface AdminAuthPageConfig {
+  readonly brandLabel: string;
+  readonly loginTitle: string;
+  readonly loginSubtitle: string;
+  readonly loginSubmitLabel: string;
+  readonly registerPrompt: string;
+  readonly registerLinkLabel: string;
+  readonly registerTitle: string;
+  readonly registerSubtitle: string;
+  readonly registerSubmitLabel: string;
+  readonly registerBackLinkLabel: string;
+}
+
+export interface AdminAuthPageDesignConfig {
+  readonly backgroundStart: string;
+  readonly backgroundEnd: string;
+  readonly accentColor: string;
+  readonly accentOpacity: number;
+  readonly accentSizePercent: number;
+  readonly cardBackground: string;
+  readonly cardBorderColor: string;
+  readonly cardRadiusPx: number;
+  readonly cardShadow: string;
+  readonly loginCardWidthRem: number;
+  readonly registerCardWidthRem: number;
+  readonly buttonBackground: string;
+  readonly buttonTextColor: string;
+}
+
 export interface AdminTemplateConfig {
   readonly appName: string;
   readonly workspaceName: string;
@@ -60,6 +89,8 @@ export interface AdminTemplateConfig {
   readonly errorAlerts: boolean;
   readonly apiKeys: readonly AdminApiKeyConfig[];
   readonly webhooks: readonly AdminWebhookConfig[];
+  readonly authPage: AdminAuthPageConfig;
+  readonly authPageDesign: AdminAuthPageDesignConfig;
   readonly features: AdminFeatureFlags;
 }
 
@@ -91,6 +122,33 @@ export const DEFAULT_ADMIN_TEMPLATE_CONFIG: AdminTemplateConfig = {
   emailNotifications: true,
   systemAlerts: true,
   errorAlerts: true,
+  authPage: {
+    brandLabel: 'ALGO.UI',
+    loginTitle: 'Please login',
+    loginSubtitle: 'Sign in to manage users, roles, policies, and operational logs.',
+    loginSubmitLabel: 'Sign in',
+    registerPrompt: 'New here?',
+    registerLinkLabel: 'Create an account',
+    registerTitle: 'Create an account',
+    registerSubtitle: 'Register a new operator account for the dashboard workspace.',
+    registerSubmitLabel: 'Create account',
+    registerBackLinkLabel: 'Back to sign in'
+  },
+  authPageDesign: {
+    backgroundStart: '#f8fafc',
+    backgroundEnd: '#eef2f7',
+    accentColor: '#0ea5e9',
+    accentOpacity: 0.16,
+    accentSizePercent: 30,
+    cardBackground: '#ffffff',
+    cardBorderColor: '#ffffff',
+    cardRadiusPx: 24,
+    cardShadow: '0 24px 70px rgba(15, 23, 42, 0.16)',
+    loginCardWidthRem: 28,
+    registerCardWidthRem: 42,
+    buttonBackground: '#6ee7b7',
+    buttonTextColor: '#ffffff'
+  },
   apiKeys: [
     {
       id: 'template-key',

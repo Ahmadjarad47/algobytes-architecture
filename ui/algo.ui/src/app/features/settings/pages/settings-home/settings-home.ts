@@ -12,6 +12,8 @@ import { ToggleSwitchModule } from 'primeng/toggleswitch';
 
 import { AppConfigService } from '../../../../core/config/app-config.service';
 import {
+  AdminAuthPageConfig,
+  AdminAuthPageDesignConfig,
   AdminDirection,
   AdminEnvironment,
   AdminShapeMode,
@@ -35,6 +37,11 @@ import {
 } from '../../../custom-fields/models/custom-fields.models';
 import { StorageSettingsApiService } from '../../../storage/api/storage-settings-api.service';
 import { FileScanResult, StorageSettings } from '../../../storage/models/storage.models';
+import {
+  authButtonStyle,
+  authCardStyle,
+  authPageBackground
+} from '../../../auth/utils/auth-page-style.utils';
 
 @Component({
   selector: 'app-settings-home',
@@ -121,6 +128,149 @@ import { FileScanResult, StorageSettings } from '../../../storage/models/storage
               <span>Favicon placeholder URL</span>
               <input pInputText [ngModel]="config().faviconUrl ?? ''" (ngModelChange)="patch({ faviconUrl: $event || null })" placeholder="https://..." />
             </label>
+          </div>
+        </article>
+
+        <article class="surface-card dashboard-section xl:col-span-2">
+          <div class="flex flex-col gap-2 md:flex-row md:items-start md:justify-between">
+            <div>
+              <h3 class="settings-title">Auth page designer</h3>
+              <p class="m-0 text-[12px] text-slate-500">
+                Tune the login and create account screens with live visual feedback.
+              </p>
+            </div>
+            <p-tag value="Live preview" severity="success" />
+          </div>
+
+          <div class="mt-4 grid gap-4 xl:grid-cols-[minmax(0,1.25fr)_minmax(24rem,.75fr)]">
+            <div class="grid gap-4">
+              <div>
+                <div class="settings-list-title mb-2">Visual style</div>
+                <div class="settings-grid">
+                  <label class="settings-field">
+                    <span>Background start</span>
+                    <input pInputText type="color" [ngModel]="config().authPageDesign.backgroundStart" (ngModelChange)="patchAuthPageDesign({ backgroundStart: $event })" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Background end</span>
+                    <input pInputText type="color" [ngModel]="config().authPageDesign.backgroundEnd" (ngModelChange)="patchAuthPageDesign({ backgroundEnd: $event })" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Accent color</span>
+                    <input pInputText type="color" [ngModel]="config().authPageDesign.accentColor" (ngModelChange)="patchAuthPageDesign({ accentColor: $event })" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Accent opacity</span>
+                    <p-inputnumber [ngModel]="config().authPageDesign.accentOpacity" (ngModelChange)="patchAuthPageDesign({ accentOpacity: $event })" [min]="0" [max]="1" [minFractionDigits]="2" [maxFractionDigits]="2" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Accent size</span>
+                    <p-inputnumber [ngModel]="config().authPageDesign.accentSizePercent" (ngModelChange)="patchAuthPageDesign({ accentSizePercent: $event })" suffix="%" [min]="10" [max]="80" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Card background</span>
+                    <input pInputText type="color" [ngModel]="config().authPageDesign.cardBackground" (ngModelChange)="patchAuthPageDesign({ cardBackground: $event })" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Card border</span>
+                    <input pInputText type="color" [ngModel]="config().authPageDesign.cardBorderColor" (ngModelChange)="patchAuthPageDesign({ cardBorderColor: $event })" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Card radius</span>
+                    <p-inputnumber [ngModel]="config().authPageDesign.cardRadiusPx" (ngModelChange)="patchAuthPageDesign({ cardRadiusPx: $event })" suffix=" px" [min]="0" [max]="40" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Login card width</span>
+                    <p-inputnumber [ngModel]="config().authPageDesign.loginCardWidthRem" (ngModelChange)="patchAuthPageDesign({ loginCardWidthRem: $event })" suffix=" rem" [min]="20" [max]="44" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Register card width</span>
+                    <p-inputnumber [ngModel]="config().authPageDesign.registerCardWidthRem" (ngModelChange)="patchAuthPageDesign({ registerCardWidthRem: $event })" suffix=" rem" [min]="24" [max]="56" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Button background</span>
+                    <input pInputText type="color" [ngModel]="config().authPageDesign.buttonBackground" (ngModelChange)="patchAuthPageDesign({ buttonBackground: $event })" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Button text</span>
+                    <input pInputText type="color" [ngModel]="config().authPageDesign.buttonTextColor" (ngModelChange)="patchAuthPageDesign({ buttonTextColor: $event })" />
+                  </label>
+                  <label class="settings-field md:col-span-2">
+                    <span>Card shadow CSS</span>
+                    <input pInputText [ngModel]="config().authPageDesign.cardShadow" (ngModelChange)="patchAuthPageDesign({ cardShadow: $event })" />
+                  </label>
+                </div>
+              </div>
+
+              <div>
+                <div class="settings-list-title mb-2">Copy</div>
+                <div class="settings-grid">
+                  <label class="settings-field">
+                    <span>Auth brand label</span>
+                    <input pInputText [ngModel]="config().authPage.brandLabel" (ngModelChange)="patchAuthPage({ brandLabel: $event })" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Login title</span>
+                    <input pInputText [ngModel]="config().authPage.loginTitle" (ngModelChange)="patchAuthPage({ loginTitle: $event })" />
+                  </label>
+                  <label class="settings-field md:col-span-2">
+                    <span>Login subtitle</span>
+                    <textarea pTextarea rows="2" [ngModel]="config().authPage.loginSubtitle" (ngModelChange)="patchAuthPage({ loginSubtitle: $event })"></textarea>
+                  </label>
+                  <label class="settings-field">
+                    <span>Login button label</span>
+                    <input pInputText [ngModel]="config().authPage.loginSubmitLabel" (ngModelChange)="patchAuthPage({ loginSubmitLabel: $event })" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Register prompt</span>
+                    <input pInputText [ngModel]="config().authPage.registerPrompt" (ngModelChange)="patchAuthPage({ registerPrompt: $event })" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Register link label</span>
+                    <input pInputText [ngModel]="config().authPage.registerLinkLabel" (ngModelChange)="patchAuthPage({ registerLinkLabel: $event })" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Register title</span>
+                    <input pInputText [ngModel]="config().authPage.registerTitle" (ngModelChange)="patchAuthPage({ registerTitle: $event })" />
+                  </label>
+                  <label class="settings-field md:col-span-2">
+                    <span>Register subtitle</span>
+                    <textarea pTextarea rows="2" [ngModel]="config().authPage.registerSubtitle" (ngModelChange)="patchAuthPage({ registerSubtitle: $event })"></textarea>
+                  </label>
+                  <label class="settings-field">
+                    <span>Register button label</span>
+                    <input pInputText [ngModel]="config().authPage.registerSubmitLabel" (ngModelChange)="patchAuthPage({ registerSubmitLabel: $event })" />
+                  </label>
+                  <label class="settings-field">
+                    <span>Register back link label</span>
+                    <input pInputText [ngModel]="config().authPage.registerBackLinkLabel" (ngModelChange)="patchAuthPage({ registerBackLinkLabel: $event })" />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div class="auth-designer-preview min-h-96 rounded-xl border border-slate-200 p-6" [style.--auth-background-image]="authDesignerPreviewBackground()">
+              <div class="mx-auto p-5" [style]="authDesignerPreviewCardStyle()">
+                <div class="text-[10px] font-semibold uppercase tracking-[0.2em]" [style.color]="config().authPageDesign.accentColor">
+                  {{ config().authPage.brandLabel }}
+                </div>
+                <div class="mt-3 text-2xl font-semibold text-slate-950">{{ config().authPage.loginTitle }}</div>
+                <p class="mt-2 text-xs leading-5 text-slate-500">{{ config().authPage.loginSubtitle }}</p>
+                <div class="mt-5 grid gap-3">
+                  <div class="h-11 rounded-lg border border-slate-200 bg-white"></div>
+                  <div class="h-11 rounded-lg border border-slate-200 bg-white"></div>
+                </div>
+                <button class="mt-5 h-11 w-full rounded-lg border text-sm font-semibold" [style]="authDesignerPreviewButtonStyle()">
+                  {{ config().authPage.loginSubmitLabel }}
+                </button>
+                <div class="mt-4 text-xs text-slate-500">
+                  {{ config().authPage.registerPrompt }}
+                  <span class="font-semibold" [style.color]="config().authPageDesign.accentColor">
+                    {{ config().authPage.registerLinkLabel }}
+                  </span>
+                </div>
+              </div>
+            </div>
           </div>
         </article>
 
@@ -430,6 +580,11 @@ import { FileScanResult, StorageSettings } from '../../../storage/models/storage
       (confirm)="confirmDeleteCustomField()"
     />
   `,
+  styles: [`
+    :host .auth-designer-preview {
+      background-image: var(--auth-background-image);
+    }
+  `],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class SettingsHome {
@@ -581,6 +736,37 @@ export class SettingsHome {
       return;
     }
     this.configService.update({ passwordPolicy: patch as AdminTemplateConfig['passwordPolicy'] });
+  }
+
+  protected patchAuthPage(patch: Partial<AdminAuthPageConfig>): void {
+    if (!this.canUpdate()) {
+      return;
+    }
+    this.configService.update({ authPage: patch as AdminAuthPageConfig });
+  }
+
+  protected patchAuthPageDesign(patch: Partial<AdminAuthPageDesignConfig>): void {
+    if (!this.canUpdate()) {
+      return;
+    }
+    this.configService.update({ authPageDesign: patch as AdminAuthPageDesignConfig });
+  }
+
+  protected authDesignerPreviewBackground(): string {
+    return authPageBackground(this.config().authPageDesign);
+  }
+
+  protected authDesignerPreviewCardStyle(): Record<string, string> {
+    return {
+      ...authCardStyle(this.config().authPageDesign, 24),
+      width: '100%',
+      borderStyle: 'solid',
+      borderWidth: '1px'
+    };
+  }
+
+  protected authDesignerPreviewButtonStyle(): Record<string, string> {
+    return authButtonStyle(this.config().authPageDesign);
   }
 
   protected setDomains(value: string): void {

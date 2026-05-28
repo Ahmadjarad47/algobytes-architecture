@@ -1,15 +1,8 @@
-using System.Text.Json;
-
 namespace algo.API.Security;
 
 internal static class AuthRedirectResponse
 {
     private const string LoginPath = "/login";
-
-    private static readonly JsonSerializerOptions JsonOptions = new()
-    {
-        PropertyNamingPolicy = JsonNamingPolicy.CamelCase,
-    };
 
     public static string BuildLoginRedirectUrl(HttpContext context)
     {
@@ -30,16 +23,9 @@ internal static class AuthRedirectResponse
             return;
         }
 
-        context.Response.StatusCode = statusCode;
-        context.Response.ContentType = "application/json";
+        var problem = ProblemDetailsResponse.Create(context, statusCode, error, message);
+        problem.Extensions["redirectUrl"] = BuildLoginRedirectUrl(context);
 
-        var body = new
-        {
-            error,
-            message,
-            redirectUrl = BuildLoginRedirectUrl(context),
-        };
-
-        await context.Response.WriteAsync(JsonSerializer.Serialize(body, JsonOptions));
+        await ProblemDetailsResponse.WriteAsync(context, problem, context.RequestAborted);
     }
 }

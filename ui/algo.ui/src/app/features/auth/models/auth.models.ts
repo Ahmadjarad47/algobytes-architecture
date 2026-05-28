@@ -9,6 +9,7 @@ export interface RegisterCommand {
   readonly password: string;
   readonly confirmPassword: string;
   readonly displayName: string;
+  readonly customFields?: Record<string, unknown>;
 }
 
 export interface AuthResponseDto {

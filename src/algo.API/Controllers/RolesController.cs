@@ -12,10 +12,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace algo.API.Controllers;
 
-[ApiController]
+//[ApiController]
 [Authorize]
-[Route("api/[controller]")]
-public sealed class RolesController(IMediator mediator) : ControllerBase
+//[Route("api/v1/[controller]")]
+public sealed class RolesController(IMediator mediator) : BaseController(mediator)
 {
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<RoleDto>), StatusCodes.Status200OK)]

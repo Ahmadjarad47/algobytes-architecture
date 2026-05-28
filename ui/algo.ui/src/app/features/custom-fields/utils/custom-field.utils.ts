@@ -51,10 +51,7 @@ export function customFieldFormFields(definitions: readonly CustomFieldDefinitio
                     : 'text',
       required: definition.required,
       options: Array.isArray(definition.options)
-        ? definition.options.map((option) => ({
-            label: String(option),
-            value: String(option)
-          }))
+        ? definition.options.map((option) => toFormOption(option))
         : undefined
     }));
 }
@@ -154,4 +151,26 @@ function toInitialValue(definition: CustomFieldDefinition, value: unknown): unkn
   }
 
   return value;
+}
+
+function toFormOption(option: unknown): { label: string; value: string } {
+  if (isRecord(option)) {
+    const value = option['value'];
+    const label = option['label'];
+    const normalizedValue = value === undefined || value === null ? String(label ?? '') : String(value);
+
+    return {
+      label: label === undefined || label === null ? normalizedValue : String(label),
+      value: normalizedValue
+    };
+  }
+
+  return {
+    label: String(option),
+    value: String(option)
+  };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }

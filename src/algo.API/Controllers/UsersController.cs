@@ -25,10 +25,10 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace algo.API.Controllers;
 
-[ApiController]
+//[ApiController]
 [Authorize]
-[Route("api/[controller]")]
-public sealed class UsersController(IMediator mediator) : ControllerBase
+//[Route("api/v1/[controller]")]
+public sealed class UsersController(IMediator mediator) : BaseController(mediator)  
 {
     [HttpGet]
     [ProducesResponseType(typeof(PaginatedResult<UserListItemDto>), StatusCodes.Status200OK)]

@@ -20,6 +20,7 @@ namespace algo.API.IntegrationTests;
 
 public sealed class AuthorizationBehaviorTests : IClassFixture<AuthorizationBehaviorTests.TestApiFactory>
 {
+    private const string ApiV1 = "/api/v1";
     private readonly TestApiFactory factory;
 
     public AuthorizationBehaviorTests(TestApiFactory factory)
@@ -35,13 +36,13 @@ public sealed class AuthorizationBehaviorTests : IClassFixture<AuthorizationBeha
         var token = await LoginAsync(client, "logs.reader@algo.bytes", "Reader@123456");
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var logsResponse = await client.GetAsync("/api/logs");
+        var logsResponse = await client.GetAsync($"{ApiV1}/logs");
         Assert.Equal(HttpStatusCode.OK, logsResponse.StatusCode);
 
-        var listAccessPoliciesResponse = await client.GetAsync("/api/AccessPolicies");
+        var listAccessPoliciesResponse = await client.GetAsync($"{ApiV1}/AccessPolicies");
         Assert.Equal(HttpStatusCode.Forbidden, listAccessPoliciesResponse.StatusCode);
 
-        var createAccessPolicyResponse = await client.PostAsJsonAsync("/api/AccessPolicies", new
+        var createAccessPolicyResponse = await client.PostAsJsonAsync($"{ApiV1}/AccessPolicies", new
         {
             resource = AccessPolicyResources.Logs,
             action = AccessPolicyActions.Read,
@@ -57,10 +58,10 @@ public sealed class AuthorizationBehaviorTests : IClassFixture<AuthorizationBeha
         });
         Assert.Equal(HttpStatusCode.Forbidden, createAccessPolicyResponse.StatusCode);
 
-        var rolesResponse = await client.GetAsync("/api/roles");
+        var rolesResponse = await client.GetAsync($"{ApiV1}/roles");
         Assert.Equal(HttpStatusCode.Forbidden, rolesResponse.StatusCode);
 
-        var usersResponse = await client.GetAsync("/api/users");
+        var usersResponse = await client.GetAsync($"{ApiV1}/users");
         Assert.Equal(HttpStatusCode.Forbidden, usersResponse.StatusCode);
     }
 
@@ -72,10 +73,10 @@ public sealed class AuthorizationBehaviorTests : IClassFixture<AuthorizationBeha
         var token = await LoginAsync(client, DefaultAdmin.Email, DefaultAdmin.Password);
         client.DefaultRequestHeaders.Authorization = new AuthenticationHeaderValue("Bearer", token);
 
-        var accessPoliciesResponse = await client.GetAsync("/api/AccessPolicies");
+        var accessPoliciesResponse = await client.GetAsync($"{ApiV1}/AccessPolicies");
         Assert.Equal(HttpStatusCode.OK, accessPoliciesResponse.StatusCode);
 
-        var createAccessPolicyResponse = await client.PostAsJsonAsync("/api/AccessPolicies", new
+        var createAccessPolicyResponse = await client.PostAsJsonAsync($"{ApiV1}/AccessPolicies", new
         {
             resource = AccessPolicyResources.Logs,
             action = AccessPolicyActions.Read,
@@ -91,16 +92,41 @@ public sealed class AuthorizationBehaviorTests : IClassFixture<AuthorizationBeha
         });
         Assert.Equal(HttpStatusCode.OK, createAccessPolicyResponse.StatusCode);
 
-        var usersResponse = await client.GetAsync("/api/users");
+        var usersResponse = await client.GetAsync($"{ApiV1}/users");
         Assert.Equal(HttpStatusCode.OK, usersResponse.StatusCode);
 
-        var logsResponse = await client.GetAsync("/api/logs");
+        var logsResponse = await client.GetAsync($"{ApiV1}/logs");
         Assert.Equal(HttpStatusCode.OK, logsResponse.StatusCode);
+    }
+
+    [Fact]
+    public async Task LoginRateLimit_ReturnsProblemDetails()
+    {
+        using var client = factory.CreateClient();
+        client.DefaultRequestHeaders.Add("X-Forwarded-For", "203.0.113.77");
+
+        HttpResponseMessage response = null!;
+        for (var attempt = 0; attempt < 6; attempt++)
+        {
+            response = await client.PostAsJsonAsync($"{ApiV1}/auth/login", new
+            {
+                email = "missing.user@algo.bytes",
+                password = "WrongPassword123!",
+            });
+        }
+
+        Assert.Equal(HttpStatusCode.TooManyRequests, response.StatusCode);
+        Assert.Equal("application/problem+json", response.Content.Headers.ContentType?.MediaType);
+
+        var body = await response.Content.ReadFromJsonAsync<JsonObject>();
+        Assert.Equal(429, body?["status"]?.GetValue<int>());
+        Assert.Equal("Too many requests.", body?["title"]?.GetValue<string>());
+        Assert.False(string.IsNullOrWhiteSpace(body?["traceId"]?.GetValue<string>()));
     }
 
     private static async Task<string> LoginAsync(HttpClient client, string email, string password)
     {
-        var response = await client.PostAsJsonAsync("/api/auth/login", new { email, password });
+        var response = await client.PostAsJsonAsync($"{ApiV1}/auth/login", new { email, password });
         response.EnsureSuccessStatusCode();
 
         var body = await response.Content.ReadFromJsonAsync<JsonObject>();

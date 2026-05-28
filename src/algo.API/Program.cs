@@ -1,6 +1,7 @@
 using algo.API.Configuration;
 using algo.API.Extensions;
 using algo.API.Filters;
+using algo.API.HealthChecks;
 using algo.API.Security;
 using algo.Application.Configuration;
 using algo.Application.DependencyInjection;
@@ -9,8 +10,11 @@ using algo.Persistence.Context;
 using algo.Persistence.DependencyInjection;
 using algo.RealTime;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Diagnostics.HealthChecks;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Diagnostics.HealthChecks;
 using Microsoft.OpenApi;
 using Scalar.AspNetCore;
 using Serilog;
@@ -27,12 +31,49 @@ builder.Services.AddPersistence(builder.Configuration);
 builder.Services.AddInfrastructure(builder.Configuration);
 builder.Services.AddApplication(builder.Configuration);
 builder.Services.AddRealTime(builder.Configuration);
+builder.Services.AddProblemDetails();
+builder.Services.AddApiRateLimiting();
+
+builder.Services.AddHealthChecks()
+    .AddCheck("self", () => HealthCheckResult.Healthy(), tags: ["live"])
+    .AddCheck<PostgreSqlHealthCheck>(
+        "postgresql",
+        failureStatus: HealthStatus.Unhealthy,
+        tags: ["ready", "database"])
+    .AddCheck<RedisHealthCheck>(
+        "redis",
+        failureStatus: HealthStatus.Unhealthy,
+        tags: ["ready", "cache"]);
 
 builder.Services.AddControllers(options => options.Filters.Add<ValidationExceptionFilter>())
     .AddJsonOptions(o =>
     {
         o.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter(JsonNamingPolicy.CamelCase));
     });
+builder.Services.Configure<ApiBehaviorOptions>(options =>
+{
+    options.InvalidModelStateResponseFactory = context =>
+    {
+        var errors = context.ModelState
+            .Where(entry => entry.Value?.Errors.Count > 0)
+            .ToDictionary(
+                entry => entry.Key,
+                entry => entry.Value!.Errors
+                    .Select(error => string.IsNullOrWhiteSpace(error.ErrorMessage)
+                        ? "The input was not valid."
+                        : error.ErrorMessage)
+                    .ToArray(),
+                StringComparer.Ordinal);
+
+        var problem = ProblemDetailsResponse.CreateValidation(
+            context.HttpContext,
+            errors,
+            StatusCodes.Status400BadRequest,
+            "Validation failed.");
+
+        return new BadRequestObjectResult(problem);
+    };
+});
 
 var jwtOptions = builder.Configuration.GetSection(JwtOptions.SectionName).Get<JwtOptions>()
     ?? throw new InvalidOperationException(
@@ -230,7 +271,6 @@ builder.Services.AddOpenApi(options =>
 });
 
 var app = builder.Build();
-app.UseCors("UiDevCors");
 if (app.Environment.IsDevelopment())
 {
     app.MapOpenApi();
@@ -242,14 +282,28 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+app.UseRouting();
+app.UseCors("UiDevCors");
 
 app.UseAlgoStructuredLogging();
+app.UseApiProblemDetails();
+app.UseRateLimiter();
 
 app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
 app.MapHub<SessionHub>("/hubs/sessions");
+app.MapHealthChecks("/health/live", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("live", StringComparer.OrdinalIgnoreCase),
+    ResponseWriter = HealthCheckResponseWriter.WriteResponseAsync
+}).AllowAnonymous();
+app.MapHealthChecks("/health/ready", new HealthCheckOptions
+{
+    Predicate = check => check.Tags.Contains("ready", StringComparer.OrdinalIgnoreCase),
+    ResponseWriter = HealthCheckResponseWriter.WriteResponseAsync
+}).AllowAnonymous();
 
 using (var scope = app.Services.CreateScope())
 {

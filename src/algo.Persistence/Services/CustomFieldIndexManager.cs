@@ -22,10 +22,12 @@ internal sealed class CustomFieldIndexManager(ApplicationDbContext db) : ICustom
 
         var resolved = mapping.Value;
 
+        await DropIndexesAsync(definition, cancellationToken);
+
         if (definition.Searchable || definition.Filterable || definition.Sortable)
         {
             var sql = $"""
-                CREATE INDEX IF NOT EXISTS "{BuildIndexName(resolved.TableName, definition.Key)}"
+                CREATE INDEX "{BuildIndexName(resolved.TableName, definition.Key)}"
                 ON "{resolved.TableName}" ({BuildExpression(definition)});
                 """;
             await db.Database.ExecuteSqlRawAsync(sql, cancellationToken);

@@ -75,7 +75,7 @@ export class SessionRealtimeService {
       return;
     }
 
-    const hubUrl = `${this.config.apiBaseUrl().replace(/\/api\/?$/, '')}/hubs/sessions`;
+    const hubUrl = `${this.config.apiBaseUrl().replace(/\/api(?:\/v\d+)?\/?$/i, '')}/hubs/sessions`;
     const connection = new signalR.HubConnectionBuilder()
       .withUrl(hubUrl, {
         accessTokenFactory: () => this.auth.getAccessToken() ?? ''

@@ -21,6 +21,8 @@ export class AppConfigService {
   readonly isCompact = computed(() => this.configState().compactMode);
   readonly direction = computed(() => this.configState().direction);
   readonly apiBaseUrl = computed(() => this.configState().apiBaseUrl);
+  readonly authPage = computed(() => this.configState().authPage);
+  readonly authPageDesign = computed(() => this.configState().authPageDesign);
 
   constructor() {
     effect(() => {
@@ -34,16 +36,28 @@ export class AppConfigService {
   }
 
   update(patch: Partial<AdminTemplateConfig>): void {
+    const normalizedPatch = patch.apiBaseUrl
+      ? { ...patch, apiBaseUrl: normalizeApiBaseUrl(patch.apiBaseUrl) }
+      : patch;
+
     this.configState.update((current) => ({
       ...current,
-      ...patch,
+      ...normalizedPatch,
       passwordPolicy: {
         ...current.passwordPolicy,
-        ...patch.passwordPolicy
+        ...normalizedPatch.passwordPolicy
+      },
+      authPage: {
+        ...current.authPage,
+        ...normalizedPatch.authPage
+      },
+      authPageDesign: {
+        ...current.authPageDesign,
+        ...normalizedPatch.authPageDesign
       },
       features: {
         ...current.features,
-        ...patch.features
+        ...normalizedPatch.features
       }
     }));
   }
@@ -84,9 +98,18 @@ export class AppConfigService {
       return {
         ...DEFAULT_ADMIN_TEMPLATE_CONFIG,
         ...parsed,
+        apiBaseUrl: normalizeApiBaseUrl(parsed.apiBaseUrl ?? DEFAULT_ADMIN_TEMPLATE_CONFIG.apiBaseUrl),
         passwordPolicy: {
           ...DEFAULT_ADMIN_TEMPLATE_CONFIG.passwordPolicy,
           ...parsed.passwordPolicy
+        },
+        authPage: {
+          ...DEFAULT_ADMIN_TEMPLATE_CONFIG.authPage,
+          ...parsed.authPage
+        },
+        authPageDesign: {
+          ...DEFAULT_ADMIN_TEMPLATE_CONFIG.authPageDesign,
+          ...parsed.authPageDesign
         },
         features: {
           ...DEFAULT_ADMIN_TEMPLATE_CONFIG.features,
@@ -129,4 +152,9 @@ export class AppConfigService {
     }
     link.href = url;
   }
+}
+
+function normalizeApiBaseUrl(apiBaseUrl: string): string {
+  const trimmed = apiBaseUrl.replace(/\/+$/, '');
+  return /\/api$/i.test(trimmed) ? `${trimmed}/v1` : trimmed;
 }
