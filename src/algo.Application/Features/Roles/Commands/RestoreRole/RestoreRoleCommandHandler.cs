@@ -6,13 +6,13 @@ using Microsoft.EntityFrameworkCore;
 namespace algo.Application.Features.Roles.Commands.RestoreRole;
 
 public sealed class RestoreRoleCommandHandler(
-    IAccessPolicyEvaluator accessPolicyEvaluator,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
     IApplicationDbContext db)
     : IRequestHandler<RestoreRoleCommand, bool>
 {
     public async Task<bool> Handle(RestoreRoleCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Roles,
             AccessPolicyActions.Update,

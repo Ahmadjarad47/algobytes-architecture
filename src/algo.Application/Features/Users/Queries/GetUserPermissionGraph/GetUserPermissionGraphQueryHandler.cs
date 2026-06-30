@@ -12,19 +12,20 @@ namespace algo.Application.Features.Users.Queries.GetUserPermissionGraph;
 
 public sealed class GetUserPermissionGraphQueryHandler(
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator)
+    IAccessPolicyAuthorizationChecker authorizationChecker,
+    IAccessPolicyQueryFilter queryFilter)
     : IRequestHandler<GetUserPermissionGraphQuery, UserPermissionGraphDto>
 {
     public async Task<UserPermissionGraphDto> Handle(GetUserPermissionGraphQuery request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Users,
             AccessPolicyActions.Read,
             cancellationToken);
 
         IQueryable<ApplicationUser> scoped = db.Users.AsNoTracking();
-        scoped = await accessPolicyEvaluator.ApplyAsync(
+        scoped = await queryFilter.ApplyAsync(
             scoped,
             AccessPolicyResources.Users,
             AccessPolicyActions.Read,

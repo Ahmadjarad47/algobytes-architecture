@@ -2,9 +2,7 @@ using algo.Domain.CustomFields;
 
 namespace algo.Application.Abstractions;
 
-public interface ICustomFieldIndexManager
+public interface ICustomFieldIndexSynchronizer
 {
     Task SyncIndexesAsync(CustomFieldDefinition definition, CancellationToken cancellationToken);
-
-    Task DropIndexesAsync(CustomFieldDefinition definition, CancellationToken cancellationToken);
 }

@@ -11,9 +11,9 @@ namespace algo.Application.Features.AccessPolicies.Commands.CreateAccessPolicy;
 
 public sealed class CreateAccessPolicyCommandHandler(
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
     IAccessPolicyConditionParser conditionParser,
-    IAccessPolicyMetadataProvider metadataProvider,
+    IAccessPolicyMetadataLookup metadataLookup,
     ICurrentUserService currentUser,
     CustomFieldValueValidator customFieldValueValidator) : IRequestHandler<CreateAccessPolicyCommand, AccessPolicyAdminDto>
 {
@@ -21,7 +21,7 @@ public sealed class CreateAccessPolicyCommandHandler(
         CreateAccessPolicyCommand request,
         CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.AccessPolicies,
             AccessPolicyActions.Create,
@@ -33,7 +33,7 @@ public sealed class CreateAccessPolicyCommandHandler(
         var description = request.Description?.Trim();
 
         if (!string.Equals(resource, AccessPolicyResources.Wildcard, StringComparison.Ordinal)
-            && !metadataProvider.TryGetMetadata(resource, out _))
+            && !metadataLookup.TryGetMetadata(resource, out _))
         {
             throw new ValidationException(new[]
             {
@@ -52,7 +52,7 @@ public sealed class CreateAccessPolicyCommandHandler(
                     StringComparison.Ordinal)
                     ? AccessPolicyResources.Users
                     : resource;
-                conditionParser.Validate(validateResource, ast, metadataProvider);
+                conditionParser.Validate(validateResource, ast, metadataLookup);
             }
             catch (AccessPolicyConditionParseException ex)
             {

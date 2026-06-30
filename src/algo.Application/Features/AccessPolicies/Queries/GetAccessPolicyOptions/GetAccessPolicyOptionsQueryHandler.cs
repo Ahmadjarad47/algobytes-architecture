@@ -8,8 +8,9 @@ namespace algo.Application.Features.AccessPolicies.Queries.GetAccessPolicyOption
 
 public sealed class GetAccessPolicyOptionsQueryHandler(
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator,
-    IAccessPolicyMetadataProvider metadataProvider)
+    IAccessPolicyAuthorizationChecker authorizationChecker,
+    IAccessPolicyResourceCatalog resourceCatalog,
+    IAccessPolicyMetadataLookup metadataLookup)
     : IRequestHandler<GetAccessPolicyOptionsQuery, AccessPolicyOptionsDto>
 {
     private static readonly IReadOnlyList<string> DefaultResourceActions =
@@ -40,13 +41,13 @@ public sealed class GetAccessPolicyOptionsQueryHandler(
         GetAccessPolicyOptionsQuery request,
         CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.AccessPolicies,
             AccessPolicyActions.Read,
             cancellationToken);
 
-        var resources = metadataProvider.GetRegisteredResources()
+        var resources = resourceCatalog.GetRegisteredResources()
             .Order(StringComparer.OrdinalIgnoreCase)
             .Append(AccessPolicyResources.Wildcard)
             .ToArray();
@@ -62,7 +63,7 @@ public sealed class GetAccessPolicyOptionsQueryHandler(
             .ToDictionary(
                 resource => resource,
                 resource => !string.Equals(resource, AccessPolicyResources.Wildcard, StringComparison.Ordinal)
-                            && metadataProvider.TryGetMetadata(resource, out var metadata)
+                            && metadataLookup.TryGetMetadata(resource, out var metadata)
                             && metadata is not null
                     ? metadata.Fields
                         .OrderBy(field => field.Key, StringComparer.OrdinalIgnoreCase)

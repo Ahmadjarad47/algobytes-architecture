@@ -12,12 +12,12 @@ namespace algo.Application.Features.Roles.Queries.GetRoles;
 public sealed class GetRolesQueryHandler(
     IApplicationDbContext db,
     RoleManager<ApplicationRole> roleManager,
-    IAccessPolicyEvaluator accessPolicyEvaluator)
+    IAccessPolicyAuthorizationChecker authorizationChecker)
     : IRequestHandler<GetRolesQuery, IReadOnlyList<RoleDto>>
 {
     public async Task<IReadOnlyList<RoleDto>> Handle(GetRolesQuery request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Roles,
             AccessPolicyActions.Read,

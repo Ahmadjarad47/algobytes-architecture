@@ -8,7 +8,7 @@ using algo.Domain.Logging.Entities;
 
 namespace algo.Persistence.Abac;
 
-public sealed class AccessPolicyMetadataProvider : IAccessPolicyMetadataProvider
+public sealed class AccessPolicyMetadataProvider : IAccessPolicyMetadataLookup, IAccessPolicyResourceCatalog
 {
     private static readonly IReadOnlyDictionary<string, AccessPolicyEntityMetadata> MetadataByResource =
         new ReadOnlyDictionary<string, AccessPolicyEntityMetadata>(

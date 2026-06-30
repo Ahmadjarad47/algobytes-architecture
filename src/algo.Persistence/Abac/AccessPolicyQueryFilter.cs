@@ -1,83 +1,19 @@
 using System.Linq.Expressions;
 using algo.Application.Abstractions;
 using algo.Application.Common.AccessPolicy;
-using algo.Domain.Identity.Policies;
-using Microsoft.Extensions.Logging;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Query;
+using Microsoft.Extensions.Logging;
 
 namespace algo.Persistence.Abac;
 
-public sealed class AccessPolicyEvaluator(
+public sealed class AccessPolicyQueryFilter(
     IAccessPolicyRuleStore ruleStore,
     IAccessPolicyConditionParser conditionParser,
     IAccessPolicyTokenResolver tokenResolver,
-    IAccessPolicyMetadataProvider metadataProvider,
+    IAccessPolicyMetadataLookup metadataLookup,
     AccessPolicyExpressionCompiler compiler,
-    ILogger<AccessPolicyEvaluator> logger) : IAccessPolicyEvaluator
+    ILogger<AccessPolicyQueryFilter> logger) : IAccessPolicyQueryFilter
 {
-    public async Task<bool> IsAllowedAsync(
-        string resource,
-        string action,
-        CancellationToken cancellationToken = default)
-    {
-        logger.LogInformation(
-            "Access policy check started for {Resource}:{Action}",
-            resource,
-            action);
-
-        var rules = await ruleStore.GetActiveRulesAsync(cancellationToken);
-        var userId = tokenResolver.CurrentUserId;
-        var roles = tokenResolver.CurrentRoleNames;
-
-        var subjectMatched = rules
-            .Where(r => MatchesSubject(r, userId, roles))
-            .ToList();
-
-        var matched = subjectMatched
-            .Where(r => MatchesResource(r.Resource, resource))
-            .Where(r => MatchesAction(r.Action, action))
-            .ToList();
-
-        var allows = matched.Where(r => r.Effect == AccessPolicyEffect.Allow).ToList();
-        var denies = matched.Where(r => r.Effect == AccessPolicyEffect.Deny).ToList();
-
-        var allowed = ComputeDecision(allows, denies);
-
-        logger.LogInformation(
-            "Access policy evaluation for {Resource}:{Action}. UserId={UserId}, Roles=[{Roles}], ActiveRules={ActiveRuleCount}, SubjectMatched={SubjectMatchedCount}, ResourceActionMatched={MatchedCount}, Allows={AllowCount}, Denies={DenyCount}, Decision={Decision}",
-            resource,
-            action,
-            userId ?? "<anonymous>",
-            string.Join(", ", roles),
-            rules.Count,
-            subjectMatched.Count,
-            matched.Count,
-            allows.Count,
-            denies.Count,
-            allowed ? "Allowed" : "Denied");
-
-        return allowed;
-    }
-
-    private static bool ComputeDecision(
-        IReadOnlyList<AccessPolicyRuleDto> allows,
-        IReadOnlyList<AccessPolicyRuleDto> denies)
-    {
-        if (allows.Count == 0)
-        {
-            return false;
-        }
-
-        var denyAll = denies.Any(d => string.IsNullOrWhiteSpace(d.ConditionJson));
-        if (denyAll)
-        {
-            return false;
-        }
-
-        return allows.Any();
-    }
-
     public async Task<IQueryable<TEntity>> ApplyAsync<TEntity>(
         IQueryable<TEntity> query,
         string resource,
@@ -85,7 +21,7 @@ public sealed class AccessPolicyEvaluator(
         CancellationToken cancellationToken = default)
         where TEntity : class
     {
-        if (!metadataProvider.TryGetMetadata(resource, out var metadata) || metadata is null)
+        if (!metadataLookup.TryGetMetadata(resource, out var metadata) || metadata is null)
         {
             throw new InvalidOperationException($"Unknown resource '{resource}' for access policy evaluation.");
         }
@@ -105,17 +41,7 @@ public sealed class AccessPolicyEvaluator(
         var userId = tokenResolver.CurrentUserId;
         var roles = tokenResolver.CurrentRoleNames;
 
-        var subjectMatched = rules
-            .Where(r => MatchesSubject(r, userId, roles))
-            .ToList();
-
-        var matched = subjectMatched
-            .Where(r => MatchesResource(r.Resource, resource))
-            .Where(r => MatchesAction(r.Action, action))
-            .ToList();
-
-        var allows = matched.Where(r => r.Effect == AccessPolicyEffect.Allow).ToList();
-        var denies = matched.Where(r => r.Effect == AccessPolicyEffect.Deny).ToList();
+        var matched = AccessPolicyRuleMatcher.MatchRules(rules, resource, action, userId, roles);
 
         logger.LogInformation(
             "Access policy query filter for {Resource}:{Action}. UserId={UserId}, Roles=[{Roles}], ActiveRules={ActiveRuleCount}, SubjectMatched={SubjectMatchedCount}, ResourceActionMatched={MatchedCount}, Allows={AllowCount}, Denies={DenyCount}",
@@ -123,27 +49,27 @@ public sealed class AccessPolicyEvaluator(
             action,
             userId ?? "<anonymous>",
             string.Join(", ", roles),
-            rules.Count,
-            subjectMatched.Count,
-            matched.Count,
-            allows.Count,
-            denies.Count);
+            matched.ActiveRuleCount,
+            matched.SubjectMatchedCount,
+            matched.ResourceActionMatchedCount,
+            matched.Allows.Count,
+            matched.Denies.Count);
 
-        if (allows.Count == 0)
+        if (matched.Allows.Count == 0)
         {
             return query.Where(_ => false);
         }
 
-        var fullAllow = allows.Any(a => string.IsNullOrWhiteSpace(a.ConditionJson));
-        var denyAll = denies.Any(d => string.IsNullOrWhiteSpace(d.ConditionJson));
+        var fullAllow = matched.Allows.Any(a => string.IsNullOrWhiteSpace(a.ConditionJson));
+        var denyAll = matched.Denies.Any(d => string.IsNullOrWhiteSpace(d.ConditionJson));
 
         Expression<Func<TEntity, bool>>? allowExpr = null;
         if (!fullAllow)
         {
-            foreach (var allow in allows)
+            foreach (var allow in matched.Allows)
             {
                 var ast = conditionParser.Parse(allow.ConditionJson);
-                conditionParser.Validate(resource, ast, metadataProvider);
+                conditionParser.Validate(resource, ast, metadataLookup);
                 ast = AccessPolicyConditionTokenResolver.Resolve(ast, tokenResolver);
                 var compiled = compiler.Compile<TEntity>(ast, metadata);
                 allowExpr = allowExpr is null ? compiled : Or(allowExpr, compiled);
@@ -157,10 +83,10 @@ public sealed class AccessPolicyEvaluator(
         }
         else
         {
-            foreach (var deny in denies.Where(d => !string.IsNullOrWhiteSpace(d.ConditionJson)))
+            foreach (var deny in matched.Denies.Where(d => !string.IsNullOrWhiteSpace(d.ConditionJson)))
             {
                 var ast = conditionParser.Parse(deny.ConditionJson);
-                conditionParser.Validate(resource, ast, metadataProvider);
+                conditionParser.Validate(resource, ast, metadataLookup);
                 ast = AccessPolicyConditionTokenResolver.Resolve(ast, tokenResolver);
                 var compiled = compiler.Compile<TEntity>(ast, metadata);
                 denyExpr = denyExpr is null ? compiled : Or(denyExpr, compiled);
@@ -197,26 +123,6 @@ public sealed class AccessPolicyEvaluator(
 
         return query.Where(predicate);
     }
-
-    private static bool MatchesResource(string policyResource, string resource) =>
-        string.Equals(policyResource, AccessPolicyResources.Wildcard, StringComparison.Ordinal)
-        || string.Equals(policyResource, resource, StringComparison.OrdinalIgnoreCase);
-
-    private static bool MatchesAction(string policyAction, string action) =>
-        string.Equals(policyAction, AccessPolicyActions.Wildcard, StringComparison.Ordinal)
-        || string.Equals(policyAction, action, StringComparison.OrdinalIgnoreCase);
-
-    private static bool MatchesSubject(AccessPolicyRuleDto rule, string? userId, IReadOnlyList<string> roles) =>
-        rule.SubjectType switch
-        {
-            AccessPolicySubjectType.Everyone => true,
-            AccessPolicySubjectType.Authenticated => !string.IsNullOrEmpty(userId),
-            AccessPolicySubjectType.User => !string.IsNullOrEmpty(userId)
-                && string.Equals(rule.SubjectKey, userId, StringComparison.Ordinal),
-            AccessPolicySubjectType.Role => roles.Any(r =>
-                string.Equals(r, rule.SubjectKey, StringComparison.OrdinalIgnoreCase)),
-            _ => false,
-        };
 
     private static Expression<Func<T, bool>> Or<T>(
         Expression<Func<T, bool>> left,

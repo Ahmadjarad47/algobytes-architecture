@@ -9,12 +9,12 @@ namespace algo.Application.Features.AccessPolicies.Commands.SoftDeleteAccessPoli
 public sealed class SoftDeleteAccessPolicyCommandHandler(
     IApplicationDbContext db,
     ICurrentUserService currentUser,
-    IAccessPolicyEvaluator accessPolicyEvaluator)
+    IAccessPolicyAuthorizationChecker authorizationChecker)
     : IRequestHandler<SoftDeleteAccessPolicyCommand, bool>
 {
     public async Task<bool> Handle(SoftDeleteAccessPolicyCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.AccessPolicies,
             AccessPolicyActions.Delete,

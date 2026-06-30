@@ -14,14 +14,14 @@ namespace algo.Application.Features.Users.Commands.CreateUser;
 
 public sealed class CreateUserCommandHandler(
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
     UserManager<ApplicationUser> userManager,
     RoleManager<ApplicationRole> roleManager,
     CustomFieldValueValidator customFieldValueValidator) : IRequestHandler<CreateUserCommand, UserDetailsDto>
 {
     public async Task<UserDetailsDto> Handle(CreateUserCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Users,
             AccessPolicyActions.Create,

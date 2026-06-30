@@ -13,8 +13,8 @@ namespace algo.Application.Features.Auth.Commands.ForgotPassword;
 public sealed class ForgotPasswordCommandHandler(
     UserManager<ApplicationUser> userManager,
     IApplicationDbContext db,
-    IOtpService otpService,
-    IEmailService emailService,
+    IOtpCodeGenerator otpCodeGenerator,
+    IPasswordResetEmailSender passwordResetEmailSender,
     IOptions<OtpOptions> otpOptions) : IRequestHandler<ForgotPasswordCommand, OtpVerificationDto>
 {
     private readonly OtpOptions _otp = otpOptions.Value;
@@ -35,7 +35,7 @@ public sealed class ForgotPasswordCommandHandler(
             .ToListAsync(cancellationToken);
         db.OtpTokens.RemoveRange(existing);
 
-        var plainCode = otpService.GenerateNumericCode(_otp.CodeLength);
+        var plainCode = otpCodeGenerator.GenerateNumericCode(_otp.CodeLength);
         var expiresAt = DateTimeOffset.UtcNow.AddMinutes(_otp.ExpirationMinutes);
 
         db.OtpTokens.Add(new OtpToken
@@ -43,14 +43,14 @@ public sealed class ForgotPasswordCommandHandler(
             Id = Guid.NewGuid(),
             UserId = user.Id,
             Purpose = OtpPurpose.PasswordReset,
-            CodeHash = otpService.HashCode(plainCode),
+            CodeHash = otpCodeGenerator.HashCode(plainCode),
             ExpiresAt = expiresAt,
             CreatedAt = DateTimeOffset.UtcNow,
         });
 
         await db.SaveChangesAsync(cancellationToken);
 
-        await emailService.SendPasswordResetOtpAsync(
+        await passwordResetEmailSender.SendPasswordResetOtpAsync(
             user.Email!,
             user.DisplayName,
             plainCode,

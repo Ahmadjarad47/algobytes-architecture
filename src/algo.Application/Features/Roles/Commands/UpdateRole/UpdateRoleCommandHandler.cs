@@ -15,12 +15,12 @@ namespace algo.Application.Features.Roles.Commands.UpdateRole;
 public sealed class UpdateRoleCommandHandler(
     RoleManager<ApplicationRole> roleManager,
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
     CustomFieldValueValidator customFieldValueValidator) : IRequestHandler<UpdateRoleCommand, RoleDetailsDto?>
 {
     public async Task<RoleDetailsDto?> Handle(UpdateRoleCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Roles,
             AccessPolicyActions.Update,

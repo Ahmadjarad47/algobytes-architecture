@@ -9,12 +9,12 @@ namespace algo.Application.Features.Logs.Queries.GetLogById;
 
 public sealed class GetLogByIdQueryHandler(
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator)
+    IAccessPolicyAuthorizationChecker authorizationChecker)
     : IRequestHandler<GetLogByIdQuery, ApplicationLogDto?>
 {
     public async Task<ApplicationLogDto?> Handle(GetLogByIdQuery request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Logs,
             AccessPolicyActions.Read,

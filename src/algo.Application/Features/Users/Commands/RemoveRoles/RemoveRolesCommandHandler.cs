@@ -13,18 +13,19 @@ namespace algo.Application.Features.Users.Commands.RemoveRoles;
 public sealed class RemoveRolesCommandHandler(
     UserManager<ApplicationUser> userManager,
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator)
+    IAccessPolicyAuthorizationChecker authorizationChecker,
+    IAccessPolicyQueryFilter queryFilter)
     : IRequestHandler<RemoveRolesCommand, Unit>
 {
     public async Task<Unit> Handle(RemoveRolesCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Users,
             AccessPolicyActions.Update,
             cancellationToken);
 
-        var scoped = await accessPolicyEvaluator.ApplyAsync(
+        var scoped = await queryFilter.ApplyAsync(
             db.Users.AsNoTracking().Where(u => u.Id == request.UserId),
             AccessPolicyResources.Users,
             AccessPolicyActions.Update,

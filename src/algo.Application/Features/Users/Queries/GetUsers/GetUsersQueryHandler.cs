@@ -18,12 +18,13 @@ namespace algo.Application.Features.Users.Queries.GetUsers;
 
 public sealed class GetUsersQueryHandler(
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
+    IAccessPolicyQueryFilter queryFilter,
     RoleManager<ApplicationRole> roleManager) : IRequestHandler<GetUsersQuery, PaginatedResult<UserListItemDto>>
 {
     public async Task<PaginatedResult<UserListItemDto>> Handle(GetUsersQuery request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Users,
             AccessPolicyActions.Read,
@@ -37,7 +38,7 @@ public sealed class GetUsersQueryHandler(
         IQueryable<ApplicationUser> query = request.IncludeTrashed || request.OnlyTrashed
             ? db.Users.IgnoreQueryFilters().AsNoTracking()
             : db.Users.AsNoTracking();
-        query = await accessPolicyEvaluator.ApplyAsync(
+        query = await queryFilter.ApplyAsync(
             query,
             AccessPolicyResources.Users,
             AccessPolicyActions.Read,

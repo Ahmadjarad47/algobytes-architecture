@@ -11,14 +11,15 @@ public static class AuthSessionIssuer
     public static async Task<AuthResponseDto> IssueAsync(
         ApplicationUser user,
         IReadOnlyList<string> roleNames,
-        IJwtTokenService jwt,
+        IAccessTokenFactory accessTokenFactory,
+        IRefreshTokenFactory refreshTokenFactory,
         IApplicationDbContext db,
         ISessionContext? sessionContext,
         CancellationToken cancellationToken)
     {
         var sessionId = Guid.NewGuid();
-        var (rawRefresh, refreshHash, refreshExp) = jwt.CreateRefreshToken();
-        var (accessToken, accessExp) = jwt.CreateAccessToken(user, roleNames, sessionId);
+        var (rawRefresh, refreshHash, refreshExp) = refreshTokenFactory.CreateRefreshToken();
+        var (accessToken, accessExp) = accessTokenFactory.CreateAccessToken(user, roleNames, sessionId);
 
         db.RefreshTokens.Add(new RefreshToken
         {

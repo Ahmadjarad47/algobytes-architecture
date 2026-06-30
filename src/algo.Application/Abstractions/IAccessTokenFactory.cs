@@ -2,14 +2,10 @@ using algo.Domain.Identity.Entities;
 
 namespace algo.Application.Abstractions;
 
-public interface IJwtTokenService
+public interface IAccessTokenFactory
 {
     (string accessToken, DateTimeOffset accessTokenExpiresAt) CreateAccessToken(
         ApplicationUser user,
         IReadOnlyList<string> roleNames,
         Guid sessionId);
-
-    (string rawRefreshToken, string refreshTokenHash, DateTimeOffset refreshTokenExpiresAt) CreateRefreshToken();
-
-    string HashRefreshToken(string rawRefreshToken);
 }

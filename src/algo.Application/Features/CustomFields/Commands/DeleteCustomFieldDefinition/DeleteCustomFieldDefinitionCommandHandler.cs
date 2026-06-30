@@ -6,7 +6,7 @@ namespace algo.Application.Features.CustomFields.Commands.DeleteCustomFieldDefin
 
 public sealed class DeleteCustomFieldDefinitionCommandHandler(
     IApplicationDbContext db,
-    ICustomFieldIndexManager indexManager)
+    ICustomFieldIndexDropper indexDropper)
     : IRequestHandler<DeleteCustomFieldDefinitionCommand, bool>
 {
     public async Task<bool> Handle(DeleteCustomFieldDefinitionCommand request, CancellationToken cancellationToken)
@@ -19,7 +19,7 @@ public sealed class DeleteCustomFieldDefinitionCommandHandler(
 
         db.CustomFieldDefinitions.Remove(definition);
         await db.SaveChangesAsync(cancellationToken);
-        await indexManager.DropIndexesAsync(definition, cancellationToken);
+        await indexDropper.DropIndexesAsync(definition, cancellationToken);
         return true;
     }
 }

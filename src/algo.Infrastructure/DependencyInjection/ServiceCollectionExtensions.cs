@@ -17,9 +17,8 @@ public static class ServiceCollectionExtensions
 
         services.AddHttpContextAccessor();
 
-        services.AddScoped<IJwtTokenService, JwtTokenService>();
-        services.AddScoped<IOtpService, OtpService>();
-        services.AddScoped<IEmailService, EmailService>();
+        services.AddIdentityServices();
+        services.AddEmailServices();
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ISessionContext, SessionContext>();
         services.AddScoped<IAccessPolicyTokenResolver, AccessPolicyTokenResolver>();

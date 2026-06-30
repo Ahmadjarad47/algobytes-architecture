@@ -11,7 +11,7 @@ namespace algo.Application.Features.CustomFields.Commands.CreateCustomFieldDefin
 
 public sealed class CreateCustomFieldDefinitionCommandHandler(
     IApplicationDbContext db,
-    ICustomFieldIndexManager indexManager)
+    ICustomFieldIndexSynchronizer indexSynchronizer)
     : IRequestHandler<CreateCustomFieldDefinitionCommand, CustomFieldDefinitionDto>
 {
     public async Task<CustomFieldDefinitionDto> Handle(CreateCustomFieldDefinitionCommand request, CancellationToken cancellationToken)
@@ -54,7 +54,7 @@ public sealed class CreateCustomFieldDefinitionCommandHandler(
 
         db.CustomFieldDefinitions.Add(definition);
         await db.SaveChangesAsync(cancellationToken);
-        await indexManager.SyncIndexesAsync(definition, cancellationToken);
+        await indexSynchronizer.SyncIndexesAsync(definition, cancellationToken);
 
         return definition.ToDto();
     }

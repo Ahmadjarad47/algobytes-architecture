@@ -13,8 +13,8 @@ namespace algo.Application.Features.Auth.Commands.ResendOtp;
 public sealed class ResendOtpCommandHandler(
     UserManager<ApplicationUser> userManager,
     IApplicationDbContext db,
-    IOtpService otpService,
-    IEmailService emailService,
+    IOtpCodeGenerator otpCodeGenerator,
+    IEmailConfirmationSender emailConfirmationSender,
     IOptions<OtpOptions> otpOptions) : IRequestHandler<ResendOtpCommand, OtpVerificationDto>
 {
     private readonly OtpOptions _otp = otpOptions.Value;
@@ -35,7 +35,7 @@ public sealed class ResendOtpCommandHandler(
             .ToListAsync(cancellationToken);
         db.OtpTokens.RemoveRange(existing);
 
-        var plainCode = otpService.GenerateNumericCode(_otp.CodeLength);
+        var plainCode = otpCodeGenerator.GenerateNumericCode(_otp.CodeLength);
         var expiresAt = DateTimeOffset.UtcNow.AddMinutes(_otp.ExpirationMinutes);
 
         db.OtpTokens.Add(new OtpToken
@@ -43,14 +43,14 @@ public sealed class ResendOtpCommandHandler(
             Id = Guid.NewGuid(),
             UserId = user.Id,
             Purpose = OtpPurpose.EmailConfirmation,
-            CodeHash = otpService.HashCode(plainCode),
+            CodeHash = otpCodeGenerator.HashCode(plainCode),
             ExpiresAt = expiresAt,
             CreatedAt = DateTimeOffset.UtcNow,
         });
 
         await db.SaveChangesAsync(cancellationToken);
 
-        await emailService.SendEmailConfirmationOtpAsync(
+        await emailConfirmationSender.SendEmailConfirmationOtpAsync(
             user.Email!,
             user.DisplayName,
             plainCode,

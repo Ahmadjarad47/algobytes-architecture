@@ -9,11 +9,12 @@ namespace algo.Application.Features.Users.Queries.GetUsersDashboard;
 
 public sealed class GetUsersDashboardQueryHandler(
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator) : IRequestHandler<GetUsersDashboardQuery, UserDashboardStatsDto>
+    IAccessPolicyAuthorizationChecker authorizationChecker,
+    IAccessPolicyQueryFilter queryFilter) : IRequestHandler<GetUsersDashboardQuery, UserDashboardStatsDto>
 {
     public async Task<UserDashboardStatsDto> Handle(GetUsersDashboardQuery request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Users,
             AccessPolicyActions.Read,
@@ -25,7 +26,7 @@ public sealed class GetUsersDashboardQueryHandler(
         var startOfMonth = new DateTimeOffset(utc.Year, utc.Month, 1, 0, 0, 0, TimeSpan.Zero);
 
         IQueryable<ApplicationUser> baseQuery = db.Users.AsNoTracking();
-        baseQuery = await accessPolicyEvaluator.ApplyAsync(
+        baseQuery = await queryFilter.ApplyAsync(
             baseQuery,
             AccessPolicyResources.Users,
             AccessPolicyActions.Read,

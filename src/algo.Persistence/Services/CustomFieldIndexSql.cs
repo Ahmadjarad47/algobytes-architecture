@@ -1,42 +1,17 @@
-using algo.Application.Abstractions;
 using algo.Domain.CustomFields;
 using algo.Persistence.Context;
 using Microsoft.EntityFrameworkCore;
 
 namespace algo.Persistence.Services;
 
-internal sealed class CustomFieldIndexManager(ApplicationDbContext db) : ICustomFieldIndexManager
+internal static class CustomFieldIndexSql
 {
-    public async Task SyncIndexesAsync(CustomFieldDefinition definition, CancellationToken cancellationToken)
+    public static async Task DropIndexesAsync(
+        ApplicationDbContext db,
+        CustomFieldDefinition definition,
+        CancellationToken cancellationToken)
     {
-        if (!string.Equals(db.Database.ProviderName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.Ordinal))
-        {
-            return;
-        }
-
-        var mapping = ResolveTable(definition.Entity);
-        if (mapping is null)
-        {
-            return;
-        }
-
-        var resolved = mapping.Value;
-
-        await DropIndexesAsync(definition, cancellationToken);
-
-        if (definition.Searchable || definition.Filterable || definition.Sortable)
-        {
-            var sql = $"""
-                CREATE INDEX "{BuildIndexName(resolved.TableName, definition.Key)}"
-                ON "{resolved.TableName}" ({BuildExpression(definition)});
-                """;
-            await db.Database.ExecuteSqlRawAsync(sql, cancellationToken);
-        }
-    }
-
-    public async Task DropIndexesAsync(CustomFieldDefinition definition, CancellationToken cancellationToken)
-    {
-        if (!string.Equals(db.Database.ProviderName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.Ordinal))
+        if (!IsPostgres(db))
         {
             return;
         }
@@ -53,6 +28,39 @@ internal sealed class CustomFieldIndexManager(ApplicationDbContext db) : ICustom
             $"""DROP INDEX IF EXISTS "{BuildIndexName(resolved.TableName, definition.Key)}";""",
             cancellationToken);
     }
+
+    public static async Task SyncIndexesAsync(
+        ApplicationDbContext db,
+        CustomFieldDefinition definition,
+        CancellationToken cancellationToken)
+    {
+        if (!IsPostgres(db))
+        {
+            return;
+        }
+
+        var mapping = ResolveTable(definition.Entity);
+        if (mapping is null)
+        {
+            return;
+        }
+
+        var resolved = mapping.Value;
+
+        await DropIndexesAsync(db, definition, cancellationToken);
+
+        if (definition.Searchable || definition.Filterable || definition.Sortable)
+        {
+            var sql = $"""
+                CREATE INDEX "{BuildIndexName(resolved.TableName, definition.Key)}"
+                ON "{resolved.TableName}" ({BuildExpression(definition)});
+                """;
+            await db.Database.ExecuteSqlRawAsync(sql, cancellationToken);
+        }
+    }
+
+    private static bool IsPostgres(ApplicationDbContext db) =>
+        string.Equals(db.Database.ProviderName, "Npgsql.EntityFrameworkCore.PostgreSQL", StringComparison.Ordinal);
 
     private static (string TableName, string ColumnName)? ResolveTable(string entity) =>
         entity switch

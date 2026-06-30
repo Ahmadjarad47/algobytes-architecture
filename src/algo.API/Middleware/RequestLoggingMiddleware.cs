@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Security.Claims;
+using algo.Application.Abstractions;
 using algo.RealTime;
 
 namespace algo.API.Middleware;

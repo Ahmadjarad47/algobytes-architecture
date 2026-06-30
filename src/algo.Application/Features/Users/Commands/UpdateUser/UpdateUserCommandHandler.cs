@@ -13,20 +13,21 @@ namespace algo.Application.Features.Users.Commands.UpdateUser;
 
 public sealed class UpdateUserCommandHandler(
     UserManager<ApplicationUser> userManager,
-    IAccessPolicyEvaluator accessPolicyEvaluator,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
+    IAccessPolicyQueryFilter queryFilter,
     IApplicationDbContext db,
     CustomFieldValueValidator customFieldValueValidator)
     : IRequestHandler<UpdateUserCommand, UserDetailsDto?>
 {
     public async Task<UserDetailsDto?> Handle(UpdateUserCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Users,
             AccessPolicyActions.Update,
             cancellationToken);
 
-        var scoped = await accessPolicyEvaluator.ApplyAsync(
+        var scoped = await queryFilter.ApplyAsync(
             db.Users.Where(u => u.Id == request.UserId),
             AccessPolicyResources.Users,
             AccessPolicyActions.Update,

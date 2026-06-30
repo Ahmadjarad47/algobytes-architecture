@@ -8,12 +8,12 @@ using Microsoft.EntityFrameworkCore;
 namespace algo.Application.Features.Roles.Queries.GetRoleById;
 
 public sealed class GetRoleByIdQueryHandler(
-    IAccessPolicyEvaluator accessPolicyEvaluator,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
     IApplicationDbContext db) : IRequestHandler<GetRoleByIdQuery, RoleDetailsDto?>
 {
     public async Task<RoleDetailsDto?> Handle(GetRoleByIdQuery request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Roles,
             AccessPolicyActions.Read,

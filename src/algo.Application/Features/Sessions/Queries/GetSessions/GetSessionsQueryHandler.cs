@@ -11,14 +11,14 @@ namespace algo.Application.Features.Sessions.Queries.GetSessions;
 public sealed class GetSessionsQueryHandler(
     IApplicationDbContext db,
     ICurrentUserService currentUser,
-    IAccessPolicyEvaluator accessPolicyEvaluator)
+    IAccessPolicyAuthorizationChecker authorizationChecker)
     : IRequestHandler<GetSessionsQuery, ActiveSessionsResponseDto>
 {
     public async Task<ActiveSessionsResponseDto> Handle(
         GetSessionsQuery request,
         CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Sessions,
             AccessPolicyActions.Read,

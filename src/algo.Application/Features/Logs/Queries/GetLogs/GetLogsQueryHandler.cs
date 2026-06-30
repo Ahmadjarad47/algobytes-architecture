@@ -12,12 +12,12 @@ namespace algo.Application.Features.Logs.Queries.GetLogs;
 
 public sealed class GetLogsQueryHandler(
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator)
+    IAccessPolicyAuthorizationChecker authorizationChecker)
     : IRequestHandler<GetLogsQuery, PaginatedResult<ApplicationLogDto>>
 {
     public async Task<PaginatedResult<ApplicationLogDto>> Handle(GetLogsQuery request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Logs,
             AccessPolicyActions.Read,

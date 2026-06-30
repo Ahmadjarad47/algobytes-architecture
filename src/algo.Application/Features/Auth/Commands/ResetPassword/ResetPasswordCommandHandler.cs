@@ -11,7 +11,7 @@ namespace algo.Application.Features.Auth.Commands.ResetPassword;
 
 public sealed class ResetPasswordCommandHandler(
     UserManager<ApplicationUser> userManager,
-    IOtpService otpService,
+    IOtpCodeVerifier otpCodeVerifier,
     IApplicationDbContext db) : IRequestHandler<ResetPasswordCommand, Unit>
 {
     public async Task<Unit> Handle(ResetPasswordCommand request, CancellationToken cancellationToken)
@@ -32,7 +32,7 @@ public sealed class ResetPasswordCommandHandler(
 
         if (otp is null
             || otp.ExpiresAt < DateTimeOffset.UtcNow
-            || !otpService.VerifyCode(request.Code, otp.CodeHash))
+            || !otpCodeVerifier.VerifyCode(request.Code, otp.CodeHash))
         {
             throw new ValidationException(new[]
             {

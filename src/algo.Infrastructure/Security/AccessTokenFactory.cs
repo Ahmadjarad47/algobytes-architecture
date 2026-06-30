@@ -1,17 +1,15 @@
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using System.Security.Cryptography;
 using System.Text;
 using algo.Application.Abstractions;
 using algo.Application.Configuration;
 using algo.Domain.Identity.Entities;
-using Microsoft.AspNetCore.WebUtilities;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 
 namespace algo.Infrastructure.Security;
 
-public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenService
+public sealed class AccessTokenFactory(IOptions<JwtOptions> options) : IAccessTokenFactory
 {
     private readonly JwtOptions _options = options.Value;
 
@@ -52,16 +50,4 @@ public sealed class JwtTokenService(IOptions<JwtOptions> options) : IJwtTokenSer
 
         return (new JwtSecurityTokenHandler().WriteToken(token), expiresAt);
     }
-
-    public (string rawRefreshToken, string refreshTokenHash, DateTimeOffset refreshTokenExpiresAt) CreateRefreshToken()
-    {
-        Span<byte> buffer = stackalloc byte[64];
-        RandomNumberGenerator.Fill(buffer);
-        var raw = WebEncoders.Base64UrlEncode(buffer);
-        var expiresAt = DateTimeOffset.UtcNow.AddDays(_options.RefreshTokenExpirationDays);
-        return (raw, HashRefreshToken(raw), expiresAt);
-    }
-
-    public string HashRefreshToken(string rawRefreshToken) =>
-        Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(rawRefreshToken)));
 }
