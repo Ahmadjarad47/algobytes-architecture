@@ -1,3 +1,4 @@
+using algo.Application.Abstractions;
 using Microsoft.AspNetCore.SignalR;
 
 namespace algo.RealTime;

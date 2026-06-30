@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using algo.Application.Abstractions;
 using algo.Application.Common.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;

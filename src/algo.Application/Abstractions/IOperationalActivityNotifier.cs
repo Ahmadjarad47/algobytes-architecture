@@ -1,4 +1,4 @@
-namespace algo.RealTime;
+namespace algo.Application.Abstractions;
 
 public interface IOperationalActivityNotifier
 {

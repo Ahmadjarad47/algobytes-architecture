@@ -3,6 +3,7 @@ using algo.API.Extensions;
 using algo.API.Filters;
 using algo.API.HealthChecks;
 using algo.API.Security;
+using algo.Application.Abstractions;
 using algo.Application.Configuration;
 using algo.Application.DependencyInjection;
 using algo.Infrastructure.DependencyInjection;
@@ -158,7 +159,7 @@ builder.Services
                     return Task.CompletedTask;
                 }
 
-                var db = context.HttpContext.RequestServices.GetRequiredService<ApplicationDbContext>();
+                var db = context.HttpContext.RequestServices.GetRequiredService<IApplicationDbContext>();
                 var now = DateTimeOffset.UtcNow;
                 var userIsAvailable = db.Users.Any(user => user.Id == userId);
                 var session = db.RefreshTokens
