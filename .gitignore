@@ -363,11 +363,12 @@ MigrationBackup/
 FodyWeavers.xsd
 
 # Keep app/runtime logs for the tracked frontend and backend logging surfaces.
-!src/algo.API/logs/
-!src/algo.API/logs/*.log
+
 !src/algo.Application/Features/Logs/
 !src/algo.Application/Features/Logs/**
 !ui/algo.ui/src/app/features/logs/
 !ui/algo.ui/src/app/features/logs/**
 !ui/algo.ui/ng-serve.log
 !ui/algo.ui/ng-serve.err.log
+/src/algo.API/logs/app-20260509.log
+/src/algo.API/logs/app-20260508.log
