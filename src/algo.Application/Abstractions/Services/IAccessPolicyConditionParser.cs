@@ -1,6 +1,6 @@
 using algo.Application.Common.AccessPolicy;
 
-namespace algo.Application.Abstractions;
+namespace algo.Application.Abstractions.Services;
 
 public interface IAccessPolicyConditionParser
 {
@@ -8,3 +8,4 @@ public interface IAccessPolicyConditionParser
 
     void Validate(string resource, AccessPolicyConditionAst ast, IAccessPolicyMetadataLookup metadataLookup);
 }
+

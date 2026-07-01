@@ -1,4 +1,4 @@
-namespace algo.Application.Abstractions;
+namespace algo.Application.Abstractions.Identity;
 
 public interface IEmailConfirmationSender
 {
@@ -9,3 +9,4 @@ public interface IEmailConfirmationSender
         DateTimeOffset expiresAt,
         CancellationToken cancellationToken);
 }
+

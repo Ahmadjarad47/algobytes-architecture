@@ -1,4 +1,4 @@
-namespace algo.Application.Abstractions;
+namespace algo.Application.Abstractions.Identity;
 
 public interface ISessionContext
 {
@@ -16,3 +16,4 @@ public interface ISessionContext
 
     bool IsSuspicious { get; }
 }
+

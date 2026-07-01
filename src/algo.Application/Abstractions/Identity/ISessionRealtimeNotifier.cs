@@ -1,4 +1,4 @@
-namespace algo.Application.Abstractions;
+namespace algo.Application.Abstractions.Identity;
 
 public interface ISessionRealtimeNotifier
 {
@@ -7,3 +7,4 @@ public interface ISessionRealtimeNotifier
         IReadOnlyCollection<string> userIds,
         CancellationToken cancellationToken);
 }
+

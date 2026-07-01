@@ -1,4 +1,4 @@
-namespace algo.Application.Abstractions;
+namespace algo.Application.Abstractions.Identity;
 
 public interface IPasswordResetEmailSender
 {
@@ -9,3 +9,4 @@ public interface IPasswordResetEmailSender
         DateTimeOffset expiresAt,
         CancellationToken cancellationToken);
 }
+

@@ -1,4 +1,4 @@
-namespace algo.Application.Abstractions;
+namespace algo.Application.Abstractions.Messaging;
 
 public sealed record OperationalActivityEvent(
     DateTimeOffset Timestamp,
@@ -9,3 +9,4 @@ public sealed record OperationalActivityEvent(
     string? UserId = null,
     int? StatusCode = null,
     long? DurationMs = null);
+

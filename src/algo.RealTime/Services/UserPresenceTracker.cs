@@ -1,6 +1,6 @@
 using StackExchange.Redis;
 
-namespace algo.RealTime;
+namespace algo.RealTime.Services;
 
 public sealed class UserPresenceTracker(IConnectionMultiplexer redis)
 {

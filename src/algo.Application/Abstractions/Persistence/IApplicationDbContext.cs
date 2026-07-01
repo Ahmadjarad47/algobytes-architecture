@@ -5,7 +5,7 @@ using algo.Domain.Logging.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
-namespace algo.Application.Abstractions;
+namespace algo.Application.Abstractions.Persistence;
 
 public interface IApplicationDbContext
 {
@@ -29,3 +29,4 @@ public interface IApplicationDbContext
 
     Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
 }
+

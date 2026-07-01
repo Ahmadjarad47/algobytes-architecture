@@ -1,4 +1,4 @@
-namespace algo.Application.Abstractions;
+namespace algo.Application.Abstractions.Identity;
 
 public interface IOtpCodeGenerator
 {
@@ -6,3 +6,4 @@ public interface IOtpCodeGenerator
 
     string HashCode(string plainCode);
 }
+

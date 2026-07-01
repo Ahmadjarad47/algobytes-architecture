@@ -1,10 +1,13 @@
 using System.Security.Claims;
 using algo.Application.Abstractions;
 using algo.Application.Common.Identity;
+using algo.RealTime;
+using algo.RealTime.Constants;
+using algo.RealTime.Services;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.SignalR;
 
-namespace algo.RealTime;
+namespace algo.RealTime.Hubs;
 
 [Authorize]
 public sealed class SessionHub(

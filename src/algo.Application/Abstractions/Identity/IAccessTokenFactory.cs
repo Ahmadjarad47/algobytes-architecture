@@ -1,6 +1,6 @@
 using algo.Domain.Identity.Entities;
 
-namespace algo.Application.Abstractions;
+namespace algo.Application.Abstractions.Identity;
 
 public interface IAccessTokenFactory
 {
@@ -9,3 +9,4 @@ public interface IAccessTokenFactory
         IReadOnlyList<string> roleNames,
         Guid sessionId);
 }
+

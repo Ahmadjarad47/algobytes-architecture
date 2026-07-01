@@ -1,4 +1,4 @@
-namespace algo.Application.Abstractions;
+namespace algo.Application.Abstractions.Services;
 
 public interface IAccessPolicyTokenResolver
 {
@@ -8,3 +8,4 @@ public interface IAccessPolicyTokenResolver
 
     object? ResolveTokenValue(string token);
 }
+

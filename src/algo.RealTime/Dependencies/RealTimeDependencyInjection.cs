@@ -1,9 +1,11 @@
 using algo.Application.Abstractions;
+using algo.RealTime;
+using algo.RealTime.Services;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using StackExchange.Redis;
 
-namespace algo.RealTime;
+namespace algo.RealTime.Dependencies;
 
 public static class RealTimeDependencyInjection
 {

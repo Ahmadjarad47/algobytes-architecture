@@ -1,4 +1,4 @@
-namespace algo.RealTime;
+namespace algo.RealTime.Constants;
 
 internal static class PresenceGroupNames
 {

@@ -1,4 +1,4 @@
-namespace algo.Application.Abstractions;
+namespace algo.Application.Abstractions.Services;
 
 public interface IAccessPolicyAuthorizationChecker
 {
@@ -7,3 +7,4 @@ public interface IAccessPolicyAuthorizationChecker
         string action,
         CancellationToken cancellationToken = default);
 }
+

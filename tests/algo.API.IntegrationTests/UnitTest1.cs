@@ -153,7 +153,7 @@ public sealed class AuthorizationBehaviorTests : IClassFixture<AuthorizationBeha
                 services.RemoveAll<ApplicationDbContext>();
 
                 services.AddDbContext<ApplicationDbContext>(options => options.UseSqlite(connection));
-                services.AddScoped<algo.Application.Abstractions.IApplicationDbContext>(sp =>
+                services.AddScoped<algo.Application.Abstractions.Persistence.IApplicationDbContext>(sp =>
                     sp.GetRequiredService<ApplicationDbContext>());
 
                 using var scope = services.BuildServiceProvider().CreateScope();

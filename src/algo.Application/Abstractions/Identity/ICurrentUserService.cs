@@ -1,6 +1,7 @@
-namespace algo.Application.Abstractions;
+namespace algo.Application.Abstractions.Identity;
 
 public interface ICurrentUserService
 {
     string? UserId { get; }
 }
+

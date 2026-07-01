@@ -1,4 +1,4 @@
-namespace algo.Application.Abstractions;
+namespace algo.Application.Abstractions.Services;
 
 public interface IAccessPolicyQueryFilter
 {
@@ -9,3 +9,4 @@ public interface IAccessPolicyQueryFilter
         CancellationToken cancellationToken = default)
         where TEntity : class;
 }
+
