@@ -130,6 +130,7 @@ import { AdminFormField } from '../../models/admin-table.model';
                 }
               </div>
             }
+            <ng-content select="[adminFormExtras]" />
           </div>
         </p-fluid>
 

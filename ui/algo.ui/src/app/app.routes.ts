@@ -59,6 +59,20 @@ export const routes: Routes = [
           import('./features/roles/roles.routes').then((m) => m.ROLES_ROUTES)
       },
       {
+        path: 'categories',
+        canActivate: [permissionGuard],
+        data: { permission: { any: [Permissions.categories.read] } },
+        loadChildren: () =>
+          import('./features/categories/categories.routes').then((m) => m.CATEGORIES_ROUTES)
+      },
+      {
+        path: 'products',
+        canActivate: [permissionGuard],
+        data: { permission: { any: [Permissions.products.read] } },
+        loadChildren: () =>
+          import('./features/products/products.routes').then((m) => m.PRODUCTS_ROUTES)
+      },
+      {
         path: 'access-policies',
         canActivate: [permissionGuard],
         data: { permission: { any: [Permissions.accessPolicies.read] } },

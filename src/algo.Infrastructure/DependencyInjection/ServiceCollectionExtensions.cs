@@ -3,6 +3,8 @@ using algo.Infrastructure.ExternalServices;
 using algo.Infrastructure.Identity;
 using algo.Infrastructure.Logging;
 using algo.Infrastructure.Security;
+using algo.Infrastructure.Storage;
+using algo.Application.Abstractions.Storage;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -22,6 +24,9 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ICurrentUserService, CurrentUserService>();
         services.AddScoped<ISessionContext, SessionContext>();
         services.AddScoped<IAccessPolicyTokenResolver, AccessPolicyTokenResolver>();
+        services.AddHttpClient(nameof(FileScannerService));
+        services.AddScoped<IObjectStorageService, S3ObjectStorageService>();
+        services.AddScoped<IFileScannerService, FileScannerService>();
 
         return services;
     }

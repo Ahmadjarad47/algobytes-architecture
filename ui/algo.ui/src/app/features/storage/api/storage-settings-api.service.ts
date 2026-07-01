@@ -5,7 +5,8 @@ import { ApiService } from '../../../core/api/api.service';
 import {
   FileScanResult,
   StorageSettings,
-  UpdateStorageSettingsCommand
+  UpdateStorageSettingsCommand,
+  UploadProductImageResult
 } from '../models/storage.models';
 
 @Injectable({ providedIn: 'root' })
@@ -13,11 +14,11 @@ export class StorageSettingsApiService {
   private readonly api = inject(ApiService);
 
   getSettings(): Observable<StorageSettings> {
-    return this.api.get<StorageSettings>('/storage/settings');
+    return this.api.get<StorageSettings>('/storage');
   }
 
   updateSettings(command: UpdateStorageSettingsCommand): Observable<StorageSettings> {
-    return this.api.put<StorageSettings, UpdateStorageSettingsCommand>('/storage/settings', command);
+    return this.api.put<StorageSettings, UpdateStorageSettingsCommand>('/storage', command);
   }
 
   scanFile(file: File): Observable<FileScanResult> {
@@ -25,5 +26,12 @@ export class StorageSettingsApiService {
     formData.append('file', file, file.name);
 
     return this.api.post<FileScanResult, FormData>('/storage/scanner/scan', formData);
+  }
+
+  uploadProductImage(file: File): Observable<UploadProductImageResult> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    return this.api.post<UploadProductImageResult, FormData>('/storage/upload/product-image', formData);
   }
 }

@@ -10,7 +10,10 @@ export interface AdminTableColumn {
   readonly filter?: boolean;
   readonly filterType?: 'text' | 'numeric' | 'date' | 'boolean';
   readonly widthClass?: string;
-  readonly cellType?: 'text' | 'date' | 'boolean' | 'status' | 'json' | 'list';
+  readonly cellType?: 'text' | 'date' | 'boolean' | 'status' | 'json' | 'list' | 'image' | 'currency';
+  readonly currencyCode?: string;
+  readonly currencyLocale?: string;
+  readonly imageBaseUrl?: string;
   readonly placeholder?: string;
   readonly severityMap?: Record<string, 'success' | 'info' | 'warn' | 'danger' | 'secondary' | 'contrast'>;
 }

@@ -48,11 +48,13 @@ import {
 } from '../../models/access-policies.models';
 
 const FALLBACK_POLICY_OPTIONS: AccessPolicyOptionsDto = {
-  resources: ['users', 'roles', 'accessPolicies', 'logs', 'errorLogs', '*'],
+  resources: ['users', 'roles', 'accessPolicies', 'products', 'categories', 'logs', 'errorLogs', '*'],
   actionsByResource: {
     users: ['read', 'create', 'update', 'delete'],
     roles: ['read', 'create', 'update', 'delete'],
     accessPolicies: ['read', 'create', 'update', 'delete'],
+    products: ['read', 'create', 'update', 'delete'],
+    categories: ['read', 'create', 'update', 'delete'],
     logs: ['read', 'create', 'update', 'delete'],
     errorLogs: ['read', 'create', 'update', 'delete'],
     '*': ['*']

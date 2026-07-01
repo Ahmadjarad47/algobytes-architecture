@@ -481,6 +481,8 @@ export class DashboardLayout {
     { label: 'Users', path: '/users', icon: 'pi pi-users', badge: 'IAM', feature: 'users', gate: { any: [Permissions.users.read] } },
     { label: 'Users Chat', path: '/users/chat', icon: 'pi pi-comments', feature: 'users', gate: { any: [Permissions.users.read] } },
     { label: 'Roles', path: '/roles', icon: 'pi pi-id-card', feature: 'roles', gate: { any: [Permissions.roles.read] } },
+    { label: 'Categories', path: '/categories', icon: 'pi pi-tags', feature: 'categories', gate: { any: [Permissions.categories.read] } },
+    { label: 'Products', path: '/products', icon: 'pi pi-shopping-bag', badge: 'Shop', feature: 'products', gate: { any: [Permissions.products.read] } },
     { label: 'Access Policies', path: '/access-policies', icon: 'pi pi-shield', badge: 'Auth', feature: 'accessPolicies', gate: { any: [Permissions.accessPolicies.read] } },
     { label: 'Active Sessions', path: '/active-sessions', icon: 'pi pi-desktop', badge: 'Security', feature: 'activeSessions', gate: { any: [Permissions.sessions.read] } },
     { label: 'Logs', path: '/logs', icon: 'pi pi-list', feature: 'logs', gate: { any: [Permissions.logs.read] } },
@@ -504,6 +506,8 @@ export class DashboardLayout {
   protected readonly newItems = computed<MenuItem[]>(() => [
     { label: 'Create user', icon: 'pi pi-user-plus', visible: this.appConfig.features().users && this.permissionService.can({ any: [Permissions.users.create] }), command: () => this.dispatchOrRoute('create-user', '/users') },
     { label: 'Create role', icon: 'pi pi-id-card', visible: this.appConfig.features().roles && this.permissionService.can({ any: [Permissions.roles.create] }), command: () => this.dispatchOrRoute('create-role', '/roles') },
+    { label: 'Create category', icon: 'pi pi-tags', visible: this.appConfig.features().categories && this.permissionService.can({ any: [Permissions.categories.create] }), command: () => this.dispatchOrRoute('create-category', '/categories') },
+    { label: 'Create product', icon: 'pi pi-shopping-bag', visible: this.appConfig.features().products && this.permissionService.can({ any: [Permissions.products.create] }), command: () => this.dispatchOrRoute('create-product', '/products') },
     { label: 'Create access policy', icon: 'pi pi-shield', visible: this.appConfig.features().accessPolicies && this.permissionService.can({ any: [Permissions.accessPolicies.create] }), command: () => this.dispatchOrRoute('create-access-policy', '/access-policies') },
     { label: 'Create API key', icon: 'pi pi-key', command: () => this.dispatchOrRoute('create-api-key', '/settings') },
     { label: 'Create workspace', icon: 'pi pi-building', command: () => this.dispatchOrRoute('create-workspace', '/settings') }
@@ -513,6 +517,8 @@ export class DashboardLayout {
     { id: 'search-users', label: 'Search users', hint: 'Open the users directory', icon: 'pi pi-search', gate: { any: [Permissions.users.read] } },
     { id: 'create-user', label: 'Create user', hint: 'Open user creation drawer', icon: 'pi pi-user-plus', gate: { any: [Permissions.users.create] } },
     { id: 'create-role', label: 'Create role', hint: 'Open role creation drawer', icon: 'pi pi-id-card', gate: { any: [Permissions.roles.create] } },
+    { id: 'create-category', label: 'Create category', hint: 'Open category creation drawer', icon: 'pi pi-tags', gate: { any: [Permissions.categories.create] } },
+    { id: 'create-product', label: 'Create product', hint: 'Open product creation drawer', icon: 'pi pi-shopping-bag', gate: { any: [Permissions.products.create] } },
     { id: 'create-access-policy', label: 'Create access policy', hint: 'Open policy creation drawer', icon: 'pi pi-shield', gate: { any: [Permissions.accessPolicies.create] } },
     { id: 'open-active-sessions', label: 'Open active sessions', hint: 'Review online users and sessions', icon: 'pi pi-desktop', gate: { any: [Permissions.sessions.read] } },
     { id: 'open-logs', label: 'Open logs', hint: 'Inspect application logs', icon: 'pi pi-list', gate: { any: [Permissions.logs.read] } },
@@ -572,6 +578,24 @@ export class DashboardLayout {
         page: 'Roles',
         title: 'Role Management',
         badge: 'Permissions'
+      };
+    }
+
+    if (url.startsWith('/categories')) {
+      return {
+        section: 'Catalog',
+        page: 'Categories',
+        title: 'Category Management',
+        badge: 'Shop'
+      };
+    }
+
+    if (url.startsWith('/products')) {
+      return {
+        section: 'Catalog',
+        page: 'Products',
+        title: 'Product Catalog',
+        badge: 'Shop'
       };
     }
 
@@ -781,6 +805,12 @@ export class DashboardLayout {
         break;
       case 'create-role':
         this.dispatchOrRoute('create-role', '/roles');
+        break;
+      case 'create-category':
+        this.dispatchOrRoute('create-category', '/categories');
+        break;
+      case 'create-product':
+        this.dispatchOrRoute('create-product', '/products');
         break;
       case 'create-access-policy':
         this.dispatchOrRoute('create-access-policy', '/access-policies');
