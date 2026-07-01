@@ -16,19 +16,28 @@ public sealed class RequestLoggingMiddleware(
         var method = context.Request.Method;
         var path = context.Request.Path.Value;
         var traceId = context.TraceIdentifier;
+        var failed = false;
 
         try
         {
             await next(context);
         }
+        catch
+        {
+            failed = true;
+            throw;
+        }
         finally
         {
             sw.Stop();
+            var statusCode = failed && context.Response.StatusCode < 500
+                ? StatusCodes.Status500InternalServerError
+                : context.Response.StatusCode;
             logger.LogInformation(
                 "HTTP {RequestMethod} {RequestPath} completed with {StatusCode} in {ElapsedMilliseconds} ms ({TraceId})",
                 method,
                 path,
-                context.Response.StatusCode,
+                statusCode,
                 sw.ElapsedMilliseconds,
                 traceId);
 
@@ -36,12 +45,12 @@ public sealed class RequestLoggingMiddleware(
             {
                 await operationalActivityNotifier.NotifyAsync(new OperationalActivityEvent(
                     DateTimeOffset.UtcNow,
-                    context.Response.StatusCode >= 500 ? "error" : context.Response.StatusCode >= 400 ? "warn" : "info",
+                    statusCode >= 500 ? "error" : statusCode >= 400 ? "warn" : "info",
                     "http",
-                    $"{method} {path} -> {context.Response.StatusCode} in {sw.ElapsedMilliseconds} ms",
+                    $"{method} {path} -> {statusCode} in {sw.ElapsedMilliseconds} ms",
                     traceId,
                     context.User.FindFirstValue("sub") ?? context.User.FindFirstValue(ClaimTypes.NameIdentifier),
-                    context.Response.StatusCode,
+                    statusCode,
                     sw.ElapsedMilliseconds),
                     context.RequestAborted);
             }

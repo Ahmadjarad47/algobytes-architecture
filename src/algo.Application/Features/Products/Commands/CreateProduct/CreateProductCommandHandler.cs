@@ -75,5 +75,8 @@ public sealed class CreateProductCommandHandler(
             product.Provider,
             product.ImageUrl,
             product.CreatedAt,
-            product.UpdatedAt);
+            product.UpdatedAt,
+            product.TrashedAt,
+            product.TrashExpiresAt,
+            product.DeletedAt);
 }

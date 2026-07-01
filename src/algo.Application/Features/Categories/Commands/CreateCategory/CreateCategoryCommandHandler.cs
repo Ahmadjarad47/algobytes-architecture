@@ -44,6 +44,13 @@ public sealed class CreateCategoryCommandHandler(
         db.Categories.Add(category);
         await db.SaveChangesAsync(cancellationToken);
 
-        return new CategoryDetailsDto(category.Id, category.Name, category.Description, 0);
+        return new CategoryDetailsDto(
+            category.Id,
+            category.Name,
+            category.Description,
+            0,
+            category.TrashedAt,
+            category.TrashExpiresAt,
+            category.DeletedAt);
     }
 }

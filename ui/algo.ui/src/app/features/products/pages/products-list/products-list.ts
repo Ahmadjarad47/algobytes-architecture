@@ -39,17 +39,45 @@ import {
     AdminConfirmDialog
   ],
   template: `
+    <section class="surface-card dashboard-section mb-3">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Product lifecycle</div>
+          <div class="mt-1 text-sm font-semibold text-slate-950">Active products and trash retention</div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            class="rounded-full px-3 py-1.5 text-xs font-semibold transition"
+            [class]="!showTrashed() ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+            (click)="setTrashView(false)"
+          >
+            Active products
+          </button>
+          <button
+            type="button"
+            class="rounded-full px-3 py-1.5 text-xs font-semibold transition"
+            [class]="showTrashed() ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'"
+            (click)="setTrashView(true)"
+          >
+            Trash
+          </button>
+        </div>
+      </div>
+    </section>
+
     <app-admin-data-table
       title="Products"
-      subtitle="Game shop catalog with pricing, provider metadata, and category assignment."
-      [columns]="columns"
+      [subtitle]="tableSubtitle()"
+      [columns]="columns()"
       [value]="products()"
       [loading]="loading()"
       [lazy]="false"
       [rows]="25"
       [totalRecords]="products().length"
       [globalFilterFields]="globalFilterFields"
-      [showCreate]="canCreate()"
+      [showCreate]="canCreate() && !showTrashed()"
       [showExport]="canExport()"
       searchPlaceholder="Search products"
       emptyTitle="No products yet"
@@ -124,10 +152,10 @@ import {
 
     <app-admin-confirm-dialog
       [visible]="deleteDialogVisible()"
-      title="Delete product"
-      [message]="'Delete ' + (pendingDeleteProduct()?.name ?? 'this product') + '?'"
-      description="This action permanently removes the product from the catalog."
-      confirmLabel="Delete product"
+      title="Move product to trash"
+      [message]="'Move ' + (pendingDeleteProduct()?.name ?? 'this product') + ' to trash?'"
+      description="The product will stay in trash for 3 days before final soft delete."
+      confirmLabel="Move to trash"
       [loading]="deleting()"
       (visibleChange)="closeDeleteDialog($event)"
       (confirm)="confirmDelete()"
@@ -150,6 +178,7 @@ export class ProductsList {
   protected readonly saving = signal(false);
   protected readonly formVisible = signal(false);
   protected readonly detailsVisible = signal(false);
+  protected readonly showTrashed = signal(false);
   protected readonly editingProductId = signal<number | null>(null);
   protected readonly selectedProduct = signal<ProductDto | null>(null);
   protected readonly deleteDialogVisible = signal(false);
@@ -165,7 +194,7 @@ export class ProductsList {
     'externalGameId'
   ];
 
-  protected readonly columns: AdminTableColumn[] = [
+  protected readonly baseColumns: AdminTableColumn[] = [
     { field: 'name', header: 'Name', sortable: true, filter: true },
     { field: 'categoryName', header: 'Category', sortable: true, filter: true },
     { field: 'imageUrl', header: 'Image', cellType: 'image' },
@@ -175,8 +204,20 @@ export class ProductsList {
     { field: 'discountedPriceSyp', header: 'Discount (SYP)', sortable: true, cellType: 'currency', currencyCode: 'SYP' },
     { field: 'provider', header: 'Provider', sortable: true, filter: true },
     { field: 'externalGameId', header: 'External ID', filter: true },
-    { field: 'createdAt', header: 'Created', cellType: 'date' }
+    { field: 'createdAt', header: 'Created', cellType: 'date' },
+    { field: 'trashedAt', header: 'Trashed at', cellType: 'date' },
+    { field: 'trashExpiresAt', header: 'Trash expires', cellType: 'date' }
   ];
+  protected readonly tableSubtitle = computed(() =>
+    this.showTrashed()
+      ? 'Trashed products can be restored for 3 days before final soft delete.'
+      : 'Game shop catalog with pricing, provider metadata, and 3-day trash retention before final soft delete.'
+  );
+  protected readonly columns = computed<AdminTableColumn[]>(() =>
+    this.showTrashed()
+      ? this.baseColumns
+      : this.baseColumns.filter((column) => column.field !== 'trashedAt' && column.field !== 'trashExpiresAt')
+  );
 
   protected readonly canCreate = computed(() =>
     this.permissionService.can({ any: [Permissions.products.create] })
@@ -191,15 +232,23 @@ export class ProductsList {
     this.permissionService.can({ any: [Permissions.products.read] })
   );
 
-  protected readonly actions = computed<AdminRowAction<ProductDto>[]>(() => [
-    { id: 'view', label: 'View product', icon: 'pi pi-eye' },
-    ...(this.canUpdate()
-      ? [{ id: 'edit', label: 'Edit product', icon: 'pi pi-pencil' } as AdminRowAction<ProductDto>]
-      : []),
-    ...(this.canDelete()
-      ? [{ id: 'delete', label: 'Delete product', icon: 'pi pi-trash', severity: 'danger' as const }]
-      : [])
-  ]);
+  protected readonly actions = computed<AdminRowAction<ProductDto>[]>(() =>
+    this.showTrashed()
+      ? [
+          { id: 'view', label: 'View product', icon: 'pi pi-eye' },
+          ...(this.canUpdate()
+            ? [{ id: 'restore', label: 'Restore product', icon: 'pi pi-history', severity: 'success' as const } as AdminRowAction<ProductDto>]
+            : [])
+        ]
+      : [
+          { id: 'view', label: 'View product', icon: 'pi pi-eye' },
+          ...(this.canUpdate()
+            ? [{ id: 'edit', label: 'Edit product', icon: 'pi pi-pencil' } as AdminRowAction<ProductDto>]
+            : []),
+          ...(this.canDelete()
+            ? [{ id: 'delete', label: 'Delete product', icon: 'pi pi-trash', severity: 'danger' as const }]
+            : [])
+        ]);
 
   protected readonly fields = computed<AdminFormField[]>(() => [
     { key: 'name', label: 'Product name', type: 'text', required: true },
@@ -254,7 +303,9 @@ export class ProductsList {
       { label: 'Image URL', value: product.imageUrl },
       { label: 'External game ID', value: product.externalGameId },
       { label: 'Created at', value: product.createdAt, type: 'date' },
-      { label: 'Updated at', value: product.updatedAt, type: 'date' }
+      { label: 'Updated at', value: product.updatedAt, type: 'date' },
+      { label: 'Trashed at', value: product.trashedAt, type: 'date' },
+      { label: 'Trash expires', value: product.trashExpiresAt, type: 'date' }
     ];
   });
 
@@ -271,9 +322,18 @@ export class ProductsList {
   protected loadProducts(): void {
     this.loading.set(true);
     this.api
-      .getProducts()
+      .getProducts({ includeTrashed: this.showTrashed(), onlyTrashed: this.showTrashed() })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe((products) => this.products.set(products));
+  }
+
+  protected setTrashView(showTrashed: boolean): void {
+    if (this.showTrashed() === showTrashed) {
+      return;
+    }
+
+    this.showTrashed.set(showTrashed);
+    this.loadProducts();
   }
 
   protected openCreate(): void {
@@ -329,6 +389,12 @@ export class ProductsList {
         this.pendingDeleteProduct.set(row);
         this.deleteDialogVisible.set(true);
         break;
+      case 'restore':
+        this.api.restoreProduct(row.id).subscribe(() => {
+          this.toast.success('Product restored', row.name);
+          this.loadProducts();
+        });
+        break;
     }
   }
 
@@ -350,7 +416,7 @@ export class ProductsList {
       .deleteProduct(product.id)
       .pipe(finalize(() => this.deleting.set(false)))
       .subscribe(() => {
-        this.toast.warn('Product deleted', product.name);
+        this.toast.warn('Moved to trash', `${product.name} will be kept for 3 days.`);
         this.deleteDialogVisible.set(false);
         this.pendingDeleteProduct.set(null);
         this.loadProducts();

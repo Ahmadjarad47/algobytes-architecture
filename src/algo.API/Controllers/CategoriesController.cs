@@ -1,5 +1,6 @@
 using algo.Application.Features.Categories.Commands.CreateCategory;
 using algo.Application.Features.Categories.Commands.DeleteCategory;
+using algo.Application.Features.Categories.Commands.RestoreCategory;
 using algo.Application.Features.Categories.Commands.UpdateCategory;
 using algo.Application.Features.Categories.Dtos;
 using algo.Application.Features.Categories.Queries.GetAllCategories;
@@ -15,8 +16,11 @@ public sealed class CategoriesController(IMediator mediator) : BaseController(me
 {
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<CategoryDto>), StatusCodes.Status200OK)]
-    public Task<IReadOnlyList<CategoryDto>> List(CancellationToken cancellationToken) =>
-        mediator.Send(new GetAllCategoriesQuery(), cancellationToken);
+    public Task<IReadOnlyList<CategoryDto>> List(
+        [FromQuery] bool includeTrashed,
+        [FromQuery] bool onlyTrashed,
+        CancellationToken cancellationToken) =>
+        mediator.Send(new GetAllCategoriesQuery(includeTrashed, onlyTrashed), cancellationToken);
 
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(CategoryDetailsDto), StatusCodes.Status200OK)]
@@ -55,6 +59,15 @@ public sealed class CategoriesController(IMediator mediator) : BaseController(me
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var ok = await mediator.Send(new DeleteCategoryCommand(id), cancellationToken);
+        return ok ? NoContent() : NotFound();
+    }
+
+    [HttpPatch("{id:int}/restore")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken)
+    {
+        var ok = await mediator.Send(new RestoreCategoryCommand(id), cancellationToken);
         return ok ? NoContent() : NotFound();
     }
 }

@@ -13,8 +13,8 @@ import {
 export class CategoriesApiService {
   private readonly api = inject(ApiService);
 
-  getCategories(): Observable<CategoryDto[]> {
-    return this.api.get<CategoryDto[]>('/Categories');
+  getCategories(query?: { includeTrashed?: boolean; onlyTrashed?: boolean }): Observable<CategoryDto[]> {
+    return this.api.get<CategoryDto[]>('/Categories', query);
   }
 
   getCategory(id: number): Observable<CategoryDetailsDto> {
@@ -31,5 +31,9 @@ export class CategoriesApiService {
 
   deleteCategory(id: number): Observable<void> {
     return this.api.delete<void>(`/Categories/${id}`);
+  }
+
+  restoreCategory(id: number): Observable<void> {
+    return this.api.patch<void>(`/Categories/${id}/restore`);
   }
 }

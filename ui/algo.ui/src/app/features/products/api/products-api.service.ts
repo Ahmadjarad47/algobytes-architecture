@@ -12,8 +12,8 @@ import {
 export class ProductsApiService {
   private readonly api = inject(ApiService);
 
-  getProducts(): Observable<ProductDto[]> {
-    return this.api.get<ProductDto[]>('/Products');
+  getProducts(query?: { includeTrashed?: boolean; onlyTrashed?: boolean }): Observable<ProductDto[]> {
+    return this.api.get<ProductDto[]>('/Products', query);
   }
 
   getProduct(id: number): Observable<ProductDto> {
@@ -30,5 +30,9 @@ export class ProductsApiService {
 
   deleteProduct(id: number): Observable<void> {
     return this.api.delete<void>(`/Products/${id}`);
+  }
+
+  restoreProduct(id: number): Observable<void> {
+    return this.api.patch<void>(`/Products/${id}/restore`);
   }
 }

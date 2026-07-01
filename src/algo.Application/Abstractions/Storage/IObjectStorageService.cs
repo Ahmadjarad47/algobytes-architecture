@@ -11,6 +11,9 @@ public sealed record ObjectStorageUploadRequest(
     string Region,
     bool UsePathStyle);
 
+public sealed class ObjectStorageUnavailableException(string message, Exception? innerException = null)
+    : Exception(message, innerException);
+
 public interface IObjectStorageService
 {
     Task<string> UploadAsync(ObjectStorageUploadRequest request, CancellationToken cancellationToken = default);

@@ -21,13 +21,17 @@ public sealed class GetCategoryByIdQueryHandler(
             cancellationToken);
 
         return await db.Categories
+            .IgnoreQueryFilters()
             .AsNoTracking()
-            .Where(c => c.Id == request.Id)
+            .Where(c => c.Id == request.Id && c.DeletedAt == null)
             .Select(c => new CategoryDetailsDto(
                 c.Id,
                 c.Name,
                 c.Description,
-                c.Products.Count))
+                c.Products.Count,
+                c.TrashedAt,
+                c.TrashExpiresAt,
+                c.DeletedAt))
             .FirstOrDefaultAsync(cancellationToken);
     }
 }

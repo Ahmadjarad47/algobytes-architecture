@@ -20,14 +20,30 @@ public sealed class GetAllCategoriesQueryHandler(
             AccessPolicyActions.Read,
             cancellationToken);
 
-        return await db.Categories
-            .AsNoTracking()
+        var query = (request.IncludeTrashed || request.OnlyTrashed
+                ? db.Categories.IgnoreQueryFilters()
+                : db.Categories)
+            .AsNoTracking();
+
+        if (request.OnlyTrashed)
+        {
+            query = query.Where(category => category.TrashedAt != null && category.DeletedAt == null);
+        }
+        else if (!request.IncludeTrashed)
+        {
+            query = query.Where(category => category.TrashedAt == null && category.DeletedAt == null);
+        }
+
+        return await query
             .OrderBy(c => c.Name)
             .Select(c => new CategoryDto(
                 c.Id,
                 c.Name,
                 c.Description,
-                c.Products.Count))
+                c.Products.Count,
+                c.TrashedAt,
+                c.TrashExpiresAt,
+                c.DeletedAt))
             .ToListAsync(cancellationToken);
     }
 }

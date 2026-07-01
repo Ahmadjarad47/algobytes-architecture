@@ -4,10 +4,16 @@ public sealed record CategoryDto(
     int Id,
     string Name,
     string? Description,
-    int ProductCount);
+    int ProductCount,
+    DateTimeOffset? TrashedAt,
+    DateTimeOffset? TrashExpiresAt,
+    DateTimeOffset? DeletedAt);
 
 public sealed record CategoryDetailsDto(
     int Id,
     string Name,
     string? Description,
-    int ProductCount);
+    int ProductCount,
+    DateTimeOffset? TrashedAt,
+    DateTimeOffset? TrashExpiresAt,
+    DateTimeOffset? DeletedAt);

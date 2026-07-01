@@ -20,8 +20,21 @@ public sealed class GetAllProductsQueryHandler(
             AccessPolicyActions.Read,
             cancellationToken);
 
-        return await db.Products
-            .AsNoTracking()
+        var query = (request.IncludeTrashed || request.OnlyTrashed
+                ? db.Products.IgnoreQueryFilters()
+                : db.Products)
+            .AsNoTracking();
+
+        if (request.OnlyTrashed)
+        {
+            query = query.Where(product => product.TrashedAt != null && product.DeletedAt == null);
+        }
+        else if (!request.IncludeTrashed)
+        {
+            query = query.Where(product => product.TrashedAt == null && product.DeletedAt == null);
+        }
+
+        return await query
             .Include(p => p.Category)
             .OrderBy(p => p.Name)
             .Select(p => new ProductDto(
@@ -37,7 +50,10 @@ public sealed class GetAllProductsQueryHandler(
                 p.Provider,
                 p.ImageUrl,
                 p.CreatedAt,
-                p.UpdatedAt))
+                p.UpdatedAt,
+                p.TrashedAt,
+                p.TrashExpiresAt,
+                p.DeletedAt))
             .ToListAsync(cancellationToken);
     }
 }

@@ -49,6 +49,13 @@ public sealed class UpdateCategoryCommandHandler(
             .AsNoTracking()
             .CountAsync(p => p.CategoryId == category.Id, cancellationToken);
 
-        return new CategoryDetailsDto(category.Id, category.Name, category.Description, productCount);
+        return new CategoryDetailsDto(
+            category.Id,
+            category.Name,
+            category.Description,
+            productCount,
+            category.TrashedAt,
+            category.TrashExpiresAt,
+            category.DeletedAt);
     }
 }

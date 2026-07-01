@@ -26,5 +26,11 @@ public class Product
 
     public DateTimeOffset? UpdatedAt { get; set; }
 
+    public DateTimeOffset? TrashedAt { get; set; }
+
+    public DateTimeOffset? TrashExpiresAt { get; set; }
+
+    public DateTimeOffset? DeletedAt { get; set; }
+
     public virtual Category Category { get; set; } = null!;
 }

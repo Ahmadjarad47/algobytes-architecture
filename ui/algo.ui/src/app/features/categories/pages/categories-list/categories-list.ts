@@ -35,17 +35,45 @@ import {
     AdminConfirmDialog
   ],
   template: `
+    <section class="surface-card dashboard-section mb-3">
+      <div class="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Category lifecycle</div>
+          <div class="mt-1 text-sm font-semibold text-slate-950">Active categories and trash retention</div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            class="rounded-full px-3 py-1.5 text-xs font-semibold transition"
+            [class]="!showTrashed() ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
+            (click)="setTrashView(false)"
+          >
+            Active categories
+          </button>
+          <button
+            type="button"
+            class="rounded-full px-3 py-1.5 text-xs font-semibold transition"
+            [class]="showTrashed() ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'"
+            (click)="setTrashView(true)"
+          >
+            Trash
+          </button>
+        </div>
+      </div>
+    </section>
+
     <app-admin-data-table
       title="Categories"
-      subtitle="Organize shop products into reusable catalog categories."
-      [columns]="columns"
+      [subtitle]="tableSubtitle()"
+      [columns]="columns()"
       [value]="categories()"
       [loading]="loading()"
       [lazy]="false"
       [rows]="25"
       [totalRecords]="categories().length"
       [globalFilterFields]="globalFilterFields"
-      [showCreate]="canCreate()"
+      [showCreate]="canCreate() && !showTrashed()"
       [showExport]="canExport()"
       searchPlaceholder="Search categories"
       emptyTitle="No categories yet"
@@ -78,10 +106,10 @@ import {
 
     <app-admin-confirm-dialog
       [visible]="deleteDialogVisible()"
-      title="Delete category"
-      [message]="'Delete ' + (pendingDeleteCategory()?.name ?? 'this category') + '?'"
-      description="Categories with assigned products cannot be deleted."
-      confirmLabel="Delete category"
+      title="Move category to trash"
+      [message]="'Move ' + (pendingDeleteCategory()?.name ?? 'this category') + ' to trash?'"
+      description="Categories with assigned products cannot be deleted. Trashed categories are retained for 3 days before final soft delete."
+      confirmLabel="Move to trash"
       [loading]="deleting()"
       (visibleChange)="closeDeleteDialog($event)"
       (confirm)="confirmDelete()"
@@ -101,6 +129,7 @@ export class CategoriesList {
   protected readonly saving = signal(false);
   protected readonly formVisible = signal(false);
   protected readonly detailsVisible = signal(false);
+  protected readonly showTrashed = signal(false);
   protected readonly editingCategoryId = signal<number | null>(null);
   protected readonly selectedCategory = signal<CategoryDetailsDto | null>(null);
   protected readonly deleteDialogVisible = signal(false);
@@ -109,11 +138,18 @@ export class CategoriesList {
 
   protected readonly globalFilterFields = ['name', 'description'];
 
-  protected readonly columns: AdminTableColumn[] = [
+  protected readonly baseColumns: AdminTableColumn[] = [
     { field: 'name', header: 'Name', sortable: true, filter: true },
     { field: 'description', header: 'Description', filter: true },
-    { field: 'productCount', header: 'Products', sortable: true }
+    { field: 'productCount', header: 'Products', sortable: true },
+    { field: 'trashedAt', header: 'Trashed at', cellType: 'date' },
+    { field: 'trashExpiresAt', header: 'Trash expires', cellType: 'date' }
   ];
+  protected readonly columns = computed<AdminTableColumn[]>(() =>
+    this.showTrashed()
+      ? this.baseColumns
+      : this.baseColumns.filter((column) => column.field !== 'trashedAt' && column.field !== 'trashExpiresAt')
+  );
 
   protected readonly fields: AdminFormField[] = [
     { key: 'name', label: 'Category name', type: 'text', required: true },
@@ -132,16 +168,29 @@ export class CategoriesList {
   protected readonly canExport = computed(() =>
     this.permissionService.can({ any: [Permissions.categories.read] })
   );
+  protected readonly tableSubtitle = computed(() =>
+    this.showTrashed()
+      ? 'Trashed categories can be restored for 3 days before final soft delete.'
+      : 'Organize shop products into reusable catalog categories with 3-day trash retention before final soft delete.'
+  );
 
-  protected readonly actions = computed<AdminRowAction<CategoryDto>[]>(() => [
-    { id: 'view', label: 'View category', icon: 'pi pi-eye' },
-    ...(this.canUpdate()
-      ? [{ id: 'edit', label: 'Edit category', icon: 'pi pi-pencil' } as AdminRowAction<CategoryDto>]
-      : []),
-    ...(this.canDelete()
-      ? [{ id: 'delete', label: 'Delete category', icon: 'pi pi-trash', severity: 'danger' as const }]
-      : [])
-  ]);
+  protected readonly actions = computed<AdminRowAction<CategoryDto>[]>(() =>
+    this.showTrashed()
+      ? [
+          { id: 'view', label: 'View category', icon: 'pi pi-eye' },
+          ...(this.canUpdate()
+            ? [{ id: 'restore', label: 'Restore category', icon: 'pi pi-history', severity: 'success' as const } as AdminRowAction<CategoryDto>]
+            : [])
+        ]
+      : [
+          { id: 'view', label: 'View category', icon: 'pi pi-eye' },
+          ...(this.canUpdate()
+            ? [{ id: 'edit', label: 'Edit category', icon: 'pi pi-pencil' } as AdminRowAction<CategoryDto>]
+            : []),
+          ...(this.canDelete()
+            ? [{ id: 'delete', label: 'Delete category', icon: 'pi pi-trash', severity: 'danger' as const }]
+            : [])
+        ]);
 
   protected readonly form = this.formBuilder.group({
     name: ['', Validators.required],
@@ -158,7 +207,9 @@ export class CategoriesList {
       { label: 'Category ID', value: category.id },
       { label: 'Name', value: category.name },
       { label: 'Description', value: category.description },
-      { label: 'Products', value: category.productCount }
+      { label: 'Products', value: category.productCount },
+      { label: 'Trashed at', value: category.trashedAt, type: 'date' },
+      { label: 'Trash expires', value: category.trashExpiresAt, type: 'date' }
     ];
   });
 
@@ -174,9 +225,18 @@ export class CategoriesList {
   protected loadCategories(): void {
     this.loading.set(true);
     this.api
-      .getCategories()
+      .getCategories({ includeTrashed: this.showTrashed(), onlyTrashed: this.showTrashed() })
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe((categories) => this.categories.set(categories));
+  }
+
+  protected setTrashView(showTrashed: boolean): void {
+    if (this.showTrashed() === showTrashed) {
+      return;
+    }
+
+    this.showTrashed.set(showTrashed);
+    this.loadCategories();
   }
 
   protected openCreate(): void {
@@ -212,6 +272,12 @@ export class CategoriesList {
         this.pendingDeleteCategory.set(row);
         this.deleteDialogVisible.set(true);
         break;
+      case 'restore':
+        this.api.restoreCategory(row.id).subscribe(() => {
+          this.toast.success('Category restored', row.name);
+          this.loadCategories();
+        });
+        break;
     }
   }
 
@@ -233,7 +299,7 @@ export class CategoriesList {
       .deleteCategory(category.id)
       .pipe(finalize(() => this.deleting.set(false)))
       .subscribe(() => {
-        this.toast.warn('Category deleted', category.name);
+        this.toast.warn('Moved to trash', `${category.name} will be kept for 3 days.`);
         this.deleteDialogVisible.set(false);
         this.pendingDeleteCategory.set(null);
         this.loadCategories();

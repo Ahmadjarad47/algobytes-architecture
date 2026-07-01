@@ -1,6 +1,7 @@
 using algo.Application.Abstractions;
 using algo.Application.Abstractions.Persistence;
 using algo.Application.Common.AccessPolicy;
+using algo.Application.Common.Trash;
 using FluentValidation;
 using FluentValidation.Results;
 using MediatR;
@@ -22,14 +23,19 @@ public sealed class DeleteCategoryCommandHandler(
             cancellationToken);
 
         var category = await db.Categories
-            .FirstOrDefaultAsync(c => c.Id == request.Id, cancellationToken);
+            .IgnoreQueryFilters()
+            .FirstOrDefaultAsync(
+                c => c.Id == request.Id && c.DeletedAt == null,
+                cancellationToken);
 
         if (category is null)
             return false;
 
         var hasProducts = await db.Products
             .AsNoTracking()
-            .AnyAsync(p => p.CategoryId == request.Id, cancellationToken);
+            .AnyAsync(
+                p => p.CategoryId == request.Id && p.DeletedAt == null && p.TrashedAt == null,
+                cancellationToken);
 
         if (hasProducts)
         {
@@ -39,7 +45,10 @@ public sealed class DeleteCategoryCommandHandler(
             });
         }
 
-        db.Categories.Remove(category);
+        var utcNow = DateTimeOffset.UtcNow;
+        category.TrashedAt = utcNow;
+        category.TrashExpiresAt = utcNow.Add(TrashRetention.Duration);
+
         await db.SaveChangesAsync(cancellationToken);
         return true;
     }

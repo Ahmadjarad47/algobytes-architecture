@@ -3,6 +3,9 @@ export interface CategoryDto {
   readonly name: string;
   readonly description: string | null;
   readonly productCount: number;
+  readonly trashedAt: string | null;
+  readonly trashExpiresAt: string | null;
+  readonly deletedAt: string | null;
 }
 
 export interface CategoryDetailsDto extends CategoryDto {}

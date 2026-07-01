@@ -12,6 +12,9 @@ export interface ProductDto {
   readonly imageUrl: string | null;
   readonly createdAt: string;
   readonly updatedAt: string | null;
+  readonly trashedAt: string | null;
+  readonly trashExpiresAt: string | null;
+  readonly deletedAt: string | null;
 }
 
 export interface CreateProductCommand {

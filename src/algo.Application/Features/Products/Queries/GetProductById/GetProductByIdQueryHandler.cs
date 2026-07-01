@@ -21,9 +21,10 @@ public sealed class GetProductByIdQueryHandler(
             cancellationToken);
 
         return await db.Products
+            .IgnoreQueryFilters()
             .AsNoTracking()
             .Include(p => p.Category)
-            .Where(p => p.Id == request.Id)
+            .Where(p => p.Id == request.Id && p.DeletedAt == null)
             .Select(p => new ProductDto(
                 p.Id,
                 p.Name,
@@ -37,7 +38,10 @@ public sealed class GetProductByIdQueryHandler(
                 p.Provider,
                 p.ImageUrl,
                 p.CreatedAt,
-                p.UpdatedAt))
+                p.UpdatedAt,
+                p.TrashedAt,
+                p.TrashExpiresAt,
+                p.DeletedAt))
             .FirstOrDefaultAsync(cancellationToken);
     }
 }

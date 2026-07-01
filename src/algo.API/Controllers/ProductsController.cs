@@ -1,5 +1,6 @@
 using algo.Application.Features.Products.Commands.CreateProduct;
 using algo.Application.Features.Products.Commands.DeleteProduct;
+using algo.Application.Features.Products.Commands.RestoreProduct;
 using algo.Application.Features.Products.Commands.UpdateProduct;
 using algo.Application.Features.Products.Dtos;
 using algo.Application.Features.Products.Queries.GetAllProducts;
@@ -15,8 +16,11 @@ public sealed class ProductsController(IMediator mediator) : BaseController(medi
 {
     [HttpGet]
     [ProducesResponseType(typeof(IReadOnlyList<ProductDto>), StatusCodes.Status200OK)]
-    public Task<IReadOnlyList<ProductDto>> List(CancellationToken cancellationToken) =>
-        mediator.Send(new GetAllProductsQuery(), cancellationToken);
+    public Task<IReadOnlyList<ProductDto>> List(
+        [FromQuery] bool includeTrashed,
+        [FromQuery] bool onlyTrashed,
+        CancellationToken cancellationToken) =>
+        mediator.Send(new GetAllProductsQuery(includeTrashed, onlyTrashed), cancellationToken);
 
     [HttpGet("{id:int}")]
     [ProducesResponseType(typeof(ProductDto), StatusCodes.Status200OK)]
@@ -68,6 +72,15 @@ public sealed class ProductsController(IMediator mediator) : BaseController(medi
     public async Task<IActionResult> Delete(int id, CancellationToken cancellationToken)
     {
         var ok = await mediator.Send(new DeleteProductCommand(id), cancellationToken);
+        return ok ? NoContent() : NotFound();
+    }
+
+    [HttpPatch("{id:int}/restore")]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
+    [ProducesResponseType(StatusCodes.Status404NotFound)]
+    public async Task<IActionResult> Restore(int id, CancellationToken cancellationToken)
+    {
+        var ok = await mediator.Send(new RestoreProductCommand(id), cancellationToken);
         return ok ? NoContent() : NotFound();
     }
 }

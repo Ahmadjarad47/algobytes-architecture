@@ -103,18 +103,29 @@ public sealed class UploadProductImageCommandHandler(
             extension = ContentTypeToExtension(request.ContentType);
 
         var objectKey = BuildObjectKey(configuration.Folder, extension);
-        var url = await objectStorageService.UploadAsync(
-            new ObjectStorageUploadRequest(
-                scanStream,
-                objectKey,
-                request.ContentType,
-                configuration.EndpointUrl,
-                configuration.AccessKey,
-                configuration.SecretKey,
-                configuration.BucketName,
-                configuration.Region,
-                configuration.UsePathStyle),
-            cancellationToken);
+        var uploadRequest = new ObjectStorageUploadRequest(
+            scanStream,
+            objectKey,
+            request.ContentType,
+            configuration.EndpointUrl,
+            configuration.AccessKey,
+            configuration.SecretKey,
+            configuration.BucketName,
+            configuration.Region,
+            configuration.UsePathStyle);
+
+        string url;
+        try
+        {
+            url = await objectStorageService.UploadAsync(uploadRequest, cancellationToken);
+        }
+        catch (ObjectStorageUnavailableException ex)
+        {
+            throw new ValidationException(new[]
+            {
+                new ValidationFailure("storage", ex.Message),
+            });
+        }
 
         return new UploadProductImageResultDto(url);
     }

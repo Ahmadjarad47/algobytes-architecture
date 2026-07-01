@@ -3,4 +3,6 @@ using MediatR;
 
 namespace algo.Application.Features.Categories.Queries.GetAllCategories;
 
-public sealed record GetAllCategoriesQuery : IRequest<IReadOnlyList<CategoryDto>>;
+public sealed record GetAllCategoriesQuery(
+    bool IncludeTrashed = false,
+    bool OnlyTrashed = false) : IRequest<IReadOnlyList<CategoryDto>>;

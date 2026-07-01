@@ -13,4 +13,7 @@ public sealed record ProductDto(
     string? Provider,
     string? ImageUrl,
     DateTimeOffset CreatedAt,
-    DateTimeOffset? UpdatedAt);
+    DateTimeOffset? UpdatedAt,
+    DateTimeOffset? TrashedAt,
+    DateTimeOffset? TrashExpiresAt,
+    DateTimeOffset? DeletedAt);

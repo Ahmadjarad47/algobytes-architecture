@@ -1,38 +1,38 @@
 using algo.Application.Abstractions;
 using algo.Application.Abstractions.Persistence;
 using algo.Application.Common.AccessPolicy;
-using algo.Application.Common.Trash;
 using MediatR;
 using Microsoft.EntityFrameworkCore;
 
-namespace algo.Application.Features.Products.Commands.DeleteProduct;
+namespace algo.Application.Features.Products.Commands.RestoreProduct;
 
-public sealed class DeleteProductCommandHandler(
+public sealed class RestoreProductCommandHandler(
     IApplicationDbContext db,
     IAccessPolicyAuthorizationChecker authorizationChecker)
-    : IRequestHandler<DeleteProductCommand, bool>
+    : IRequestHandler<RestoreProductCommand, bool>
 {
-    public async Task<bool> Handle(DeleteProductCommand request, CancellationToken cancellationToken)
+    public async Task<bool> Handle(RestoreProductCommand request, CancellationToken cancellationToken)
     {
         await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Products,
-            AccessPolicyActions.Delete,
+            AccessPolicyActions.Update,
             cancellationToken);
 
         var product = await db.Products
             .IgnoreQueryFilters()
             .FirstOrDefaultAsync(
-                p => p.Id == request.Id && p.DeletedAt == null,
+                p => p.Id == request.Id && p.TrashedAt != null && p.DeletedAt == null,
                 cancellationToken);
 
         if (product is null)
+        {
             return false;
+        }
 
-        var utcNow = DateTimeOffset.UtcNow;
-        product.TrashedAt = utcNow;
-        product.TrashExpiresAt = utcNow.Add(TrashRetention.Duration);
-        product.UpdatedAt = utcNow;
+        product.TrashedAt = null;
+        product.TrashExpiresAt = null;
+        product.UpdatedAt = DateTimeOffset.UtcNow;
 
         await db.SaveChangesAsync(cancellationToken);
         return true;
