@@ -1,3 +1,4 @@
+using algo.Application.Common.AccessPolicy;
 using algo.Application.Features.Storage.Commands.ScanFile;
 using algo.Application.Features.Storage.Commands.UpdateStorageSettings;
 using algo.Application.Features.Storage.Commands.UploadProductImage;
@@ -71,7 +72,39 @@ public sealed class StorageController(IMediator mediator) : BaseController(media
 
         await using var stream = file.OpenReadStream();
         var result = await mediator.Send(
-            new UploadProductImageCommand(stream, file.FileName, file.ContentType, file.Length),
+            new UploadProductImageCommand(
+                stream,
+                file.FileName,
+                file.ContentType,
+                file.Length,
+                "products",
+                AccessPolicyResources.Products,
+                [AccessPolicyActions.Create, AccessPolicyActions.Update]),
+            cancellationToken);
+
+        return Ok(result);
+    }
+
+    [HttpPost("upload/category-image")]
+    [ProducesResponseType(typeof(UploadProductImageResultDto), StatusCodes.Status200OK)]
+    [RequestSizeLimit(10_485_760)]
+    public async Task<ActionResult<UploadProductImageResultDto>> UploadCategoryImage(
+        IFormFile file,
+        CancellationToken cancellationToken)
+    {
+        if (file.Length == 0)
+            return BadRequest("Image file is required.");
+
+        await using var stream = file.OpenReadStream();
+        var result = await mediator.Send(
+            new UploadProductImageCommand(
+                stream,
+                file.FileName,
+                file.ContentType,
+                file.Length,
+                "categories",
+                AccessPolicyResources.Categories,
+                [AccessPolicyActions.Create, AccessPolicyActions.Update]),
             cancellationToken);
 
         return Ok(result);

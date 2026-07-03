@@ -68,6 +68,8 @@ internal static class CustomFieldIndexSql
             "users" => ("AspNetUsers", "CustomFields"),
             "roles" => ("AspNetRoles", "CustomFields"),
             "accessPolicies" => ("access_policies", "CustomFields"),
+            "products" => ("Products", "CustomFields"),
+            "orders" => ("Orders", "CustomFields"),
             _ => null
         };
 

@@ -1,6 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
-import { finalize } from 'rxjs';
+import { finalize, Observable, of, switchMap } from 'rxjs';
 
 import { AdminConfirmDialog } from '../../../../shared/components/admin-confirm-dialog/admin-confirm-dialog';
 import { AdminDataTable } from '../../../../shared/components/admin-data-table/admin-data-table';
@@ -18,6 +18,7 @@ import { Permissions } from '../../../../core/permissions/permission.catalog';
 import { PermissionService } from '../../../../core/permissions/permission.service';
 import { exportCsv, exportJson, ExportRow } from '../../../../shared/utils/export.utils';
 import { CategoriesApiService } from '../../api/categories-api.service';
+import { StorageSettingsApiService } from '../../../storage/api/storage-settings-api.service';
 import {
   CategoryDetailsDto,
   CategoryDto,
@@ -119,6 +120,7 @@ import {
 })
 export class CategoriesList {
   private readonly api = inject(CategoriesApiService);
+  private readonly storageApi = inject(StorageSettingsApiService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly toast = inject(AppToastService);
   private readonly actionBus = inject(AdminActionBusService);
@@ -136,9 +138,10 @@ export class CategoriesList {
   protected readonly deleting = signal(false);
   protected readonly pendingDeleteCategory = signal<CategoryDto | null>(null);
 
-  protected readonly globalFilterFields = ['name', 'description'];
+  protected readonly globalFilterFields = ['name', 'description', 'imageUrl'];
 
   protected readonly baseColumns: AdminTableColumn[] = [
+    { field: 'imageUrl', header: 'Image', cellType: 'image', placeholder: 'No image' },
     { field: 'name', header: 'Name', sortable: true, filter: true },
     { field: 'description', header: 'Description', filter: true },
     { field: 'productCount', header: 'Products', sortable: true },
@@ -153,6 +156,12 @@ export class CategoriesList {
 
   protected readonly fields: AdminFormField[] = [
     { key: 'name', label: 'Category name', type: 'text', required: true },
+    {
+      key: 'imageFile',
+      label: 'Category image',
+      type: 'file',
+      accept: 'image/jpeg,image/png,image/webp,image/gif'
+    },
     { key: 'description', label: 'Description', type: 'textarea' }
   ];
 
@@ -194,6 +203,8 @@ export class CategoriesList {
 
   protected readonly form = this.formBuilder.group({
     name: ['', Validators.required],
+    imageFile: [null as File | null],
+    imageUrl: [null as string | null],
     description: ['']
   });
 
@@ -207,6 +218,7 @@ export class CategoriesList {
       { label: 'Category ID', value: category.id },
       { label: 'Name', value: category.name },
       { label: 'Description', value: category.description },
+      { label: 'Image URL', value: category.imageUrl },
       { label: 'Products', value: category.productCount },
       { label: 'Trashed at', value: category.trashedAt, type: 'date' },
       { label: 'Trash expires', value: category.trashExpiresAt, type: 'date' }
@@ -241,7 +253,7 @@ export class CategoriesList {
 
   protected openCreate(): void {
     this.editingCategoryId.set(null);
-    this.form.reset({ name: '', description: '' });
+    this.form.reset({ name: '', imageFile: null, imageUrl: null, description: '' });
     this.formVisible.set(true);
   }
 
@@ -264,6 +276,8 @@ export class CategoriesList {
         this.editingCategoryId.set(row.id);
         this.form.reset({
           name: row.name,
+          imageFile: null,
+          imageUrl: row.imageUrl,
           description: row.description ?? ''
         });
         this.formVisible.set(true);
@@ -311,23 +325,32 @@ export class CategoriesList {
       return;
     }
 
-    this.saving.set(true);
     const value = this.form.getRawValue();
-    const payload = {
-      name: value.name,
-      description: value.description || null
-    };
 
-    const saveRequest = this.editingCategoryId()
-      ? this.api.updateCategory(this.editingCategoryId()!, payload as UpdateCategoryRequest)
-      : this.api.createCategory(payload as CreateCategoryCommand);
+    this.saving.set(true);
+    const imageUrlRequest: Observable<{ readonly url: string | null }> = value.imageFile
+      ? this.storageApi.uploadCategoryImage(value.imageFile)
+      : of({ url: value.imageUrl });
 
-    saveRequest
-      .pipe(finalize(() => this.saving.set(false)))
+    imageUrlRequest
+      .pipe(
+        switchMap(({ url }) => {
+          const payload = {
+            name: value.name,
+            description: value.description || null,
+            imageUrl: url
+          };
+
+          return this.editingCategoryId()
+            ? this.api.updateCategory(this.editingCategoryId()!, payload as UpdateCategoryRequest)
+            : this.api.createCategory(payload as CreateCategoryCommand);
+        }),
+        finalize(() => this.saving.set(false))
+      )
       .subscribe(() => {
         this.toast.success(
           this.editingCategoryId() ? 'Category updated' : 'Category created',
-          payload.name
+          value.name
         );
         this.formVisible.set(false);
         this.loadCategories();

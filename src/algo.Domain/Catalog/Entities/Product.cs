@@ -1,12 +1,23 @@
+using System.Text.Json;
+using algo.Domain.CustomFields;
+
 namespace algo.Domain.Catalog.Entities;
 
-public class Product
+public class Product : IHasCustomFields
 {
     public int Id { get; set; }
 
     public string Name { get; set; } = string.Empty;
 
     public int CategoryId { get; set; }
+
+    public string CurrencyCode { get; set; } = string.Empty;
+
+    public decimal Price { get; set; }
+
+    public decimal? DiscountedPrice { get; set; }
+
+    public JsonDocument? CustomFields { get; set; }
 
     public decimal? PriceUsd { get; set; }
 

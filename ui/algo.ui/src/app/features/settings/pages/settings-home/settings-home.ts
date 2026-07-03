@@ -622,7 +622,9 @@ export class SettingsHome {
   protected readonly customFieldEntityOptions = [
     { label: 'Users', value: 'users' as const },
     { label: 'Roles', value: 'roles' as const },
-    { label: 'Access policies', value: 'accessPolicies' as const }
+    { label: 'Access policies', value: 'accessPolicies' as const },
+    { label: 'Products', value: 'products' as const },
+    { label: 'Orders', value: 'orders' as const }
   ];
   protected readonly customFieldTypeOptions = [
     { label: 'Text', value: 'text' as const },

@@ -3,6 +3,7 @@ using algo.Domain.CustomFields;
 using algo.Domain.Identity.Entities;
 using algo.Domain.Identity.Policies;
 using algo.Domain.Logging.Entities;
+using algo.Domain.Sales.Entities;
 using algo.Domain.Storage.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -14,6 +15,14 @@ public interface IApplicationDbContext
     DbSet<Category> Categories { get; }
 
     DbSet<Product> Products { get; }
+
+    DbSet<Order> Orders { get; }
+
+    DbSet<OrderItem> OrderItems { get; }
+
+    DbSet<Payment> Payments { get; }
+
+    DbSet<WalletTransaction> WalletTransactions { get; }
 
     DbSet<ApplicationUser> Users { get; }
 

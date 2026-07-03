@@ -1149,7 +1149,7 @@ body.app-dark [class*="bg-slate-200"] {
 :root.app-dark [class*="bg-slate-900"],
 body.app-dark [class*="bg-slate-950"],
 body.app-dark [class*="bg-slate-900"] {
-  background-color: #1a1c26 !important;
+  background-color: #1c41fb !important;
 }
 
 :root.app-dark [class*="border-slate-200"],
@@ -1310,5 +1310,790 @@ body.app-dark .settings-list-row {
 
   .app-shell {
     width: min(calc(100% - 12px), var(--app-shell-max-width));
+  }
+}
+
+app-landing-page {
+  --gold: #caa05a;
+  --gold2: #efcd88;
+  --landing-shell: min(1216px, calc(100% - 108px));
+  display: block;
+}
+
+.landing-page {
+  min-height: 100vh;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 63% 12%, rgba(20, 155, 124, 0.22), transparent 25%),
+    linear-gradient(180deg, #020706 0%, #04100f 48%, #020707 100%);
+  color: #fff;
+  font-family: Inter, "Segoe UI", Tahoma, Arial, sans-serif;
+  text-align: right;
+}
+
+.landing-page a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.landing-page .top-stage {
+  position: relative;
+  min-height: 600px;
+  isolation: isolate;
+}
+
+.landing-page .top-stage::before {
+  position: absolute;
+  inset: 0;
+  z-index: -2; 
+  content: "";
+  background:
+    url("https://fileserver.aljawharaplus.com/images/uploads%2Ftest%2FChatGPT%20Image%20Jul%203%2C%202026%2C%2004_49_45%20AM.png") center   / cover no-repeat;
+}
+
+.landing-page .top-stage::after {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  content: "";
+  pointer-events: none;
+
+}
+
+.landing-page .site-header,
+.landing-page .hero,
+.landing-page .stats-panel,
+.landing-page .market-shell,
+.landing-page .landing-footer {
+  position: relative;
+  z-index: 1;
+  width: var(--landing-shell);
+  margin-inline: auto;
+}
+
+.landing-page .site-header {
+  display: grid;
+  grid-template-columns: 220px minmax(0, 1fr) 220px;
+  align-items: center;
+  height: 72px;
+}
+
+.landing-page .brand {
+  display: flex;
+  grid-column: 1;
+  flex-direction: row-reverse;
+  gap: 12px;
+  align-items: center;
+  justify-self: start;
+}
+
+.landing-page .brand-emblem {
+  display: grid;
+  width: 58px;
+  height: 62px;
+  place-items: center;
+  color: var(--gold2);
+  font-size: 31px;
+  font-weight: 900;
+  clip-path: polygon(50% 0, 96% 21%, 84% 88%, 50% 100%, 16% 88%, 4% 21%);
+  background: linear-gradient(145deg, rgba(201, 162, 92, 0.2), rgba(18, 181, 139, 0.09));
+  border: 2px solid rgba(201, 160, 90, 0.68);
+  box-shadow: 0 0 30px rgba(18, 181, 139, 0.28);
+}
+
+.landing-page .brand-copy {
+  text-align: right;
+}
+
+.landing-page .brand-copy strong {
+  display: block;
+  font-size: 24px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.landing-page .brand-copy small {
+  display: block;
+  margin-top: 5px;
+  color: #e0c98f;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.landing-page .main-nav {
+  display: flex;
+  grid-column: 2;
+  gap: 52px;
+  align-items: center;
+  justify-self: center;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.landing-page .main-nav a {
+  position: relative;
+  white-space: nowrap;
+}
+
+.landing-page .main-nav a:first-child {
+  color: var(--gold);
+}
+
+.landing-page .main-nav a:first-child::after {
+  position: absolute;
+  right: 50%;
+  bottom: -22px;
+  width: 34px;
+  height: 1px;
+  content: "";
+  background: var(--gold);
+  transform: translateX(50%);
+}
+
+.landing-page .login-button {
+  display: flex;
+  grid-column: 3;
+  gap: 8px;
+  align-items: center;
+  justify-self: end;
+  height: 35px;
+  padding: 0 16px;
+  color: #efd28f;
+  font-size: 12px;
+  font-weight: 850;
+  background: rgba(6, 25, 24, 0.52);
+  border: 1px solid rgba(201, 160, 90, 0.55);
+  border-radius: 10px;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.28);
+}
+
+.landing-page .hero {
+  display: grid;
+  grid-template-areas: "copy art";
+  grid-template-columns: minmax(460px, 0.82fr) minmax(560px, 1.18fr);
+  align-items: center;
+  min-height: 360px;    
+  
+
+}
+
+.landing-page .hero-copy {
+  grid-area: copy;
+  max-width: 590px;
+  padding-top: 22px;
+  text-align: right;
+}
+
+.landing-page .hero-art {
+  grid-area: art;
+  min-height: 1px;
+}
+
+.landing-page .hero h1 {
+  margin: 0;
+  font-size: 43px;
+  font-weight: 950;
+  line-height: 1.22;
+  letter-spacing: 0;
+}
+
+.landing-page .hero h1 span {
+  display: block;
+  color: var(--gold);
+  font-size: 53px;
+  line-height: 1.1;
+}
+
+.landing-page .hero p {
+  margin: 17px 0 0;
+  color: rgba(255, 255, 255, 0.82);
+  font-size: 14px;
+  font-weight: 650;
+  line-height: 1.8;
+}
+
+.landing-page .feature-row {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 28px;
+  max-width: 520px;
+  margin-top: 31px;
+}
+
+.landing-page .mini-feature {
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 10px;
+  line-height: 1.55;
+  text-align: center;
+}
+
+.landing-page .mini-feature i {
+  display: grid;
+  width: 29px;
+  height: 29px;
+  margin: 0 auto 7px;
+  place-items: center;
+  color: var(--gold2);
+  font-size: 14px;
+  background: rgba(8, 34, 31, 0.7);
+  border: 1px solid rgba(201, 160, 90, 0.48);
+  border-radius: 50%;
+}
+
+.landing-page .mini-feature strong {
+  display: block;
+  color: #f3ddad;
+  font-size: 11px;
+  font-weight: 850;
+}
+
+.landing-page .mini-feature small {
+  display: block;
+  margin-top: 2px;
+}
+
+.landing-page .hero-actions {
+  display: flex;
+  gap: 16px;
+  justify-content: flex-start;
+  margin-top: 25px;
+}
+
+.landing-page .primary-cta,
+.landing-page .secondary-cta {
+  display: flex;
+  gap: 9px;
+  align-items: center;
+  justify-content: center;
+  height: 43px;
+  padding: 0 24px;
+  font-size: 12px;
+  font-weight: 900;
+  white-space: nowrap;
+  border-radius: 10px;
+}
+
+.landing-page .primary-cta {
+  color: #211706;
+  background: linear-gradient(135deg, var(--gold2), #bd8741);
+  box-shadow: 0 12px 30px rgba(201, 162, 92, 0.26);
+}
+
+.landing-page .secondary-cta {
+  min-width: 145px;
+  color: rgba(255, 255, 255, 0.78);
+  background: rgba(6, 25, 24, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.14);
+}
+
+.landing-page .stats-panel {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  min-height: 76px;
+  padding: 10px 34px;
+  margin-top: 0;
+  background: rgba(3, 20, 19, 0.86);
+  border: 1px solid rgba(201, 160, 90, 0.15);
+  border-radius: 10px;
+  box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45), inset 0 1px rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(22px);
+}
+
+.landing-page .stat-item {
+  display: flex;
+  gap: 19px;
+  align-items: center;
+  justify-content: center;
+  border-left: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.landing-page .stat-item:last-child {
+  border-left: 0;
+}
+
+.landing-page .stat-item span {
+  color: var(--gold);
+  font-size: 28px;
+  line-height: 1;
+}
+
+.landing-page .stat-item strong {
+  display: block;
+  font-size: 18px;
+  font-weight: 950;
+  line-height: 1;
+}
+
+.landing-page .stat-item small {
+  display: block;
+  margin-top: 7px;
+  color: rgba(255, 255, 255, 0.7);
+  font-size: 11px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.landing-page .market-shell {
+  padding: 16px 0 0;
+}
+
+.landing-page .games-toolbar {
+  display: flex;
+  gap: 26px;
+  align-items: center;
+  justify-content: space-between;
+  direction: ltr;
+}
+
+.landing-page .search-box {
+  order: 1;
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  width: 306px;
+  height: 38px;
+  padding: 0 14px;
+  color: rgba(255, 255, 255, 0.55);
+  direction: rtl;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 12px;
+}
+
+.landing-page .search-box input {
+  width: 100%;
+  color: white;
+  font-size: 11px;
+  text-align: right;
+  background: transparent;
+  border: 0;
+  outline: 0;
+}
+
+.landing-page .search-box input::placeholder {
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.landing-page .section-title {
+  display: flex;
+  order: 2;
+  gap: 15px;
+  align-items: center;
+  direction: rtl;
+}
+
+.landing-page .section-title h2 {
+  margin: 0;
+  color: #fff;
+  font-size: 20px;
+  font-weight: 950;
+}
+
+.landing-page .section-title button {
+  height: 25px;
+  padding: 0 13px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 10px;
+  font-weight: 800;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+}
+
+.landing-page .games-track {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(7, minmax(0, 1fr));
+  gap: 14px;
+  margin-top: 14px;
+}
+
+.landing-page .game-card {
+  min-width: 0;
+  padding: 9px 9px 10px;
+  background: linear-gradient(180deg, rgba(10, 40, 36, 0.88), rgba(4, 18, 17, 0.88));
+  border: 1px solid rgba(201, 160, 90, 0.15);
+  border-radius: 12px;
+  box-shadow: 0 12px 35px rgba(0, 0, 0, 0.34), inset 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.landing-page .game-image {
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+  height: 127px;
+  padding: 0 8px 27px;
+  overflow: hidden;
+  background-position: center;
+  background-size: cover;
+  border-radius: 9px;
+}
+
+.landing-page .game-image strong {
+  overflow-wrap: anywhere;
+  font-size: 18px;
+  font-weight: 950;
+  line-height: 1.05;
+  text-align: center;
+  text-shadow: 0 3px 15px #000;
+  text-transform: uppercase;
+}
+
+.landing-page .game-card h3 {
+  overflow: hidden;
+  margin: 10px 0 9px;
+  color: #f5e6c3;
+  font-size: 11px;
+  font-weight: 850;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.landing-page .game-card a {
+  display: flex;
+  gap: 6px;
+  align-items: center;
+  justify-content: center;
+  height: 31px;
+  color: #e8c676;
+  font-size: 10px;
+  font-weight: 900;
+  background: rgba(4, 20, 19, 0.74);
+  border: 1px solid rgba(201, 160, 90, 0.32);
+  border-radius: 8px;
+}
+
+.landing-page .slider-button {
+  position: absolute;
+  top: 47%;
+  z-index: 2;
+  display: grid;
+  width: 31px;
+  height: 31px;
+  place-items: center;
+  color: white;
+  background: rgba(2, 12, 12, 0.78);
+  border: 1px solid rgba(255, 255, 255, 0.11);
+  border-radius: 50%;
+}
+
+.landing-page .slider-button:first-child {
+  right: -38px;
+}
+
+.landing-page .slider-button:last-child {
+  left: -38px;
+}
+
+.landing-page .promo-grid {
+  display: grid;
+  grid-template-columns: 1.05fr 1.42fr 1.42fr 1.05fr;
+  gap: 14px;
+  margin-top: 20px;
+  margin-bottom: 12px;
+}
+
+.landing-page .promo-card {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  min-height: 93px;
+  padding: 13px 16px;
+  overflow: hidden;
+  background: linear-gradient(145deg, rgba(11, 44, 39, 0.9), rgba(4, 18, 17, 0.88));
+  border: 1px solid rgba(201, 160, 90, 0.13);
+  border-radius: 12px;
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.26), inset 0 1px rgba(255, 255, 255, 0.04);
+}
+
+.landing-page .promo-card img {
+  order: 2;
+  flex: 0 0 103px;
+  align-self: flex-end;
+  width: 103px;
+  height: 82px;
+  object-fit: cover;
+  border-radius: 9px;
+  filter: saturate(1.12);
+}
+
+.landing-page .promo-card.has-image {
+  padding-block: 6px;
+}
+
+.landing-page .promo-icon {
+  display: grid;
+  flex: 0 0 60px;
+  width: 60px;
+  height: 60px;
+  place-items: center;
+  color: #d9bb72;
+  font-size: 28px;
+  background: radial-gradient(circle, rgba(201, 162, 92, 0.34), rgba(18, 181, 139, 0.1));
+  border-radius: 50%;
+}
+
+.landing-page .promo-card div {
+  flex: 1;
+  min-width: 0;
+}
+
+.landing-page .promo-card h3 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 950;
+  line-height: 1.35;
+}
+
+.landing-page .promo-card p {
+  margin: 4px 0 7px;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 10px;
+  font-weight: 650;
+  line-height: 1.5;
+}
+
+.landing-page .promo-card a {
+  color: #d8ba6d;
+  font-size: 10px;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
+.landing-page .landing-footer {
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 45px;
+  padding-bottom: 8px;
+  margin-top: 0;
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 10px;
+}
+
+.landing-page .landing-footer p {
+  margin: 0;
+}
+
+.landing-page .footer-highlights {
+  display: flex;
+  gap: 58px;
+  font-weight: 800;
+}
+
+.landing-page .footer-highlights i {
+  margin-inline-end: 6px;
+  color: var(--gold);
+}
+
+.landing-page .socials {
+  display: flex;
+  gap: 10px;
+}
+
+.landing-page .socials a {
+  display: grid;
+  width: 26px;
+  height: 26px;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.86);
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+}
+
+@media (max-width: 1240px) {
+  app-landing-page {
+    --landing-shell: min(1080px, calc(100% - 56px));
+  }
+
+  .landing-page .site-header {
+    grid-template-columns: 205px minmax(0, 1fr) 170px;
+  }
+
+  .landing-page .main-nav {
+    gap: 30px;
+  }
+
+  .landing-page .hero {
+    grid-template-columns: minmax(410px, 0.86fr) minmax(440px, 1.14fr);
+  }
+
+  .landing-page .hero h1 {
+    font-size: 38px;
+  }
+
+  .landing-page .hero h1 span {
+    font-size: 48px;
+  }
+
+  .landing-page .game-image {
+    height: 112px;
+  }
+
+  .landing-page .footer-highlights {
+    gap: 28px;
+  }
+}
+
+@media (max-width: 1020px) {
+  app-landing-page {
+    --landing-shell: calc(100% - 34px);
+  }
+
+  .landing-page .site-header {
+    grid-template-columns: 1fr auto;
+  }
+
+  .landing-page .brand {
+    grid-column: 1;
+  }
+
+  .landing-page .login-button {
+    grid-column: 2;
+  }
+
+  .landing-page .main-nav {
+    display: none;
+  }
+
+  .landing-page .hero {
+    grid-template-columns: 1fr;
+    min-height: 420px;
+  }
+
+  .landing-page .hero-copy {
+    max-width: 650px;
+  }
+
+  .landing-page .hero-art {
+    display: none;
+  }
+
+  .landing-page .games-track {
+    grid-template-columns: repeat(4, 1fr);
+  }
+
+  .landing-page .promo-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .landing-page .landing-footer {
+    flex-wrap: wrap;
+  }
+
+  .landing-page .footer-highlights {
+    order: 3;
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 720px) {
+  .landing-page .top-stage {
+    min-height: auto;
+  }
+
+  .landing-page .site-header {
+    height: auto;
+    padding: 16px 0;
+    gap: 12px;
+  }
+
+  .landing-page .brand-copy small {
+    display: none;
+  }
+
+  .landing-page .login-button {
+    height: 34px;
+    padding: 0 12px;
+  }
+
+  .landing-page .hero {
+    min-height: auto;
+    padding: 28px 0 22px;
+  }
+
+  .landing-page .hero h1 {
+    font-size: 31px;
+  }
+
+  .landing-page .hero h1 span {
+    font-size: 38px;
+  }
+
+  .landing-page .hero p {
+    font-size: 13px;
+  }
+
+  .landing-page .feature-row,
+  .landing-page .stats-panel {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 14px;
+  }
+
+  .landing-page .hero-actions {
+    flex-wrap: wrap;
+  }
+
+  .landing-page .stats-panel {
+    padding: 16px;
+  }
+
+  .landing-page .stat-item {
+    border-left: 0;
+  }
+
+  .landing-page .games-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .landing-page .search-box {
+    order: 2;
+    width: 100%;
+  }
+
+  .landing-page .section-title {
+    order: 1;
+    justify-content: space-between;
+  }
+
+  .landing-page .games-track {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .landing-page .slider-button {
+    display: none;
+  }
+
+  .landing-page .promo-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-page .landing-footer {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .landing-page .footer-highlights {
+    flex-direction: column;
+    gap: 10px;
+    align-items: flex-start;
+  }
+}
+
+@media (max-width: 430px) {
+  .landing-page .games-track,
+  .landing-page .feature-row,
+  .landing-page .stats-panel {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-page .primary-cta,
+  .landing-page .secondary-cta {
+    width: 100%;
   }
 }

@@ -8,6 +8,8 @@ public class Category
 
     public string? Description { get; set; }
 
+    public string? ImageUrl { get; set; }
+
     public DateTimeOffset? TrashedAt { get; set; }
 
     public DateTimeOffset? TrashExpiresAt { get; set; }

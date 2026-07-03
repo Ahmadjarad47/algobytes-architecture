@@ -476,13 +476,20 @@ export class DashboardLayout {
   protected readonly replyingToMessage = signal<string | null>(null);
   private typingTimeoutHandle: ReturnType<typeof setTimeout> | null = null;
 
-  private readonly allNavigation: Array<{ label: string; path: string; icon: string; badge?: string; feature?: string; gate?: PermissionGate }> = [
+  protected readonly isAdmin = computed(() =>
+    this.authService.session()?.user?.roles?.some((role) => role.toLowerCase() === 'admin') ?? false
+  );
+
+  private readonly allNavigation: Array<{ label: string; path: string; icon: string; badge?: string; feature?: string; gate?: PermissionGate; adminOnly?: boolean }> = [
     { label: 'Overview', path: '/dashboard', icon: 'pi pi-home', gate: { any: DashboardOverviewReadPermissions } },
     { label: 'Users', path: '/users', icon: 'pi pi-users', badge: 'IAM', feature: 'users', gate: { any: [Permissions.users.read] } },
     { label: 'Users Chat', path: '/users/chat', icon: 'pi pi-comments', feature: 'users', gate: { any: [Permissions.users.read] } },
     { label: 'Roles', path: '/roles', icon: 'pi pi-id-card', feature: 'roles', gate: { any: [Permissions.roles.read] } },
     { label: 'Categories', path: '/categories', icon: 'pi pi-tags', feature: 'categories', gate: { any: [Permissions.categories.read] } },
     { label: 'Products', path: '/products', icon: 'pi pi-shopping-bag', badge: 'Shop', feature: 'products', gate: { any: [Permissions.products.read] } },
+    { label: 'Orders', path: '/orders', icon: 'pi pi-receipt', badge: 'Shop', feature: 'orders', gate: { any: [Permissions.orders.read] } },
+    { label: 'Wallet', path: '/wallet', icon: 'pi pi-wallet', badge: 'Shop', feature: 'wallet', gate: { any: [Permissions.wallet.read] } },
+    { label: 'Admin Wallets', path: '/admin-wallet', icon: 'pi pi-chart-line', badge: 'Admin', feature: 'wallet', gate: { all: [Permissions.wallet.read, Permissions.wallet.update, Permissions.wallet.delete] }, adminOnly: true },
     { label: 'Access Policies', path: '/access-policies', icon: 'pi pi-shield', badge: 'Auth', feature: 'accessPolicies', gate: { any: [Permissions.accessPolicies.read] } },
     { label: 'Active Sessions', path: '/active-sessions', icon: 'pi pi-desktop', badge: 'Security', feature: 'activeSessions', gate: { any: [Permissions.sessions.read] } },
     { label: 'Logs', path: '/logs', icon: 'pi pi-list', feature: 'logs', gate: { any: [Permissions.logs.read] } },
@@ -494,6 +501,7 @@ export class DashboardLayout {
     const features = this.appConfig.features();
     const filtered = this.allNavigation.filter((item) =>
       (!item.feature || features[item.feature as keyof typeof features]) &&
+      (!item.adminOnly || this.isAdmin()) &&
       this.permissionService.can(item.gate));
 
     const unread = this.sessionRealtime.totalUnreadCount();
@@ -508,6 +516,8 @@ export class DashboardLayout {
     { label: 'Create role', icon: 'pi pi-id-card', visible: this.appConfig.features().roles && this.permissionService.can({ any: [Permissions.roles.create] }), command: () => this.dispatchOrRoute('create-role', '/roles') },
     { label: 'Create category', icon: 'pi pi-tags', visible: this.appConfig.features().categories && this.permissionService.can({ any: [Permissions.categories.create] }), command: () => this.dispatchOrRoute('create-category', '/categories') },
     { label: 'Create product', icon: 'pi pi-shopping-bag', visible: this.appConfig.features().products && this.permissionService.can({ any: [Permissions.products.create] }), command: () => this.dispatchOrRoute('create-product', '/products') },
+    { label: 'Create order', icon: 'pi pi-receipt', visible: this.appConfig.features().orders && this.permissionService.can({ any: [Permissions.orders.create] }), command: () => this.dispatchOrRoute('create-order', '/orders') },
+    { label: 'Charge wallet', icon: 'pi pi-wallet', visible: this.appConfig.features().wallet && this.permissionService.can({ any: [Permissions.wallet.create] }), command: () => this.dispatchOrRoute('open-wallet', '/wallet') },
     { label: 'Create access policy', icon: 'pi pi-shield', visible: this.appConfig.features().accessPolicies && this.permissionService.can({ any: [Permissions.accessPolicies.create] }), command: () => this.dispatchOrRoute('create-access-policy', '/access-policies') },
     { label: 'Create API key', icon: 'pi pi-key', command: () => this.dispatchOrRoute('create-api-key', '/settings') },
     { label: 'Create workspace', icon: 'pi pi-building', command: () => this.dispatchOrRoute('create-workspace', '/settings') }
@@ -519,6 +529,8 @@ export class DashboardLayout {
     { id: 'create-role', label: 'Create role', hint: 'Open role creation drawer', icon: 'pi pi-id-card', gate: { any: [Permissions.roles.create] } },
     { id: 'create-category', label: 'Create category', hint: 'Open category creation drawer', icon: 'pi pi-tags', gate: { any: [Permissions.categories.create] } },
     { id: 'create-product', label: 'Create product', hint: 'Open product creation drawer', icon: 'pi pi-shopping-bag', gate: { any: [Permissions.products.create] } },
+    { id: 'create-order', label: 'Create order', hint: 'Open order creation drawer', icon: 'pi pi-receipt', gate: { any: [Permissions.orders.create] } },
+    { id: 'open-wallet', label: 'Open wallet', hint: 'Review balances and charge wallet', icon: 'pi pi-wallet', gate: { any: [Permissions.wallet.read] } },
     { id: 'create-access-policy', label: 'Create access policy', hint: 'Open policy creation drawer', icon: 'pi pi-shield', gate: { any: [Permissions.accessPolicies.create] } },
     { id: 'open-active-sessions', label: 'Open active sessions', hint: 'Review online users and sessions', icon: 'pi pi-desktop', gate: { any: [Permissions.sessions.read] } },
     { id: 'open-logs', label: 'Open logs', hint: 'Inspect application logs', icon: 'pi pi-list', gate: { any: [Permissions.logs.read] } },
@@ -596,6 +608,33 @@ export class DashboardLayout {
         page: 'Products',
         title: 'Product Catalog',
         badge: 'Shop'
+      };
+    }
+
+    if (url.startsWith('/orders')) {
+      return {
+        section: 'Commerce',
+        page: 'Orders',
+        title: 'Orders Management',
+        badge: 'Payments'
+      };
+    }
+
+    if (url.startsWith('/admin-wallet')) {
+      return {
+        section: 'Commerce',
+        page: 'Admin Wallets',
+        title: 'Admin Wallet Control',
+        badge: 'Admin'
+      };
+    }
+
+    if (url.startsWith('/wallet')) {
+      return {
+        section: 'Commerce',
+        page: 'Wallet',
+        title: 'Wallet Management',
+        badge: 'Balance'
       };
     }
 
@@ -811,6 +850,12 @@ export class DashboardLayout {
         break;
       case 'create-product':
         this.dispatchOrRoute('create-product', '/products');
+        break;
+      case 'create-order':
+        this.dispatchOrRoute('create-order', '/orders');
+        break;
+      case 'open-wallet':
+        void this.router.navigateByUrl('/wallet');
         break;
       case 'create-access-policy':
         this.dispatchOrRoute('create-access-policy', '/access-policies');

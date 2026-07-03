@@ -1,4 +1,4 @@
-export type CustomFieldEntity = 'users' | 'roles' | 'accessPolicies';
+export type CustomFieldEntity = 'users' | 'roles' | 'accessPolicies' | 'products' | 'orders';
 
 export type CustomFieldType =
   | 'text'

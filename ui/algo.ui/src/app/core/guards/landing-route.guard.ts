@@ -25,6 +25,22 @@ function resolveLandingRoute(): string {
     return '/access-policies';
   }
 
+  if (permissionService.can({ any: [Permissions.categories.read] })) {
+    return '/categories';
+  }
+
+  if (permissionService.can({ any: [Permissions.products.read] })) {
+    return '/products';
+  }
+
+  if (permissionService.can({ any: [Permissions.orders.read] })) {
+    return '/orders';
+  }
+
+  if (permissionService.can({ any: [Permissions.wallet.read] })) {
+    return '/wallet';
+  }
+
   if (permissionService.can({ any: [Permissions.sessions.read] })) {
     return '/active-sessions';
   }

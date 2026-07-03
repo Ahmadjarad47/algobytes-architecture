@@ -57,9 +57,11 @@ export interface AdminFormField {
     | 'number'
     | 'switch'
     | 'date'
+    | 'file'
     | 'select'
     | 'multiselect';
   readonly placeholder?: string;
+  readonly accept?: string;
   readonly options?: AdminFormFieldOption[];
   readonly required?: boolean;
 }

@@ -7,4 +7,7 @@ public sealed record UploadProductImageCommand(
     Stream Content,
     string FileName,
     string ContentType,
-    long Length) : IRequest<UploadProductImageResultDto>;
+    long Length,
+    string FolderSegment,
+    string AuthorizedResource,
+    IReadOnlyCollection<string> AuthorizedActions) : IRequest<UploadProductImageResultDto>;

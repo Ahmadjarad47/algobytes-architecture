@@ -29,11 +29,12 @@ public sealed class UploadProductImageCommandHandler(
 
     public async Task<UploadProductImageResultDto> Handle(UploadProductImageCommand request, CancellationToken cancellationToken)
     {
-        await authorizationChecker.EnsureResourceActionAllowedAsync(
-            db,
-            AccessPolicyResources.Products,
-            AccessPolicyActions.Create,
-            cancellationToken);
+        if (!await IsAllowedAsync(request.AuthorizedResource, request.AuthorizedActions, cancellationToken))
+        {
+            throw AccessPolicyAuthorizationExtensions.BuildForbiddenValidationException(
+                request.AuthorizedResource,
+                string.Join("|", request.AuthorizedActions));
+        }
 
         if (request.Length <= 0 || request.Length > MaxImageBytes)
         {
@@ -102,7 +103,7 @@ public sealed class UploadProductImageCommandHandler(
         if (string.IsNullOrWhiteSpace(extension))
             extension = ContentTypeToExtension(request.ContentType);
 
-        var objectKey = BuildObjectKey(configuration.Folder, extension);
+        var objectKey = BuildObjectKey(configuration.Folder, request.FolderSegment, extension);
         var uploadRequest = new ObjectStorageUploadRequest(
             scanStream,
             objectKey,
@@ -130,10 +131,27 @@ public sealed class UploadProductImageCommandHandler(
         return new UploadProductImageResultDto(url);
     }
 
-    private static string BuildObjectKey(string folder, string extension)
+    private async Task<bool> IsAllowedAsync(
+        string resource,
+        IReadOnlyCollection<string> actions,
+        CancellationToken cancellationToken)
+    {
+        foreach (var action in actions)
+        {
+            if (await authorizationChecker.IsAllowedAsync(resource, action, cancellationToken))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string BuildObjectKey(string folder, string folderSegment, string extension)
     {
         var prefix = string.IsNullOrWhiteSpace(folder) ? "uploads" : folder.Trim().Trim('/');
-        return $"{prefix}/products/{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
+        var segment = string.IsNullOrWhiteSpace(folderSegment) ? "images" : folderSegment.Trim().Trim('/');
+        return $"{prefix}/{segment}/{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
     }
 
     private static string ContentTypeToExtension(string contentType) =>

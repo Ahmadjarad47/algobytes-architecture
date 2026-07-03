@@ -17,7 +17,7 @@ export interface FileScannerSettings {
   readonly quarantineFolder: string | null;
 }
 
-export interface UploadProductImageResult {
+export interface UploadImageResult {
   readonly url: string;
 }
 

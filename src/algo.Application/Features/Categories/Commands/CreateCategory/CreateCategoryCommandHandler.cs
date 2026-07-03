@@ -39,6 +39,9 @@ public sealed class CreateCategoryCommandHandler(
             Description = string.IsNullOrWhiteSpace(request.Description)
                 ? null
                 : request.Description.Trim(),
+            ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl)
+                ? null
+                : request.ImageUrl.Trim(),
         };
 
         db.Categories.Add(category);
@@ -48,6 +51,7 @@ public sealed class CreateCategoryCommandHandler(
             category.Id,
             category.Name,
             category.Description,
+            category.ImageUrl,
             0,
             category.TrashedAt,
             category.TrashExpiresAt,

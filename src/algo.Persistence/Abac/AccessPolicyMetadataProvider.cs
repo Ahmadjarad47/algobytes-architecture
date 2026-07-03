@@ -207,6 +207,7 @@ public sealed class AccessPolicyMetadataProvider : IAccessPolicyMetadataLookup, 
             ["id"] = Field(type, nameof(Category.Id)),
             ["name"] = Field(type, nameof(Category.Name)),
             ["description"] = Field(type, nameof(Category.Description)),
+            ["imageUrl"] = Field(type, nameof(Category.ImageUrl)),
         };
 
         return new AccessPolicyEntityMetadata

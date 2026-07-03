@@ -12,5 +12,8 @@ public sealed class CreateCategoryCommandValidator : AbstractValidator<CreateCat
 
         RuleFor(x => x.Description)
             .MaximumLength(2000);
+
+        RuleFor(x => x.ImageUrl)
+            .MaximumLength(2048);
     }
 }

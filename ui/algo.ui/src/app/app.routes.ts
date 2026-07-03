@@ -1,6 +1,7 @@
 import { Routes } from '@angular/router';
 
 import { authGuard } from './core/guards/auth.guard';
+import { adminRoleGuard } from './core/guards/admin-role.guard';
 import { guestGuard } from './core/guards/guest.guard';
 import { landingRouteGuard } from './core/guards/landing-route.guard';
 import { permissionGuard } from './core/guards/permission.guard';
@@ -10,8 +11,15 @@ export const routes: Routes = [
   {
     path: '',
     pathMatch: 'full',
-    canActivate: [landingRouteGuard],
-    children: []
+    loadComponent: () =>
+      import('./features/landing/pages/landing-page/landing-page').then(
+        (m) => m.LandingPage
+      )
+  },
+  {
+    path: 'landing',
+    loadChildren: () =>
+      import('./features/landing/landing.routes').then((m) => m.LANDING_ROUTES)
   },
   {
     path: 'access-denied',
@@ -71,6 +79,27 @@ export const routes: Routes = [
         data: { permission: { any: [Permissions.products.read] } },
         loadChildren: () =>
           import('./features/products/products.routes').then((m) => m.PRODUCTS_ROUTES)
+      },
+      {
+        path: 'orders',
+        canActivate: [permissionGuard],
+        data: { permission: { any: [Permissions.orders.read] } },
+        loadChildren: () =>
+          import('./features/orders/orders.routes').then((m) => m.ORDERS_ROUTES)
+      },
+      {
+        path: 'wallet',
+        canActivate: [permissionGuard],
+        data: { permission: { any: [Permissions.wallet.read] } },
+        loadChildren: () =>
+          import('./features/wallet/wallet.routes').then((m) => m.WALLET_ROUTES)
+      },
+      {
+        path: 'admin-wallet',
+        canActivate: [adminRoleGuard, permissionGuard],
+        data: { permission: { all: [Permissions.wallet.read, Permissions.wallet.update, Permissions.wallet.delete] } },
+        loadChildren: () =>
+          import('./features/wallet/wallet.routes').then((m) => m.ADMIN_WALLET_ROUTES)
       },
       {
         path: 'access-policies',

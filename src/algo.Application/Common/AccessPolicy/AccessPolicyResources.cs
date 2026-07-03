@@ -10,6 +10,7 @@ public static class AccessPolicyResources
     public const string ErrorLogs = "errorLogs";
     public const string Products = "products";
     public const string Categories = "categories";
+    public const string Wallet = "wallet";
     public const string Settings = "settings";
 
     public const string Wildcard = "*";

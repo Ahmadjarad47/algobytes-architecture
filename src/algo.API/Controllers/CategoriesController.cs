@@ -49,7 +49,7 @@ public sealed class CategoriesController(IMediator mediator) : BaseController(me
         [FromBody] UpdateCategoryRequest body,
         CancellationToken cancellationToken)
     {
-        var result = await mediator.Send(new UpdateCategoryCommand(id, body.Name, body.Description), cancellationToken);
+        var result = await mediator.Send(new UpdateCategoryCommand(id, body.Name, body.Description, body.ImageUrl), cancellationToken);
         return result is null ? NotFound() : Ok(result);
     }
 
@@ -72,4 +72,4 @@ public sealed class CategoriesController(IMediator mediator) : BaseController(me
     }
 }
 
-public sealed record UpdateCategoryRequest(string Name, string? Description);
+public sealed record UpdateCategoryRequest(string Name, string? Description, string? ImageUrl);

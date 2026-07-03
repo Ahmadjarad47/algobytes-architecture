@@ -6,7 +6,7 @@ import {
   FileScanResult,
   StorageSettings,
   UpdateStorageSettingsCommand,
-  UploadProductImageResult
+  UploadImageResult
 } from '../models/storage.models';
 
 @Injectable({ providedIn: 'root' })
@@ -28,10 +28,17 @@ export class StorageSettingsApiService {
     return this.api.post<FileScanResult, FormData>('/storage/scanner/scan', formData);
   }
 
-  uploadProductImage(file: File): Observable<UploadProductImageResult> {
+  uploadProductImage(file: File): Observable<UploadImageResult> {
     const formData = new FormData();
     formData.append('file', file, file.name);
 
-    return this.api.post<UploadProductImageResult, FormData>('/storage/upload/product-image', formData);
+    return this.api.post<UploadImageResult, FormData>('/storage/upload/product-image', formData);
+  }
+
+  uploadCategoryImage(file: File): Observable<UploadImageResult> {
+    const formData = new FormData();
+    formData.append('file', file, file.name);
+
+    return this.api.post<UploadImageResult, FormData>('/storage/upload/category-image', formData);
   }
 }

@@ -3,4 +3,4 @@ using MediatR;
 
 namespace algo.Application.Features.Categories.Commands.CreateCategory;
 
-public sealed record CreateCategoryCommand(string Name, string? Description) : IRequest<CategoryDetailsDto>;
+public sealed record CreateCategoryCommand(string Name, string? Description, string? ImageUrl) : IRequest<CategoryDetailsDto>;

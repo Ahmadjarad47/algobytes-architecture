@@ -40,6 +40,7 @@ public sealed class GetAllCategoriesQueryHandler(
                 c.Id,
                 c.Name,
                 c.Description,
+                c.ImageUrl,
                 c.Products.Count,
                 c.TrashedAt,
                 c.TrashExpiresAt,

@@ -42,6 +42,9 @@ public sealed class UpdateCategoryCommandHandler(
         category.Description = string.IsNullOrWhiteSpace(request.Description)
             ? null
             : request.Description.Trim();
+        category.ImageUrl = string.IsNullOrWhiteSpace(request.ImageUrl)
+            ? null
+            : request.ImageUrl.Trim();
 
         await db.SaveChangesAsync(cancellationToken);
 
@@ -53,6 +56,7 @@ public sealed class UpdateCategoryCommandHandler(
             category.Id,
             category.Name,
             category.Description,
+            category.ImageUrl,
             productCount,
             category.TrashedAt,
             category.TrashExpiresAt,

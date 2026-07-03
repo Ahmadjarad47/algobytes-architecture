@@ -1,7 +1,6 @@
 import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
-import { AbstractControl, NonNullableFormBuilder, ReactiveFormsModule, ValidationErrors, Validators } from '@angular/forms';
-import { finalize } from 'rxjs';
-import { ButtonModule } from 'primeng/button';
+import { NonNullableFormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
+import { finalize, Observable, of, switchMap } from 'rxjs';
 
 import { AdminConfirmDialog } from '../../../../shared/components/admin-confirm-dialog/admin-confirm-dialog';
 import { AdminDataTable } from '../../../../shared/components/admin-data-table/admin-data-table';
@@ -22,66 +21,33 @@ import { CategoriesApiService } from '../../../categories/api/categories-api.ser
 import { CategoryDto } from '../../../categories/models/categories.models';
 import { StorageSettingsApiService } from '../../../storage/api/storage-settings-api.service';
 import { ProductsApiService } from '../../api/products-api.service';
-import {
-  CreateProductCommand,
-  ProductDto,
-  UpdateProductRequest
-} from '../../models/products.models';
+import { CreateProductCommand, ProductDto, UpdateProductRequest } from '../../models/products.models';
 
 @Component({
   selector: 'app-products-list',
   imports: [
     ReactiveFormsModule,
-    ButtonModule,
     AdminDataTable,
     AdminFormDialog,
     AdminDetailsDrawer,
     AdminConfirmDialog
   ],
   template: `
-    <section class="surface-card dashboard-section mb-3">
-      <div class="flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <div class="text-[11px] font-semibold uppercase tracking-wide text-slate-500">Product lifecycle</div>
-          <div class="mt-1 text-sm font-semibold text-slate-950">Active products and trash retention</div>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-2">
-          <button
-            type="button"
-            class="rounded-full px-3 py-1.5 text-xs font-semibold transition"
-            [class]="!showTrashed() ? 'bg-slate-900 text-white' : 'bg-slate-100 text-slate-600 hover:bg-slate-200'"
-            (click)="setTrashView(false)"
-          >
-            Active products
-          </button>
-          <button
-            type="button"
-            class="rounded-full px-3 py-1.5 text-xs font-semibold transition"
-            [class]="showTrashed() ? 'bg-rose-600 text-white' : 'bg-rose-50 text-rose-700 hover:bg-rose-100'"
-            (click)="setTrashView(true)"
-          >
-            Trash
-          </button>
-        </div>
-      </div>
-    </section>
-
     <app-admin-data-table
       title="Products"
-      [subtitle]="tableSubtitle()"
-      [columns]="columns()"
+      subtitle="Catalog products with base pricing, optional discounts, and dynamic custom fields."
+      [columns]="columns"
       [value]="products()"
       [loading]="loading()"
       [lazy]="false"
       [rows]="25"
       [totalRecords]="products().length"
       [globalFilterFields]="globalFilterFields"
-      [showCreate]="canCreate() && !showTrashed()"
+      [showCreate]="canCreate()"
       [showExport]="canExport()"
       searchPlaceholder="Search products"
       emptyTitle="No products yet"
-      emptyMessage="Create a product to populate the shop catalog."
+      emptyMessage="Create products to start selling in the shop."
       [actions]="actions()"
       (refresh)="loadProducts()"
       (create)="openCreate()"
@@ -99,49 +65,7 @@ import {
       [loading]="saving()"
       (visibleChange)="closeForm($event)"
       (submit)="save()"
-    >
-      <div adminFormExtras class="md:col-span-2 rounded-2xl border border-slate-200 bg-slate-50/80 p-4">
-        <div class="text-sm font-semibold text-slate-950">Product image</div>
-        <p class="mt-1 text-[12px] text-slate-500">
-          Uploads to Amazon S3 using the storage settings saved in Settings.
-        </p>
-
-        @if (imagePreviewUrl()) {
-          <div class="mt-3 overflow-hidden rounded-xl border border-slate-200 bg-white">
-            <img [src]="imagePreviewUrl()!" [alt]="form.controls.name.value || 'Product image'" class="max-h-48 w-full object-contain" />
-          </div>
-        }
-
-        <div class="mt-3 flex flex-wrap items-center gap-2">
-          <input
-            #imageInput
-            type="file"
-            accept="image/png,image/jpeg,image/webp,image/gif"
-            class="hidden"
-            (change)="onImageSelected($event)"
-          />
-          <p-button
-            label="Choose image"
-            icon="pi pi-upload"
-            size="small"
-            [outlined]="true"
-            [loading]="imageUploading()"
-            (onClick)="imageInput.click()"
-          />
-          @if (imagePreviewUrl()) {
-            <p-button
-              label="Remove image"
-              icon="pi pi-times"
-              size="small"
-              severity="secondary"
-              [outlined]="true"
-              [disabled]="imageUploading()"
-              (onClick)="clearImage()"
-            />
-          }
-        </div>
-      </div>
-    </app-admin-form-dialog>
+    />
 
     <app-admin-details-drawer
       [visible]="detailsVisible()"
@@ -152,10 +76,10 @@ import {
 
     <app-admin-confirm-dialog
       [visible]="deleteDialogVisible()"
-      title="Move product to trash"
-      [message]="'Move ' + (pendingDeleteProduct()?.name ?? 'this product') + ' to trash?'"
-      description="The product will stay in trash for 3 days before final soft delete."
-      confirmLabel="Move to trash"
+      title="Delete product"
+      [message]="'Delete ' + (pendingDeleteProduct()?.name ?? 'this product') + '?'"
+      description="This permanently removes the product record."
+      confirmLabel="Delete"
       [loading]="deleting()"
       (visibleChange)="closeDeleteDialog($event)"
       (confirm)="confirmDelete()"
@@ -165,8 +89,8 @@ import {
 })
 export class ProductsList {
   private readonly api = inject(ProductsApiService);
-  private readonly categoriesApi = inject(CategoriesApiService);
   private readonly storageApi = inject(StorageSettingsApiService);
+  private readonly categoriesApi = inject(CategoriesApiService);
   private readonly formBuilder = inject(NonNullableFormBuilder);
   private readonly toast = inject(AppToastService);
   private readonly actionBus = inject(AdminActionBusService);
@@ -178,46 +102,51 @@ export class ProductsList {
   protected readonly saving = signal(false);
   protected readonly formVisible = signal(false);
   protected readonly detailsVisible = signal(false);
-  protected readonly showTrashed = signal(false);
   protected readonly editingProductId = signal<number | null>(null);
   protected readonly selectedProduct = signal<ProductDto | null>(null);
   protected readonly deleteDialogVisible = signal(false);
   protected readonly deleting = signal(false);
   protected readonly pendingDeleteProduct = signal<ProductDto | null>(null);
-  protected readonly imagePreviewUrl = signal<string | null>(null);
-  protected readonly imageUploading = signal(false);
 
-  protected readonly globalFilterFields = [
-    'name',
-    'categoryName',
-    'provider',
-    'externalGameId'
-  ];
-
-  protected readonly baseColumns: AdminTableColumn[] = [
+  protected readonly globalFilterFields = ['name', 'categoryName', 'currencyCode'];
+  protected readonly columns: AdminTableColumn[] = [
+    { field: 'imageUrl', header: 'Image', cellType: 'image', widthClass: 'w-20' },
     { field: 'name', header: 'Name', sortable: true, filter: true },
     { field: 'categoryName', header: 'Category', sortable: true, filter: true },
-    { field: 'imageUrl', header: 'Image', cellType: 'image' },
-    { field: 'priceUsd', header: 'Price (USD)', sortable: true, cellType: 'currency', currencyCode: 'USD' },
-    { field: 'priceSyp', header: 'Price (SYP)', sortable: true, cellType: 'currency', currencyCode: 'SYP' },
-    { field: 'discountedPriceUsd', header: 'Discount (USD)', sortable: true, cellType: 'currency', currencyCode: 'USD' },
-    { field: 'discountedPriceSyp', header: 'Discount (SYP)', sortable: true, cellType: 'currency', currencyCode: 'SYP' },
-    { field: 'provider', header: 'Provider', sortable: true, filter: true },
-    { field: 'externalGameId', header: 'External ID', filter: true },
-    { field: 'createdAt', header: 'Created', cellType: 'date' },
-    { field: 'trashedAt', header: 'Trashed at', cellType: 'date' },
-    { field: 'trashExpiresAt', header: 'Trash expires', cellType: 'date' }
+    { field: 'currencyCode', header: 'Currency', sortable: true, filter: true },
+    { field: 'price', header: 'Price', sortable: true, cellType: 'currency', currencyCode: 'USD' },
+    { field: 'discountedPrice', header: 'Discounted price', sortable: true, cellType: 'currency', currencyCode: 'USD' },
+    { field: 'createdAt', header: 'Created', cellType: 'date', sortable: true }
   ];
-  protected readonly tableSubtitle = computed(() =>
-    this.showTrashed()
-      ? 'Trashed products can be restored for 3 days before final soft delete.'
-      : 'Game shop catalog with pricing, provider metadata, and 3-day trash retention before final soft delete.'
-  );
-  protected readonly columns = computed<AdminTableColumn[]>(() =>
-    this.showTrashed()
-      ? this.baseColumns
-      : this.baseColumns.filter((column) => column.field !== 'trashedAt' && column.field !== 'trashExpiresAt')
-  );
+
+  protected readonly fields = computed<AdminFormField[]>(() => [
+    { key: 'name', label: 'Product name', type: 'text', required: true },
+    {
+      key: 'categoryId',
+      label: 'Category',
+      type: 'select',
+      required: true,
+      options: this.categories().map((category) => ({
+        label: category.name,
+        value: category.id
+      }))
+    },
+    { key: 'currencyCode', label: 'Currency code', type: 'text', required: true },
+    { key: 'price', label: 'Price', type: 'number', required: true },
+    { key: 'discountedPrice', label: 'Discounted price', type: 'number' },
+    {
+      key: 'imageFile',
+      label: 'Product image',
+      type: 'file',
+      accept: 'image/jpeg,image/png,image/webp,image/gif'
+    },
+    {
+      key: 'customFieldsJson',
+      label: 'Custom fields JSON',
+      type: 'json',
+      placeholder: '{"tier":"standard"}'
+    }
+  ]);
 
   protected readonly canCreate = computed(() =>
     this.permissionService.can({ any: [Permissions.products.create] })
@@ -232,58 +161,26 @@ export class ProductsList {
     this.permissionService.can({ any: [Permissions.products.read] })
   );
 
-  protected readonly actions = computed<AdminRowAction<ProductDto>[]>(() =>
-    this.showTrashed()
-      ? [
-          { id: 'view', label: 'View product', icon: 'pi pi-eye' },
-          ...(this.canUpdate()
-            ? [{ id: 'restore', label: 'Restore product', icon: 'pi pi-history', severity: 'success' as const } as AdminRowAction<ProductDto>]
-            : [])
-        ]
-      : [
-          { id: 'view', label: 'View product', icon: 'pi pi-eye' },
-          ...(this.canUpdate()
-            ? [{ id: 'edit', label: 'Edit product', icon: 'pi pi-pencil' } as AdminRowAction<ProductDto>]
-            : []),
-          ...(this.canDelete()
-            ? [{ id: 'delete', label: 'Delete product', icon: 'pi pi-trash', severity: 'danger' as const }]
-            : [])
-        ]);
-
-  protected readonly fields = computed<AdminFormField[]>(() => [
-    { key: 'name', label: 'Product name', type: 'text', required: true },
-    {
-      key: 'categoryId',
-      label: 'Category',
-      type: 'select',
-      required: true,
-      options: this.categories().map((category) => ({
-        label: category.name,
-        value: category.id
-      }))
-    },
-    { key: 'priceUsd', label: 'Price (USD)', type: 'number' },
-    { key: 'priceSyp', label: 'Price (SYP)', type: 'number' },
-    { key: 'discountedPriceUsd', label: 'Discounted price (USD)', type: 'number' },
-    { key: 'discountedPriceSyp', label: 'Discounted price (SYP)', type: 'number' },
-    { key: 'provider', label: 'Provider', type: 'text' },
-    { key: 'externalGameId', label: 'External game ID', type: 'text' }
+  protected readonly actions = computed<AdminRowAction<ProductDto>[]>(() => [
+    { id: 'view', label: 'View product', icon: 'pi pi-eye' },
+    ...(this.canUpdate()
+      ? [{ id: 'edit', label: 'Edit product', icon: 'pi pi-pencil' } as AdminRowAction<ProductDto>]
+      : []),
+    ...(this.canDelete()
+      ? [{ id: 'delete', label: 'Delete product', icon: 'pi pi-trash', severity: 'danger' as const }]
+      : [])
   ]);
 
-  protected readonly form = this.formBuilder.group(
-    {
-      name: ['', Validators.required],
-      categoryId: [0, [Validators.required, Validators.min(1)]],
-      priceUsd: [null as number | null, Validators.min(0)],
-      priceSyp: [null as number | null, Validators.min(0)],
-      discountedPriceUsd: [null as number | null, Validators.min(0)],
-      discountedPriceSyp: [null as number | null, Validators.min(0)],
-      provider: [''],
-      externalGameId: [''],
-      imageUrl: ['']
-    },
-    { validators: [requireAtLeastOnePrice] }
-  );
+  protected readonly form = this.formBuilder.group({
+    name: ['', Validators.required],
+    categoryId: [0, [Validators.required, Validators.min(1)]],
+    currencyCode: ['USD', Validators.required],
+    price: [0, [Validators.required, Validators.min(0)]],
+    discountedPrice: [null as number | null, Validators.min(0)],
+    imageFile: [null as File | null],
+    imageUrl: [null as string | null],
+    customFieldsJson: ['']
+  });
 
   protected readonly detailItems = computed<AdminDetailItem[]>(() => {
     const product = this.selectedProduct();
@@ -295,17 +192,12 @@ export class ProductsList {
       { label: 'Product ID', value: product.id },
       { label: 'Name', value: product.name },
       { label: 'Category', value: product.categoryName },
-      { label: 'Price (USD)', value: product.priceUsd },
-      { label: 'Price (SYP)', value: product.priceSyp },
-      { label: 'Discounted price (USD)', value: product.discountedPriceUsd },
-      { label: 'Discounted price (SYP)', value: product.discountedPriceSyp },
-      { label: 'Provider', value: product.provider },
+      { label: 'Currency', value: product.currencyCode },
+      { label: 'Price', value: product.price },
+      { label: 'Discounted price', value: product.discountedPrice },
       { label: 'Image URL', value: product.imageUrl },
-      { label: 'External game ID', value: product.externalGameId },
       { label: 'Created at', value: product.createdAt, type: 'date' },
-      { label: 'Updated at', value: product.updatedAt, type: 'date' },
-      { label: 'Trashed at', value: product.trashedAt, type: 'date' },
-      { label: 'Trash expires', value: product.trashExpiresAt, type: 'date' }
+      { label: 'Custom fields', value: product.customFields, type: 'json' }
     ];
   });
 
@@ -322,18 +214,9 @@ export class ProductsList {
   protected loadProducts(): void {
     this.loading.set(true);
     this.api
-      .getProducts({ includeTrashed: this.showTrashed(), onlyTrashed: this.showTrashed() })
+      .getProducts()
       .pipe(finalize(() => this.loading.set(false)))
       .subscribe((products) => this.products.set(products));
-  }
-
-  protected setTrashView(showTrashed: boolean): void {
-    if (this.showTrashed() === showTrashed) {
-      return;
-    }
-
-    this.showTrashed.set(showTrashed);
-    this.loadProducts();
   }
 
   protected openCreate(): void {
@@ -341,15 +224,13 @@ export class ProductsList {
     this.form.reset({
       name: '',
       categoryId: this.categories()[0]?.id ?? 0,
-      priceUsd: null,
-      priceSyp: null,
-      discountedPriceUsd: null,
-      discountedPriceSyp: null,
-      provider: '',
-      externalGameId: '',
-      imageUrl: ''
+      currencyCode: 'USD',
+      price: 0,
+      discountedPrice: null,
+      imageFile: null,
+      imageUrl: null,
+      customFieldsJson: ''
     });
-    this.imagePreviewUrl.set(null);
     this.formVisible.set(true);
   }
 
@@ -357,7 +238,6 @@ export class ProductsList {
     this.formVisible.set(visible);
     if (!visible) {
       this.editingProductId.set(null);
-      this.imagePreviewUrl.set(null);
     }
   }
 
@@ -374,26 +254,18 @@ export class ProductsList {
         this.form.reset({
           name: row.name,
           categoryId: row.categoryId,
-          priceUsd: row.priceUsd,
-          priceSyp: row.priceSyp,
-          discountedPriceUsd: row.discountedPriceUsd,
-          discountedPriceSyp: row.discountedPriceSyp,
-          provider: row.provider ?? '',
-          externalGameId: row.externalGameId ?? '',
-          imageUrl: row.imageUrl ?? ''
+          currencyCode: row.currencyCode,
+          price: row.price,
+          discountedPrice: row.discountedPrice,
+          imageFile: null,
+          imageUrl: row.imageUrl,
+          customFieldsJson: row.customFields ? JSON.stringify(row.customFields, null, 2) : ''
         });
-        this.imagePreviewUrl.set(row.imageUrl);
         this.formVisible.set(true);
         break;
       case 'delete':
         this.pendingDeleteProduct.set(row);
         this.deleteDialogVisible.set(true);
-        break;
-      case 'restore':
-        this.api.restoreProduct(row.id).subscribe(() => {
-          this.toast.success('Product restored', row.name);
-          this.loadProducts();
-        });
         break;
     }
   }
@@ -416,7 +288,7 @@ export class ProductsList {
       .deleteProduct(product.id)
       .pipe(finalize(() => this.deleting.set(false)))
       .subscribe(() => {
-        this.toast.warn('Moved to trash', `${product.name} will be kept for 3 days.`);
+        this.toast.warn('Product deleted', product.name);
         this.deleteDialogVisible.set(false);
         this.pendingDeleteProduct.set(null);
         this.loadProducts();
@@ -428,30 +300,41 @@ export class ProductsList {
       return;
     }
 
-    this.saving.set(true);
     const value = this.form.getRawValue();
-    const payload = {
-      name: value.name,
-      categoryId: value.categoryId,
-      priceUsd: value.priceUsd,
-      priceSyp: value.priceSyp,
-      discountedPriceUsd: value.discountedPriceUsd,
-      discountedPriceSyp: value.discountedPriceSyp,
-      externalGameId: value.externalGameId || null,
-      provider: value.provider || null,
-      imageUrl: value.imageUrl || null
-    };
+    const customFields = parseJsonObject(value.customFieldsJson);
+    if (value.customFieldsJson.trim() && customFields === null) {
+      this.toast.error('Invalid custom fields', 'Custom fields must be a valid JSON object.');
+      return;
+    }
 
-    const saveRequest = this.editingProductId()
-      ? this.api.updateProduct(this.editingProductId()!, payload as UpdateProductRequest)
-      : this.api.createProduct(payload as CreateProductCommand);
+    this.saving.set(true);
+    const imageUrlRequest: Observable<{ readonly url: string | null }> = value.imageFile
+      ? this.storageApi.uploadProductImage(value.imageFile)
+      : of({ url: value.imageUrl });
 
-    saveRequest
-      .pipe(finalize(() => this.saving.set(false)))
+    imageUrlRequest
+      .pipe(
+        switchMap(({ url }) => {
+          const payload = {
+            name: value.name,
+            categoryId: value.categoryId,
+            currencyCode: value.currencyCode.trim().toUpperCase(),
+            price: value.price,
+            discountedPrice: value.discountedPrice,
+            customFields,
+            imageUrl: url
+          };
+
+          return this.editingProductId()
+            ? this.api.updateProduct(this.editingProductId()!, payload as UpdateProductRequest)
+            : this.api.createProduct(payload as CreateProductCommand);
+        }),
+        finalize(() => this.saving.set(false))
+      )
       .subscribe(() => {
         this.toast.success(
           this.editingProductId() ? 'Product updated' : 'Product created',
-          payload.name
+          value.name
         );
         this.formVisible.set(false);
         this.loadProducts();
@@ -469,44 +352,21 @@ export class ProductsList {
   private loadCategories(): void {
     this.categoriesApi.getCategories().subscribe((categories) => this.categories.set(categories));
   }
-
-  protected onImageSelected(event: Event): void {
-    const input = event.target as HTMLInputElement | null;
-    const file = input?.files?.item(0) ?? null;
-    if (!file || this.imageUploading()) {
-      return;
-    }
-
-    this.imageUploading.set(true);
-    this.storageApi
-      .uploadProductImage(file)
-      .pipe(finalize(() => this.imageUploading.set(false)))
-      .subscribe({
-        next: ({ url }) => {
-          this.form.patchValue({ imageUrl: url });
-          this.imagePreviewUrl.set(url);
-          this.toast.success('Image uploaded', 'Product image stored in S3.');
-        },
-        error: () => {
-          this.toast.error('Upload failed', 'Configure S3 in Settings or try another image.');
-        }
-      });
-
-    if (input) {
-      input.value = '';
-    }
-  }
-
-  protected clearImage(): void {
-    this.form.patchValue({ imageUrl: '' });
-    this.imagePreviewUrl.set(null);
-  }
 }
 
-function requireAtLeastOnePrice(control: AbstractControl): ValidationErrors | null {
-  const priceUsd = control.get('priceUsd')?.value;
-  const priceSyp = control.get('priceSyp')?.value;
-  const hasUsd = priceUsd !== null && priceUsd !== undefined && priceUsd !== '';
-  const hasSyp = priceSyp !== null && priceSyp !== undefined && priceSyp !== '';
-  return hasUsd || hasSyp ? null : { requireAtLeastOnePrice: true };
+function parseJsonObject(value: string): Record<string, unknown> | null {
+  if (!value.trim()) {
+    return null;
+  }
+
+  try {
+    const parsed = JSON.parse(value) as unknown;
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+      return null;
+    }
+
+    return parsed as Record<string, unknown>;
+  } catch {
+    return null;
+  }
 }

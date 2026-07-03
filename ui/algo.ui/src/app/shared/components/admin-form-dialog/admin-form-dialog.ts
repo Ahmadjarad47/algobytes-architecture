@@ -52,11 +52,21 @@ import { AdminFormField } from '../../models/admin-table.model';
         <p-fluid>
           <div class="grid gap-3 md:grid-cols-2">
             @for (field of fields(); track field.key) {
-              <div [class]="field.type === 'textarea' ? 'md:col-span-2' : ''">
+              <div [class]="field.type === 'textarea' || field.type === 'json' || field.type === 'file' ? 'md:col-span-2' : ''">
                 @if (field.type === 'switch') {
                   <label class="flex items-center justify-between rounded-lg border border-surface-200 px-3 py-2.5">
                     <span class="text-sm font-medium text-surface-700">{{ field.label }}</span>
                     <p-toggleswitch [formControl]="control(field.key)" />
+                  </label>
+                } @else if (field.type === 'file') {
+                  <label class="flex flex-col gap-2 rounded-lg border border-surface-200 px-3 py-2.5">
+                    <span class="text-sm font-medium text-surface-700">{{ field.label }}{{ field.required ? ' *' : '' }}</span>
+                    <input
+                      type="file"
+                      [accept]="field.accept ?? ''"
+                      (change)="onFileSelected(field.key, $event)"
+                      class="text-sm text-surface-700"
+                    />
                   </label>
                 } @else {
                   <p-floatlabel variant="on">
@@ -169,5 +179,14 @@ export class AdminFormDialog {
 
   control(key: string): FormControl {
     return this.form().get(key) as FormControl;
+  }
+
+  onFileSelected(key: string, event: Event): void {
+    const input = event.target as HTMLInputElement;
+    const file = input.files?.item(0) ?? null;
+    const control = this.control(key);
+
+    control.setValue(file);
+    control.markAsDirty();
   }
 }
