@@ -1,7 +1,11 @@
 import { CommonModule } from '@angular/common';
-import { ChangeDetectionStrategy, Component } from '@angular/core';
+import { ChangeDetectionStrategy, Component, computed, inject, signal } from '@angular/core';
 import { Title } from '@angular/platform-browser';
 import { RouterLink } from '@angular/router';
+import { catchError, finalize, of } from 'rxjs';
+
+import { CategoriesApiService } from '../../../categories/api/categories-api.service';
+import { CategoryDto } from '../../../categories/models/categories.models';
 
 interface IconItem {
   readonly icon: string;
@@ -16,6 +20,7 @@ interface StatItem {
 }
 
 interface GameCard {
+  readonly id: number | string;
   readonly image: string;
   readonly title: string;
   readonly label: string;
@@ -33,7 +38,7 @@ interface PromoCard {
   imports: [CommonModule, RouterLink],
   template: `
     <main class="landing-page" dir="rtl">
-      <section class="top-stage">
+      <section id="home" class="top-stage">
         <header class="site-header">
           <a class="brand" href="#" aria-label="المهندس">
          <img style="width: 102px;"src="https://fileserver.aljawharaplus.com/images/uploads%2Ftest%2FChatGPT%20Image%20Jul%203%2C%202026%2C%2006_52_51%20AM.png" alt="المهندس" />  
@@ -104,7 +109,12 @@ interface PromoCard {
           <div class="games-toolbar">
             <div class="search-box">
               <i class="pi pi-search"></i>
-              <input type="search" placeholder="ابحث عن لعبة أو بطاقة" aria-label="ابحث عن لعبة أو بطاقة" />
+              <input
+                type="search"
+                placeholder="ابحث عن لعبة أو بطاقة"
+                aria-label="ابحث عن لعبة أو بطاقة"
+                (input)="categorySearch.set($any($event.target).value)"
+              />
             </div>
 
             <div class="section-title">
@@ -117,7 +127,7 @@ interface PromoCard {
             <button class="slider-button" type="button" aria-label="السابق">
               <i class="pi pi-angle-right"></i>
             </button>
-            @for (game of games; track game.title) {
+            @for (game of filteredGames(); track game.id) {
               <article class="game-card">
                 <div class="game-image" [style.background-image]="'linear-gradient(180deg, rgba(2,8,8,.05), rgba(2,8,8,.78)), url(' + game.image + ')'">
                   <strong>{{ game.label }}</strong>
@@ -128,6 +138,9 @@ interface PromoCard {
                   اشحن الآن
                 </a>
               </article>
+            }
+            @if (!loadingCategories() && filteredGames().length === 0) {
+              <p class="games-empty">لا توجد تصنيفات مطابقة للبحث</p>
             }
             <button class="slider-button" type="button" aria-label="التالي">
               <i class="pi pi-angle-left"></i>
@@ -167,14 +180,52 @@ interface PromoCard {
           <a href="#" aria-label="واتساب"><i class="pi pi-whatsapp"></i></a>
         </div>
       </footer>
+
+      <nav class="mobile-bottom-nav" aria-label="التنقل السفلي">
+        <a class="is-active" href="#home">
+          <i class="pi pi-home"></i>
+          <span>الرئيسية</span>
+        </a>
+        <a href="#games">
+          <i class="pi pi-th-large"></i>
+          <span>الألعاب</span>
+        </a>
+        <a href="#offers">
+          <i class="pi pi-gift"></i>
+          <span>العروض</span>
+        </a>
+        <a routerLink="/auth/login">
+          <i class="pi pi-user"></i>
+          <span>حسابي</span>
+        </a>
+      </nav>
     </main>
   `,
   styles: [],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class LandingPage {
+  private readonly categoriesApi = inject(CategoriesApiService);
+
+  protected readonly categories = signal<CategoryDto[]>([]);
+  protected readonly categorySearch = signal('');
+  protected readonly loadingCategories = signal(false);
+  protected readonly filteredGames = computed<readonly GameCard[]>(() => {
+    const search = this.categorySearch().trim().toLocaleLowerCase();
+    const source = this.categories().length > 0 ? this.categories().map((category) => this.toGameCard(category)) : this.fallbackGames;
+
+    if (!search) {
+      return source;
+    }
+
+    return source.filter((game) =>
+      `${game.title} ${game.label}`.toLocaleLowerCase().includes(search)
+    );
+  });
+
   constructor(title: Title) {
     title.setTitle('المهندس | اشحن ألعابك المفضلة');
+    this.loadCategories();
   }
 
   protected readonly heroFeatures: readonly IconItem[] = [
@@ -191,43 +242,76 @@ export class LandingPage {
     { icon: 'pi pi-user', value: '+250K', label: 'عميل سعيد' }
   ];
 
-  protected readonly games: readonly GameCard[] = [
+  private readonly fallbackGames: readonly GameCard[] = [
     {
+      id: 'fallback-pubg',
       title: 'PUBG Mobile',
       label: 'PUBG MOBILE',
       image: 'https://images.unsplash.com/photo-1542751371-adc38448a05e?auto=format&fit=crop&w=420&q=80'
     },
     {
+      id: 'fallback-free-fire',
       title: 'Free Fire',
       label: 'FREE FIRE',
       image: 'https://images.unsplash.com/photo-1511512578047-dfb367046420?auto=format&fit=crop&w=420&q=80'
     },
     {
+      id: 'fallback-mobile-legends',
       title: 'Mobile Legends',
       label: 'MOBILE LEGENDS',
       image: 'https://images.unsplash.com/photo-1560253023-3ec5d502959f?auto=format&fit=crop&w=420&q=80'
     },
     {
+      id: 'fallback-playstation',
       title: 'PlayStation Store',
       label: 'PLAYSTATION',
       image: 'https://images.unsplash.com/photo-1606144042614-b2417e99c4e3?auto=format&fit=crop&w=420&q=80'
     },
     {
+      id: 'fallback-xbox',
       title: 'Xbox Gift Card',
       label: 'XBOX',
       image: 'https://images.unsplash.com/photo-1621259182978-fbf93132d53d?auto=format&fit=crop&w=420&q=80'
     },
     {
+      id: 'fallback-itunes',
       title: 'iTunes Gift Card',
       label: 'iTunes',
       image: 'https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=420&q=80'
     },
     {
+      id: 'fallback-google-play',
       title: 'Google Play',
       label: 'Google Play',
       image: 'https://images.unsplash.com/photo-1611162617474-5b21e879e113?auto=format&fit=crop&w=420&q=80'
     }
   ];
+
+  private loadCategories(): void {
+    this.loadingCategories.set(true);
+    this.categoriesApi
+      .getCategories()
+      .pipe(
+        catchError(() => of([] as CategoryDto[])),
+        finalize(() => this.loadingCategories.set(false))
+      )
+      .subscribe((categories) => {
+        this.categories.set(categories.filter((category) => !category.deletedAt && !category.trashedAt));
+      });
+  }
+
+  private toGameCard(category: CategoryDto): GameCard {
+    return {
+      id: category.id,
+      title: category.name,
+      label: category.name,
+      image: category.imageUrl || this.categoryFallbackImage(category.id)
+    };
+  }
+
+  private categoryFallbackImage(categoryId: number): string {
+    return this.fallbackGames[categoryId % this.fallbackGames.length].image;
+  }
 
   protected readonly promos: readonly PromoCard[] = [
     { icon: 'pi pi-percentage', title: 'عروض حصرية كل يوم!', text: 'خصومات وباقات خاصة للاعبين' },

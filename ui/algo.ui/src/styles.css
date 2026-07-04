@@ -789,6 +789,101 @@ body.app-dark .p-multiselect-option.p-focus {
   padding: 5px 7px;
 }
 
+.p-toast {
+  max-width: calc(100vw - 24px);
+}
+
+.p-toast .p-toast-message {
+  overflow: hidden;
+  border-radius: 14px;
+  border: 1px solid rgba(201, 160, 90, 0.22);
+  background:
+    linear-gradient(145deg, rgba(8, 34, 31, 0.96), rgba(3, 14, 13, 0.96)),
+    rgba(3, 14, 13, 0.96);
+  color: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.42), inset 0 1px rgba(255, 255, 255, 0.05);
+  backdrop-filter: blur(18px);
+}
+
+.p-toast .p-toast-message-content {
+  align-items: center;
+  gap: 10px;
+  padding: 12px 14px;
+}
+
+.p-toast .p-toast-summary {
+  color: #f3ddad;
+  font-size: 13px;
+  font-weight: 850;
+}
+
+.p-toast .p-toast-detail {
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.p-toast .p-toast-message-icon,
+.p-toast .p-toast-icon-close,
+.p-toast .p-toast-close-button {
+  color: #efcd88;
+}
+
+.p-toast .p-toast-message-error {
+  border-color: rgba(239, 205, 136, 0.34);
+}
+
+.p-toast .p-toast-message-error .p-toast-message-icon {
+  color: #efcd88;
+}
+
+.p-toast .p-toast-message-success {
+  border-color: rgba(32, 197, 147, 0.34);
+}
+
+.p-toast .p-toast-message-info {
+  border-color: rgba(94, 234, 212, 0.28);
+}
+
+.p-toast .p-toast-message-warn {
+  border-color: rgba(239, 205, 136, 0.38);
+}
+
+@media (max-width: 720px) {
+  .p-toast {
+    top: calc(env(safe-area-inset-top) + 10px) !important;
+    right: 12px !important;
+    left: 12px !important;
+    width: auto !important;
+    max-width: none;
+  }
+
+  .p-toast .p-toast-message {
+    width: 100%;
+    margin: 0 0 10px;
+    border-radius: 12px;
+  }
+
+  .p-toast .p-toast-message-content {
+    min-height: 58px;
+    padding: 10px 12px;
+  }
+
+  .p-toast .p-toast-summary {
+    font-size: 12px;
+  }
+
+  .p-toast .p-toast-detail {
+    font-size: 11px;
+  }
+
+  .p-toast .p-toast-close-button,
+  .p-toast .p-toast-icon-close {
+    flex: 0 0 auto;
+  }
+}
+
 .dashboard-grid {
   display: grid;
   gap: var(--app-gap);
@@ -1765,6 +1860,15 @@ app-landing-page {
   border-radius: 8px;
 }
 
+.landing-page .games-empty {
+  grid-column: 1 / -1;
+  margin: 14px 0;
+  color: rgba(255, 255, 255, 0.72);
+  font-size: 13px;
+  font-weight: 750;
+  text-align: center;
+}
+
 .landing-page .slider-button {
   position: absolute;
   top: 47%;
@@ -1904,6 +2008,10 @@ app-landing-page {
   border-radius: 50%;
 }
 
+.landing-page .mobile-bottom-nav {
+  display: none;
+}
+
 @media (max-width: 1240px) {
   app-landing-page {
     --landing-shell: min(1080px, calc(100% - 56px));
@@ -1943,6 +2051,10 @@ app-landing-page {
     --landing-shell: calc(100% - 34px);
   }
 
+  .landing-page {
+    padding-bottom: calc(env(safe-area-inset-bottom) + 88px);
+  }
+
   .landing-page .site-header {
     grid-template-columns: 1fr auto;
   }
@@ -1957,6 +2069,13 @@ app-landing-page {
 
   .landing-page .main-nav {
     display: none;
+  }
+
+  .landing-page .login-button {
+    max-width: 150px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 
   .landing-page .hero {
@@ -1989,17 +2108,83 @@ app-landing-page {
     width: 100%;
     justify-content: center;
   }
+
+  .landing-page .mobile-bottom-nav {
+    position: fixed;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    z-index: 50;
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 2px;
+    padding: 9px max(12px, env(safe-area-inset-left)) calc(env(safe-area-inset-bottom) + 10px) max(12px, env(safe-area-inset-right));
+    direction: rtl;
+    background:
+      linear-gradient(180deg, rgba(9, 37, 33, 0.96), rgba(2, 10, 10, 0.98)),
+      rgba(2, 10, 10, 0.98);
+    border-top: 1px solid rgba(201, 160, 90, 0.28);
+    box-shadow: 0 -16px 36px rgba(0, 0, 0, 0.46), 0 -1px 20px rgba(201, 160, 90, 0.12);
+    backdrop-filter: blur(18px);
+  }
+
+  .landing-page .mobile-bottom-nav a {
+    display: grid;
+    min-width: 0;
+    min-height: 54px;
+    place-items: center;
+    align-content: center;
+    gap: 5px;
+    color: rgba(255, 255, 255, 0.64);
+    font-size: 10px;
+    font-weight: 850;
+    line-height: 1.1;
+    border-radius: 12px;
+  }
+
+  .landing-page .mobile-bottom-nav i {
+    color: currentColor;
+    font-size: 18px;
+    line-height: 1;
+  }
+
+  .landing-page .mobile-bottom-nav .is-active {
+    color: var(--gold2);
+    background: rgba(201, 160, 90, 0.1);
+    box-shadow: inset 0 0 0 1px rgba(201, 160, 90, 0.14);
+  }
 }
 
 @media (max-width: 720px) {
+  app-landing-page {
+    --landing-shell: calc(100% - 28px);
+  }
+
   .landing-page .top-stage {
     min-height: auto;
   }
 
+  .landing-page .top-stage::before {
+    background:
+      linear-gradient(180deg, rgba(1, 8, 8, 0.18) 0%, rgba(2, 10, 10, 0.44) 38%, rgba(3, 13, 12, 0.96) 100%),
+      url("https://fileserver.aljawharaplus.com/images/uploads%2Ftest%2FChatGPT%20Image%20Jul%203%2C%202026%2C%2004_49_45%20AM.png") center top / cover no-repeat;
+  }
+
+  .landing-page .top-stage::after {
+    background: linear-gradient(90deg, rgba(1, 8, 8, 0.92), rgba(1, 8, 8, 0.52), rgba(1, 8, 8, 0.88));
+  }
+
   .landing-page .site-header {
     height: auto;
-    padding: 16px 0;
+    min-height: 62px;
+    padding: 10px 0;
     gap: 12px;
+  }
+
+  .landing-page .brand img {
+    width: 82px !important;
+    max-width: 28vw;
+    height: auto;
   }
 
   .landing-page .brand-copy small {
@@ -2007,25 +2192,38 @@ app-landing-page {
   }
 
   .landing-page .login-button {
-    height: 34px;
-    padding: 0 12px;
+    height: 32px;
+    padding: 0 10px;
+    font-size: 11px;
   }
 
   .landing-page .hero {
     min-height: auto;
-    padding: 28px 0 22px;
+    padding: 34px 0 24px;
+  }
+
+  .landing-page .hero-copy {
+    max-width: 100%;
+    padding-top: 0;
+    text-align: center;
   }
 
   .landing-page .hero h1 {
-    font-size: 31px;
+    max-width: 360px;
+    margin-inline: auto;
+    font-size: 30px;
+    line-height: 1.25;
   }
 
   .landing-page .hero h1 span {
-    font-size: 38px;
+    font-size: 37px;
   }
 
   .landing-page .hero p {
+    max-width: 330px;
+    margin-inline: auto;
     font-size: 13px;
+    line-height: 1.7;
   }
 
   .landing-page .feature-row,
@@ -2036,24 +2234,39 @@ app-landing-page {
 
   .landing-page .hero-actions {
     flex-wrap: wrap;
+    justify-content: center;
   }
 
   .landing-page .stats-panel {
-    padding: 16px;
+    padding: 14px;
+    margin-top: 0;
   }
 
   .landing-page .stat-item {
+    min-height: 62px;
+    gap: 10px;
     border-left: 0;
+  }
+
+  .landing-page .stat-item strong {
+    font-size: 16px;
+  }
+
+  .landing-page .stat-item small {
+    font-size: 10px;
+    white-space: normal;
   }
 
   .landing-page .games-toolbar {
     flex-direction: column;
     align-items: stretch;
+    gap: 12px;
   }
 
   .landing-page .search-box {
     order: 2;
     width: 100%;
+    height: 42px;
   }
 
   .landing-page .section-title {
@@ -2061,8 +2274,31 @@ app-landing-page {
     justify-content: space-between;
   }
 
+  .landing-page .section-title h2 {
+    font-size: 19px;
+  }
+
   .landing-page .games-track {
-    grid-template-columns: repeat(2, 1fr);
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .landing-page .game-card {
+    padding: 8px;
+  }
+
+  .landing-page .game-image {
+    height: auto;
+    aspect-ratio: 1 / 0.88;
+    padding: 0 6px 18px;
+  }
+
+  .landing-page .game-image strong {
+    font-size: 15px;
+  }
+
+  .landing-page .game-card h3 {
+    font-size: 11px;
   }
 
   .landing-page .slider-button {
@@ -2071,11 +2307,26 @@ app-landing-page {
 
   .landing-page .promo-grid {
     grid-template-columns: 1fr;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .landing-page .promo-card {
+    min-height: 96px;
+    padding: 14px;
+    overflow: visible;
+  }
+
+  .landing-page .promo-card img {
+    flex-basis: 88px;
+    width: 88px;
+    height: 78px;
   }
 
   .landing-page .landing-footer {
     flex-direction: column;
     align-items: flex-start;
+    padding-bottom: 16px;
   }
 
   .landing-page .footer-highlights {
@@ -2086,14 +2337,28 @@ app-landing-page {
 }
 
 @media (max-width: 430px) {
-  .landing-page .games-track,
   .landing-page .feature-row,
   .landing-page .stats-panel {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   .landing-page .primary-cta,
   .landing-page .secondary-cta {
     width: 100%;
+  }
+
+  .landing-page .mobile-bottom-nav {
+    padding-inline: 8px;
+  }
+}
+
+@media (max-width: 360px) {
+  .landing-page .games-track {
+    grid-template-columns: 1fr;
+  }
+
+  .landing-page .feature-row,
+  .landing-page .stats-panel {
+    grid-template-columns: 1fr;
   }
 }

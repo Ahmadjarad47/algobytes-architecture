@@ -11,7 +11,6 @@ using Microsoft.AspNetCore.Mvc;
 
 namespace algo.API.Controllers;
 
-[Authorize]
 public sealed class CategoriesController(IMediator mediator) : BaseController(mediator)
 {
     [HttpGet]
