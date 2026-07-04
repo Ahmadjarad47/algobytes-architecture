@@ -37,6 +37,7 @@
     "@angular/build": "^21.2.10",
     "@angular/cli": "^21.2.10",
     "@angular/compiler-cli": "^21.2.0",
+    "@netlify/angular-runtime": "^4.0.0",
     "@tailwindcss/postcss": "^4.1.12",
     "@types/dagre": "^0.7.54",
     "@types/express": "^5.0.1",
