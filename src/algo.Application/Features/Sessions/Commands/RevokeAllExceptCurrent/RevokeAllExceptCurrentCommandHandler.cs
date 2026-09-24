@@ -10,12 +10,12 @@ namespace algo.Application.Features.Sessions.Commands.RevokeAllExceptCurrent;
 public sealed class RevokeAllExceptCurrentCommandHandler(
     IApplicationDbContext db,
     ICurrentUserService currentUser,
-    IAccessPolicyEvaluator accessPolicyEvaluator,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
     ISessionRealtimeNotifier sessionRealtimeNotifier) : IRequestHandler<RevokeAllExceptCurrentCommand, int>
 {
     public async Task<int> Handle(RevokeAllExceptCurrentCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Sessions,
             AccessPolicyActions.RevokeAll,

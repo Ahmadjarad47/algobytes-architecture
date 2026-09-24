@@ -8,19 +8,20 @@ using Microsoft.EntityFrameworkCore;
 namespace algo.Application.Features.Users.Commands.DeleteUser;
 
 public sealed class DeleteUserCommandHandler(
-    IAccessPolicyEvaluator accessPolicyEvaluator,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
+    IAccessPolicyQueryFilter queryFilter,
     IApplicationDbContext db)
     : IRequestHandler<DeleteUserCommand, bool>
 {
     public async Task<bool> Handle(DeleteUserCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Users,
             AccessPolicyActions.Delete,
             cancellationToken);
 
-        var scoped = await accessPolicyEvaluator.ApplyAsync(
+        var scoped = await queryFilter.ApplyAsync(
             db.Users.IgnoreQueryFilters().Where(u => u.Id == request.UserId && u.DeletedAt == null),
             AccessPolicyResources.Users,
             AccessPolicyActions.Delete,

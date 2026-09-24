@@ -10,12 +10,12 @@ namespace algo.Application.Features.AccessPolicies.Commands.SetAccessPolicyEnabl
 public sealed class SetAccessPolicyEnabledCommandHandler(
     IApplicationDbContext db,
     ICurrentUserService currentUser,
-    IAccessPolicyEvaluator accessPolicyEvaluator)
+    IAccessPolicyAuthorizationChecker authorizationChecker)
     : IRequestHandler<SetAccessPolicyEnabledCommand, AccessPolicyAdminDto?>
 {
     public async Task<AccessPolicyAdminDto?> Handle(SetAccessPolicyEnabledCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.AccessPolicies,
             AccessPolicyActions.Update,

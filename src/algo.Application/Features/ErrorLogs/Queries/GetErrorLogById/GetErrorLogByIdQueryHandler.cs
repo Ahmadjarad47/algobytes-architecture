@@ -9,12 +9,12 @@ namespace algo.Application.Features.ErrorLogs.Queries.GetErrorLogById;
 
 public sealed class GetErrorLogByIdQueryHandler(
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator)
+    IAccessPolicyAuthorizationChecker authorizationChecker)
     : IRequestHandler<GetErrorLogByIdQuery, ErrorLogDto?>
 {
     public async Task<ErrorLogDto?> Handle(GetErrorLogByIdQuery request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.ErrorLogs,
             AccessPolicyActions.Read,

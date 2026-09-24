@@ -11,11 +11,12 @@ namespace algo.Application.Features.Users.Queries.GetUserRoles;
 
 public sealed class GetUserRolesQueryHandler(
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator) : IRequestHandler<GetUserRolesQuery, IReadOnlyList<UserRoleDto>>
+    IAccessPolicyAuthorizationChecker authorizationChecker,
+    IAccessPolicyQueryFilter queryFilter) : IRequestHandler<GetUserRolesQuery, IReadOnlyList<UserRoleDto>>
 {
     public async Task<IReadOnlyList<UserRoleDto>> Handle(GetUserRolesQuery request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Users,
             AccessPolicyActions.Read,
@@ -25,7 +26,7 @@ public sealed class GetUserRolesQueryHandler(
             .IgnoreQueryFilters()
             .AsNoTracking()
             .Where(u => u.Id == request.UserId && u.DeletedAt == null);
-        scoped = await accessPolicyEvaluator.ApplyAsync(
+        scoped = await queryFilter.ApplyAsync(
             scoped,
             AccessPolicyResources.Users,
             AccessPolicyActions.Read,

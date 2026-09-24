@@ -8,12 +8,12 @@ namespace algo.Application.Features.AccessPolicies.Commands.RestoreAccessPolicy;
 public sealed class RestoreAccessPolicyCommandHandler(
     IApplicationDbContext db,
     ICurrentUserService currentUser,
-    IAccessPolicyEvaluator accessPolicyEvaluator)
+    IAccessPolicyAuthorizationChecker authorizationChecker)
     : IRequestHandler<RestoreAccessPolicyCommand, bool>
 {
     public async Task<bool> Handle(RestoreAccessPolicyCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.AccessPolicies,
             AccessPolicyActions.Update,

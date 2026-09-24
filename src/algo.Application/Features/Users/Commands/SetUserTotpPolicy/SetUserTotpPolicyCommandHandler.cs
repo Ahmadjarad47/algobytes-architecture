@@ -10,18 +10,19 @@ namespace algo.Application.Features.Users.Commands.SetUserTotpPolicy;
 public sealed class SetUserTotpPolicyCommandHandler(
     IApplicationDbContext db,
     UserManager<ApplicationUser> userManager,
-    IAccessPolicyEvaluator accessPolicyEvaluator) : IRequestHandler<SetUserTotpPolicyCommand, bool>
+    IAccessPolicyAuthorizationChecker authorizationChecker,
+    IAccessPolicyQueryFilter queryFilter) : IRequestHandler<SetUserTotpPolicyCommand, bool>
 {
     public async Task<bool> Handle(SetUserTotpPolicyCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Users,
             AccessPolicyActions.Update,
             cancellationToken);
 
         IQueryable<ApplicationUser> scoped = db.Users.AsNoTracking().Where(u => u.Id == request.UserId);
-        scoped = await accessPolicyEvaluator.ApplyAsync(
+        scoped = await queryFilter.ApplyAsync(
             scoped,
             AccessPolicyResources.Users,
             AccessPolicyActions.Update,

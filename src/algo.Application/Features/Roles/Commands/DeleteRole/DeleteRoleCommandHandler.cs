@@ -7,13 +7,13 @@ using Microsoft.EntityFrameworkCore;
 namespace algo.Application.Features.Roles.Commands.DeleteRole;
 
 public sealed class DeleteRoleCommandHandler(
-    IAccessPolicyEvaluator accessPolicyEvaluator,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
     IApplicationDbContext db)
     : IRequestHandler<DeleteRoleCommand, bool>
 {
     public async Task<bool> Handle(DeleteRoleCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Roles,
             AccessPolicyActions.Delete,

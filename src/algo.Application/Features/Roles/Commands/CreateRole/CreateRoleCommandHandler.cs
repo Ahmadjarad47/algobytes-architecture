@@ -13,14 +13,14 @@ namespace algo.Application.Features.Roles.Commands.CreateRole;
 
 public sealed class CreateRoleCommandHandler(
     RoleManager<ApplicationRole> roleManager,
-    IAccessPolicyEvaluator accessPolicyEvaluator,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
     IApplicationDbContext db,
     CustomFieldValueValidator customFieldValueValidator)
     : IRequestHandler<CreateRoleCommand, RoleDetailsDto>
 {
     public async Task<RoleDetailsDto> Handle(CreateRoleCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Roles,
             AccessPolicyActions.Create,

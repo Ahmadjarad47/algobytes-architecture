@@ -16,6 +16,7 @@
 
   <ItemGroup>
     <ProjectReference Include="..\algo.Application\algo.Application.csproj" />
+    <ProjectReference Include="..\algo.SharedKernel\algo.SharedKernel.csproj" />
   </ItemGroup>
 
 </Project>

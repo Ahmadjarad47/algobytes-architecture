@@ -26,7 +26,7 @@ public sealed class AccessPolicyConditionParser : IAccessPolicyConditionParser
     public void Validate(
         string resource,
         AccessPolicyConditionAst ast,
-        IAccessPolicyMetadataProvider metadataProvider)
+        IAccessPolicyMetadataLookup metadataLookup)
     {
         if (string.IsNullOrWhiteSpace(resource)
             || string.Equals(resource, AccessPolicyResources.Wildcard, StringComparison.Ordinal))
@@ -35,7 +35,7 @@ public sealed class AccessPolicyConditionParser : IAccessPolicyConditionParser
                 "A concrete resource is required to validate conditions.");
         }
 
-        if (!metadataProvider.TryGetMetadata(resource, out var metadata) || metadata is null)
+        if (!metadataLookup.TryGetMetadata(resource, out var metadata) || metadata is null)
         {
             throw new AccessPolicyConditionValidationException($"Unknown resource '{resource}'.");
         }

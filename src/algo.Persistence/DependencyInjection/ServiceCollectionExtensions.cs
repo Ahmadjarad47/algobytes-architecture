@@ -52,14 +52,18 @@ public static class ServiceCollectionExtensions
 
         services.AddScoped<IApplicationDbContext>(sp =>
             sp.GetRequiredService<ApplicationDbContext>());
-        services.AddScoped<ICustomFieldIndexManager, CustomFieldIndexManager>();
+        services.AddScoped<ICustomFieldIndexSynchronizer, CustomFieldIndexSynchronizer>();
+        services.AddScoped<ICustomFieldIndexDropper, CustomFieldIndexDropper>();
         services.AddHostedService<TrashFinalizationService>();
 
-        services.AddSingleton<IAccessPolicyMetadataProvider, AccessPolicyMetadataProvider>();
+        services.AddSingleton<AccessPolicyMetadataProvider>();
+        services.AddSingleton<IAccessPolicyMetadataLookup>(sp => sp.GetRequiredService<AccessPolicyMetadataProvider>());
+        services.AddSingleton<IAccessPolicyResourceCatalog>(sp => sp.GetRequiredService<AccessPolicyMetadataProvider>());
         services.AddScoped<IAccessPolicyRuleStore, AccessPolicyRuleStore>();
         services.AddScoped<IAccessPolicyConditionParser, AccessPolicyConditionParser>();
         services.AddScoped<AccessPolicyExpressionCompiler>();
-        services.AddScoped<IAccessPolicyEvaluator, AccessPolicyEvaluator>();
+        services.AddScoped<IAccessPolicyAuthorizationChecker, AccessPolicyAuthorizationChecker>();
+        services.AddScoped<IAccessPolicyQueryFilter, AccessPolicyQueryFilter>();
 
         return services;
     }

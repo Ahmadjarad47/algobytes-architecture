@@ -7,7 +7,7 @@ namespace algo.Application.Features.AccessPolicies.Commands.ValidateAccessPolicy
 
 public sealed class ValidateAccessPolicyConditionCommandHandler(
     IAccessPolicyConditionParser conditionParser,
-    IAccessPolicyMetadataProvider metadataProvider) : IRequestHandler<ValidateAccessPolicyConditionCommand,
+    IAccessPolicyMetadataLookup metadataLookup) : IRequestHandler<ValidateAccessPolicyConditionCommand,
     ValidateAccessPolicyConditionResultDto>
 {
     public Task<ValidateAccessPolicyConditionResultDto> Handle(
@@ -16,7 +16,7 @@ public sealed class ValidateAccessPolicyConditionCommandHandler(
     {
         try
         {
-            if (!metadataProvider.TryGetMetadata(request.Resource, out _))
+            if (!metadataLookup.TryGetMetadata(request.Resource, out _))
             {
                 return Task.FromResult(new ValidateAccessPolicyConditionResultDto(
                     false,
@@ -24,7 +24,7 @@ public sealed class ValidateAccessPolicyConditionCommandHandler(
             }
 
             var ast = conditionParser.Parse(request.ConditionJson);
-            conditionParser.Validate(request.Resource, ast, metadataProvider);
+            conditionParser.Validate(request.Resource, ast, metadataLookup);
             return Task.FromResult(new ValidateAccessPolicyConditionResultDto(true, null));
         }
         catch (AccessPolicyConditionParseException ex)

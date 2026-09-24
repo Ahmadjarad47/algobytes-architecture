@@ -12,14 +12,14 @@ namespace algo.Application.Features.ErrorLogs.Queries.GetErrorLogs;
 
 public sealed class GetErrorLogsQueryHandler(
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator)
+    IAccessPolicyAuthorizationChecker authorizationChecker)
     : IRequestHandler<GetErrorLogsQuery, PaginatedResult<ErrorLogDto>>
 {
     public async Task<PaginatedResult<ErrorLogDto>> Handle(
         GetErrorLogsQuery request,
         CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.ErrorLogs,
             AccessPolicyActions.Read,

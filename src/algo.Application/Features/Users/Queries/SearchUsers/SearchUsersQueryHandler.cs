@@ -14,18 +14,19 @@ namespace algo.Application.Features.Users.Queries.SearchUsers;
 
 public sealed class SearchUsersQueryHandler(
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
+    IAccessPolicyQueryFilter queryFilter,
     RoleManager<ApplicationRole> roleManager) : IRequestHandler<SearchUsersQuery, SearchUsersResponseDto>
 {
     public async Task<SearchUsersResponseDto> Handle(SearchUsersQuery request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(db, AccessPolicyResources.Users, AccessPolicyActions.Read, cancellationToken);
+        await authorizationChecker.EnsureResourceActionAllowedAsync(db, AccessPolicyResources.Users, AccessPolicyActions.Read, cancellationToken);
 
         var now = DateTimeOffset.UtcNow;
         var includes = (request.Include ?? []).Select(x => x.Trim()).Where(x => x.Length > 0).ToHashSet(StringComparer.OrdinalIgnoreCase);
 
         IQueryable<ApplicationUser> query = db.Users.AsNoTracking();
-        query = await accessPolicyEvaluator.ApplyAsync(query, AccessPolicyResources.Users, AccessPolicyActions.Read, cancellationToken);
+        query = await queryFilter.ApplyAsync(query, AccessPolicyResources.Users, AccessPolicyActions.Read, cancellationToken);
 
         if (!string.IsNullOrWhiteSpace(request.Search))
         {

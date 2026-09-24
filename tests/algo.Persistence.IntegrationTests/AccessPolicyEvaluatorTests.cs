@@ -13,6 +13,10 @@ namespace algo.Persistence.IntegrationTests;
 
 public sealed class AccessPolicyEvaluatorTests
 {
+    private sealed record AccessPolicyServices(
+        IAccessPolicyAuthorizationChecker AuthorizationChecker,
+        IAccessPolicyQueryFilter QueryFilter);
+
     private static ApplicationDbContext CreateContext()
     {
         var options = new DbContextOptionsBuilder<ApplicationDbContext>()
@@ -37,7 +41,7 @@ public sealed class AccessPolicyEvaluatorTests
         };
     }
 
-    private static AccessPolicyEvaluator CreateEvaluator(
+    private static AccessPolicyServices CreateServices(
         ApplicationDbContext db,
         IAccessPolicyTokenResolver tokens)
     {
@@ -45,7 +49,18 @@ public sealed class AccessPolicyEvaluatorTests
         var parser = new AccessPolicyConditionParser();
         var compiler = new AccessPolicyExpressionCompiler();
         var store = new AccessPolicyRuleStore(db);
-        return new AccessPolicyEvaluator(store, parser, tokens, metadata, compiler, NullLogger<AccessPolicyEvaluator>.Instance);
+        return new AccessPolicyServices(
+            new AccessPolicyAuthorizationChecker(
+                store,
+                tokens,
+                NullLogger<AccessPolicyAuthorizationChecker>.Instance),
+            new AccessPolicyQueryFilter(
+                store,
+                parser,
+                tokens,
+                metadata,
+                compiler,
+                NullLogger<AccessPolicyQueryFilter>.Instance));
     }
 
     [Fact]
@@ -68,8 +83,8 @@ public sealed class AccessPolicyEvaluatorTests
         });
         await db.SaveChangesAsync();
 
-        var evaluator = CreateEvaluator(db, new TestTokenResolver("1", ["Admin"]));
-        var query = await evaluator.ApplyAsync(db.Users.AsQueryable(), AccessPolicyResources.Users, "read");
+        var services = CreateServices(db, new TestTokenResolver("1", ["Admin"]));
+        var query = await services.QueryFilter.ApplyAsync(db.Users.AsQueryable(), AccessPolicyResources.Users, "read");
 
         Assert.Equal(2, await query.CountAsync());
     }
@@ -93,8 +108,8 @@ public sealed class AccessPolicyEvaluatorTests
         });
         await db.SaveChangesAsync();
 
-        var evaluator = CreateEvaluator(db, new TestTokenResolver("1", ["Admin"]));
-        var scoped = await evaluator.ApplyAsync(
+        var services = CreateServices(db, new TestTokenResolver("1", ["Admin"]));
+        var scoped = await services.QueryFilter.ApplyAsync(
             db.AccessPolicies.AsQueryable(),
             AccessPolicyResources.AccessPolicies,
             AccessPolicyActions.Create);
@@ -120,8 +135,10 @@ public sealed class AccessPolicyEvaluatorTests
         });
         await db.SaveChangesAsync();
 
-        var evaluator = CreateEvaluator(db, new TestTokenResolver("1", ["Admin"]));
-        var allowed = await evaluator.IsAllowedAsync(AccessPolicyResources.Users, AccessPolicyActions.Delete);
+        var services = CreateServices(db, new TestTokenResolver("1", ["Admin"]));
+        var allowed = await services.AuthorizationChecker.IsAllowedAsync(
+            AccessPolicyResources.Users,
+            AccessPolicyActions.Delete);
 
         Assert.True(allowed);
     }
@@ -143,8 +160,10 @@ public sealed class AccessPolicyEvaluatorTests
         });
         await db.SaveChangesAsync();
 
-        var evaluator = CreateEvaluator(db, new TestTokenResolver("u1", ["User"]));
-        var allowed = await evaluator.IsAllowedAsync(AccessPolicyResources.AccessPolicies, AccessPolicyActions.Create);
+        var services = CreateServices(db, new TestTokenResolver("u1", ["User"]));
+        var allowed = await services.AuthorizationChecker.IsAllowedAsync(
+            AccessPolicyResources.AccessPolicies,
+            AccessPolicyActions.Create);
 
         Assert.False(allowed);
     }
@@ -172,8 +191,11 @@ public sealed class AccessPolicyEvaluatorTests
         });
         await db.SaveChangesAsync();
 
-        var evaluator = CreateEvaluator(db, new TestTokenResolver("u1", ["User"]));
-        var scoped = await evaluator.ApplyAsync(db.ApplicationLogs.AsQueryable(), AccessPolicyResources.Logs, AccessPolicyActions.Read);
+        var services = CreateServices(db, new TestTokenResolver("u1", ["User"]));
+        var scoped = await services.QueryFilter.ApplyAsync(
+            db.ApplicationLogs.AsQueryable(),
+            AccessPolicyResources.Logs,
+            AccessPolicyActions.Read);
 
         Assert.True(await scoped.AnyAsync());
     }
@@ -211,8 +233,8 @@ public sealed class AccessPolicyEvaluatorTests
             });
         await db.SaveChangesAsync();
 
-        var evaluator = CreateEvaluator(db, new TestTokenResolver("x", ["InactiveViewer"]));
-        var query = await evaluator.ApplyAsync(db.Users.AsQueryable(), AccessPolicyResources.Users, "read");
+        var services = CreateServices(db, new TestTokenResolver("x", ["InactiveViewer"]));
+        var query = await services.QueryFilter.ApplyAsync(db.Users.AsQueryable(), AccessPolicyResources.Users, "read");
 
         var emails = await query.Select(u => u.Email).OrderBy(e => e).ToListAsync();
         Assert.Single(emails);
@@ -226,8 +248,8 @@ public sealed class AccessPolicyEvaluatorTests
         db.Users.Add(CreateUser("1", "a@test", isActive: true));
         await db.SaveChangesAsync();
 
-        var evaluator = CreateEvaluator(db, new TestTokenResolver("1", ["NoPolicyRole"]));
-        var query = await evaluator.ApplyAsync(db.Users.AsQueryable(), AccessPolicyResources.Users, "read");
+        var services = CreateServices(db, new TestTokenResolver("1", ["NoPolicyRole"]));
+        var query = await services.QueryFilter.ApplyAsync(db.Users.AsQueryable(), AccessPolicyResources.Users, "read");
 
         Assert.Equal(0, await query.CountAsync());
     }

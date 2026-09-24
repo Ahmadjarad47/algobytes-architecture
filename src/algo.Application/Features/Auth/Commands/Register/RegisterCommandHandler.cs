@@ -15,8 +15,8 @@ namespace algo.Application.Features.Auth.Commands.Register;
 public sealed class RegisterCommandHandler(
     UserManager<ApplicationUser> userManager,
     IApplicationDbContext db,
-    IOtpService otpService,
-    IEmailService emailService,
+    IOtpCodeGenerator otpCodeGenerator,
+    IEmailConfirmationSender emailConfirmationSender,
     CustomFieldValueValidator customFieldValueValidator,
     IOptions<OtpOptions> otpOptions) : IRequestHandler<RegisterCommand, OtpVerificationDto>
 {
@@ -50,7 +50,7 @@ public sealed class RegisterCommandHandler(
             throw new ValidationException(failures);
         }
 
-        var plainCode = otpService.GenerateNumericCode(_otp.CodeLength);
+        var plainCode = otpCodeGenerator.GenerateNumericCode(_otp.CodeLength);
         var expiresAt = DateTimeOffset.UtcNow.AddMinutes(_otp.ExpirationMinutes);
 
         db.OtpTokens.Add(new OtpToken
@@ -58,14 +58,14 @@ public sealed class RegisterCommandHandler(
             Id = Guid.NewGuid(),
             UserId = user.Id,
             Purpose = OtpPurpose.EmailConfirmation,
-            CodeHash = otpService.HashCode(plainCode),
+            CodeHash = otpCodeGenerator.HashCode(plainCode),
             ExpiresAt = expiresAt,
             CreatedAt = DateTimeOffset.UtcNow,
         });
 
         await db.SaveChangesAsync(cancellationToken);
 
-        await emailService.SendEmailConfirmationOtpAsync(
+        await emailConfirmationSender.SendEmailConfirmationOtpAsync(
             user.Email!,
             user.DisplayName,
             plainCode,

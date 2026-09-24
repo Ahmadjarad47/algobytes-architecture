@@ -10,12 +10,12 @@ namespace algo.Application.Features.Sessions.Commands.RevokeUserSessions;
 public sealed class RevokeUserSessionsCommandHandler(
     IApplicationDbContext db,
     ICurrentUserService currentUser,
-    IAccessPolicyEvaluator accessPolicyEvaluator,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
     ISessionRealtimeNotifier sessionRealtimeNotifier) : IRequestHandler<RevokeUserSessionsCommand, int>
 {
     public async Task<int> Handle(RevokeUserSessionsCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Sessions,
             AccessPolicyActions.RevokeAll,

@@ -18,6 +18,7 @@ import { ToolbarModule } from 'primeng/toolbar';
 import { TooltipModule } from 'primeng/tooltip';
 
 import { AdminBulkAction, AdminRowAction, AdminTableColumn } from '../../models/admin-table.model';
+import { AdminTableImageUrlPipe } from './admin-table-image-url.pipe';
 
 @Component({
   selector: 'app-admin-data-table',
@@ -33,7 +34,8 @@ import { AdminBulkAction, AdminRowAction, AdminTableColumn } from '../../models/
     TagModule,
     ToolbarModule,
     TooltipModule,
-    DatePipe
+    DatePipe,
+    AdminTableImageUrlPipe
   ],
   template: `
     <section class="surface-card overflow-hidden rounded-xl">
@@ -143,6 +145,7 @@ import { AdminBulkAction, AdminRowAction, AdminTableColumn } from '../../models/
         [scrollable]="horizontalScroll()"
         scrollDirection="horizontal"
         [tableStyle]="{ 'min-width': tableMinWidth() }"
+        [rowTrackBy]="trackByDataKey"
         (onLazyLoad)="lazyLoad.emit($event)"
       >
         <ng-template #header let-columns>
@@ -244,6 +247,21 @@ import { AdminBulkAction, AdminRowAction, AdminTableColumn } from '../../models/
                     @case ('list') {
                       <span>{{ formatList(read(rowData, column.field)) }}</span>
                     }
+                    @case ('image') {
+                      @if (rowData?.[column.field] | tableImageUrl: column.imageBaseUrl; as imageUrl) {
+                        <img
+                          [src]="imageUrl"
+                          [alt]="column.header"
+                          class="h-10 w-16 rounded-md border border-surface-200 object-cover"
+                          loading="lazy"
+                        />
+                      } @else {
+                        <span>-</span>
+                      }
+                    }
+                    @case ('currency') {
+                      <span>{{ formatCurrency(read(rowData, column.field), column.currencyCode, column.currencyLocale) }}</span>
+                    }
                     @default {
                       <span>{{ formatValue(read(rowData, column.field)) }}</span>
                     }
@@ -328,6 +346,10 @@ export class AdminDataTable {
 
   searchValue = '';
   selectedRows: any[] = [];
+  readonly trackByDataKey = (_: number, row: Record<string, unknown>): unknown => {
+    const key = this.dataKey();
+    return row?.[key] ?? row?.['id'] ?? _;
+  };
 
   skeletonRows(): Record<string, number>[] {
     return Array.from({ length: Math.min(this.rows(), 10) }, (_, index) => ({ id: index }));
@@ -395,6 +417,35 @@ export class AdminDataTable {
     }
 
     return JSON.stringify(value);
+  }
+
+  formatCurrency(value: unknown, currencyCode = 'USD', locale = 'en-US'): string {
+    if (value === null || value === undefined || value === '') {
+      return '-';
+    }
+
+    const amount =
+      typeof value === 'number'
+        ? value
+        : typeof value === 'string'
+          ? Number(value)
+          : Number.NaN;
+
+    if (!Number.isFinite(amount)) {
+      return '-';
+    }
+
+    try {
+      const shouldUseFraction = currencyCode.toUpperCase() !== 'SYP';
+      return new Intl.NumberFormat(locale, {
+        style: 'currency',
+        currency: currencyCode.toUpperCase(),
+        minimumFractionDigits: shouldUseFraction ? 2 : 0,
+        maximumFractionDigits: shouldUseFraction ? 2 : 0
+      }).format(amount);
+    } catch {
+      return `${currencyCode.toUpperCase()} ${amount.toLocaleString(locale)}`;
+    }
   }
 
   resolveSeverity(

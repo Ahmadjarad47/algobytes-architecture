@@ -71,7 +71,31 @@ internal sealed class TrashFinalizationService(
             .Where(policy => policy.TrashExpiresAt <= utcNowDateTime)
             .ToList();
 
-        if (users.Count == 0 && roles.Count == 0 && policies.Count == 0)
+        var products = (await db.Products
+            .IgnoreQueryFilters()
+            .Where(product =>
+                product.TrashedAt != null &&
+                product.TrashExpiresAt != null &&
+                product.DeletedAt == null)
+            .ToListAsync(cancellationToken))
+            .Where(product => product.TrashExpiresAt <= utcNow)
+            .ToList();
+
+        var categories = (await db.Categories
+            .IgnoreQueryFilters()
+            .Where(category =>
+                category.TrashedAt != null &&
+                category.TrashExpiresAt != null &&
+                category.DeletedAt == null)
+            .ToListAsync(cancellationToken))
+            .Where(category => category.TrashExpiresAt <= utcNow)
+            .ToList();
+
+        if (users.Count == 0 &&
+            roles.Count == 0 &&
+            policies.Count == 0 &&
+            products.Count == 0 &&
+            categories.Count == 0)
         {
             return;
         }
@@ -91,13 +115,26 @@ internal sealed class TrashFinalizationService(
             policy.DeletedAt = utcNowDateTime;
         }
 
+        foreach (var product in products)
+        {
+            product.DeletedAt = utcNow;
+            product.UpdatedAt = utcNow;
+        }
+
+        foreach (var category in categories)
+        {
+            category.DeletedAt = utcNow;
+        }
+
         await db.SaveChangesAsync(cancellationToken);
 
         logger.LogInformation(
-            "Finalized trashed records after {RetentionDays} days. Users={UserCount}, Roles={RoleCount}, Policies={PolicyCount}",
+            "Finalized trashed records after {RetentionDays} days. Users={UserCount}, Roles={RoleCount}, Policies={PolicyCount}, Products={ProductCount}, Categories={CategoryCount}",
             TrashRetention.Duration.TotalDays,
             users.Count,
             roles.Count,
-            policies.Count);
+            policies.Count,
+            products.Count,
+            categories.Count);
     }
 }

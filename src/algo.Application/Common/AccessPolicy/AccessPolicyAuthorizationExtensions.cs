@@ -7,14 +7,14 @@ namespace algo.Application.Common.AccessPolicy;
 public static class AccessPolicyAuthorizationExtensions
 {
     public static async Task EnsureResourceActionAllowedAsync(
-        this IAccessPolicyEvaluator evaluator,
+        this IAccessPolicyAuthorizationChecker authorizationChecker,
         IApplicationDbContext db,
         string resource,
         string action,
         CancellationToken cancellationToken = default)
     {
         _ = db;
-        if (!await evaluator.IsAllowedAsync(resource, action, cancellationToken))
+        if (!await authorizationChecker.IsAllowedAsync(resource, action, cancellationToken))
         {
             throw BuildForbiddenValidationException(resource, action);
         }

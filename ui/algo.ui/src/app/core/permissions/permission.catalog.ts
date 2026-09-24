@@ -33,6 +33,30 @@ export const Permissions = {
     read: { resource: 'errorLogs', action: 'read' } satisfies AppPermission,
     export: { resource: 'errorLogs', action: 'export' } satisfies AppPermission
   },
+  products: {
+    read: { resource: 'products', action: 'read' } satisfies AppPermission,
+    create: { resource: 'products', action: 'create' } satisfies AppPermission,
+    update: { resource: 'products', action: 'update' } satisfies AppPermission,
+    delete: { resource: 'products', action: 'delete' } satisfies AppPermission
+  },
+  orders: {
+    read: { resource: 'orders', action: 'read' } satisfies AppPermission,
+    create: { resource: 'orders', action: 'create' } satisfies AppPermission,
+    update: { resource: 'orders', action: 'update' } satisfies AppPermission,
+    delete: { resource: 'orders', action: 'delete' } satisfies AppPermission
+  },
+  wallet: {
+    read: { resource: 'wallet', action: 'read' } satisfies AppPermission,
+    create: { resource: 'wallet', action: 'create' } satisfies AppPermission,
+    update: { resource: 'wallet', action: 'update' } satisfies AppPermission,
+    delete: { resource: 'wallet', action: 'delete' } satisfies AppPermission
+  },
+  categories: {
+    read: { resource: 'categories', action: 'read' } satisfies AppPermission,
+    create: { resource: 'categories', action: 'create' } satisfies AppPermission,
+    update: { resource: 'categories', action: 'update' } satisfies AppPermission,
+    delete: { resource: 'categories', action: 'delete' } satisfies AppPermission
+  },
   settings: {
     read: { resource: 'settings', action: 'read' } satisfies AppPermission,
     update: { resource: 'settings', action: 'update' } satisfies AppPermission

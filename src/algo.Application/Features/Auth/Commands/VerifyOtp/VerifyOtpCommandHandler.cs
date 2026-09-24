@@ -13,8 +13,9 @@ namespace algo.Application.Features.Auth.Commands.VerifyOtp;
 
 public sealed class VerifyOtpCommandHandler(
     UserManager<ApplicationUser> userManager,
-    IOtpService otpService,
-    IJwtTokenService jwt,
+    IOtpCodeVerifier otpCodeVerifier,
+    IAccessTokenFactory accessTokenFactory,
+    IRefreshTokenFactory refreshTokenFactory,
     IApplicationDbContext db,
     ISessionContext sessionContext) : IRequestHandler<VerifyOtpCommand, AuthResponseDto>
 {
@@ -44,7 +45,7 @@ public sealed class VerifyOtpCommandHandler(
 
         if (otp is null
             || otp.ExpiresAt < DateTimeOffset.UtcNow
-            || !otpService.VerifyCode(request.Code, otp.CodeHash))
+            || !otpCodeVerifier.VerifyCode(request.Code, otp.CodeHash))
         {
             throw new ValidationException(new[]
             {
@@ -66,6 +67,7 @@ public sealed class VerifyOtpCommandHandler(
         await db.SaveChangesAsync(cancellationToken);
 
         var roles = (await userManager.GetRolesAsync(user)).ToArray();
-        return await AuthSessionIssuer.IssueAsync(user, roles, jwt, db, sessionContext, cancellationToken);
+        return await AuthSessionIssuer.IssueAsync(
+            user, roles, accessTokenFactory, refreshTokenFactory, db, sessionContext, cancellationToken);
     }
 }

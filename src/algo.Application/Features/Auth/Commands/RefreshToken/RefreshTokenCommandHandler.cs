@@ -13,13 +13,15 @@ namespace algo.Application.Features.Auth.Commands.RefreshToken;
 
 public sealed class RefreshTokenCommandHandler(
     UserManager<ApplicationUser> userManager,
-    IJwtTokenService jwt,
+    IRefreshTokenHasher refreshTokenHasher,
+    IRefreshTokenFactory refreshTokenFactory,
+    IAccessTokenFactory accessTokenFactory,
     IApplicationDbContext db,
     ISessionContext sessionContext) : IRequestHandler<RefreshTokenCommand, AuthResponseDto>
 {
     public async Task<AuthResponseDto> Handle(RefreshTokenCommand request, CancellationToken cancellationToken)
     {
-        var hash = jwt.HashRefreshToken(request.RefreshToken);
+        var hash = refreshTokenHasher.HashRefreshToken(request.RefreshToken);
         var stored = await db.RefreshTokens
             .Include(t => t.User)
             .FirstOrDefaultAsync(
@@ -34,7 +36,7 @@ public sealed class RefreshTokenCommandHandler(
             });
         }
 
-        var (rawRefresh, newHash, refreshExp) = jwt.CreateRefreshToken();
+        var (rawRefresh, newHash, refreshExp) = refreshTokenFactory.CreateRefreshToken();
 
         stored.RevokedAt = DateTimeOffset.UtcNow;
         stored.ReplacedByTokenHash = newHash;
@@ -60,7 +62,7 @@ public sealed class RefreshTokenCommandHandler(
         });
 
         var roles = (await userManager.GetRolesAsync(stored.User)).ToArray();
-        var (accessToken, accessExp) = jwt.CreateAccessToken(stored.User, roles, sessionId);
+        var (accessToken, accessExp) = accessTokenFactory.CreateAccessToken(stored.User, roles, sessionId);
         await db.SaveChangesAsync(cancellationToken);
 
         var userDto = await AuthSessionIssuer.BuildUserDtoAsync(stored.User, roles, db, cancellationToken);

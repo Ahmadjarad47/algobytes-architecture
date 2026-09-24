@@ -9,11 +9,11 @@ namespace algo.Application.Features.Sessions.Queries.GetSessionById;
 public sealed class GetSessionByIdQueryHandler(
     IApplicationDbContext db,
     ICurrentUserService currentUser,
-    IAccessPolicyEvaluator accessPolicyEvaluator) : IRequestHandler<GetSessionByIdQuery, ActiveSessionDto?>
+    IAccessPolicyAuthorizationChecker authorizationChecker) : IRequestHandler<GetSessionByIdQuery, ActiveSessionDto?>
 {
     public async Task<ActiveSessionDto?> Handle(GetSessionByIdQuery request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Sessions,
             AccessPolicyActions.Read,

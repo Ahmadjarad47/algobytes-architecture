@@ -10,7 +10,7 @@ namespace algo.Application.Features.CustomFields.Commands.UpdateCustomFieldDefin
 
 public sealed class UpdateCustomFieldDefinitionCommandHandler(
     IApplicationDbContext db,
-    ICustomFieldIndexManager indexManager)
+    ICustomFieldIndexSynchronizer indexSynchronizer)
     : IRequestHandler<UpdateCustomFieldDefinitionCommand, CustomFieldDefinitionDto?>
 {
     public async Task<CustomFieldDefinitionDto?> Handle(UpdateCustomFieldDefinitionCommand request, CancellationToken cancellationToken)
@@ -45,7 +45,7 @@ public sealed class UpdateCustomFieldDefinitionCommandHandler(
         definition.UpdatedAt = DateTimeOffset.UtcNow;
 
         await db.SaveChangesAsync(cancellationToken);
-        await indexManager.SyncIndexesAsync(definition, cancellationToken);
+        await indexSynchronizer.SyncIndexesAsync(definition, cancellationToken);
 
         return definition.ToDto();
     }

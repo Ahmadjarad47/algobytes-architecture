@@ -8,12 +8,12 @@ namespace algo.Application.Features.Sessions.Commands.RevokeSelectedSessions;
 public sealed class RevokeSelectedSessionsCommandHandler(
     IApplicationDbContext db,
     ICurrentUserService currentUser,
-    IAccessPolicyEvaluator accessPolicyEvaluator,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
     ISessionRealtimeNotifier sessionRealtimeNotifier) : IRequestHandler<RevokeSelectedSessionsCommand, int>
 {
     public async Task<int> Handle(RevokeSelectedSessionsCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Sessions,
             AccessPolicyActions.Revoke,

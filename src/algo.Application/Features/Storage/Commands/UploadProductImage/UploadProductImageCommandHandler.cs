@@ -1,0 +1,165 @@
+using algo.Application.Abstractions.Persistence;
+using algo.Application.Abstractions.Storage;
+using algo.Application.Common.AccessPolicy;
+using algo.Application.Features.Storage.Dtos;
+using algo.Domain.Storage.Entities;
+using FluentValidation;
+using FluentValidation.Results;
+using MediatR;
+using Microsoft.EntityFrameworkCore;
+
+namespace algo.Application.Features.Storage.Commands.UploadProductImage;
+
+public sealed class UploadProductImageCommandHandler(
+    IApplicationDbContext db,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
+    IObjectStorageService objectStorageService,
+    IFileScannerService fileScannerService)
+    : IRequestHandler<UploadProductImageCommand, UploadProductImageResultDto>
+{
+    private const long MaxImageBytes = 10 * 1024 * 1024;
+
+    private static readonly HashSet<string> AllowedContentTypes = new(StringComparer.OrdinalIgnoreCase)
+    {
+        "image/jpeg",
+        "image/png",
+        "image/webp",
+        "image/gif",
+    };
+
+    public async Task<UploadProductImageResultDto> Handle(UploadProductImageCommand request, CancellationToken cancellationToken)
+    {
+        if (!await IsAllowedAsync(request.AuthorizedResource, request.AuthorizedActions, cancellationToken))
+        {
+            throw AccessPolicyAuthorizationExtensions.BuildForbiddenValidationException(
+                request.AuthorizedResource,
+                string.Join("|", request.AuthorizedActions));
+        }
+
+        if (request.Length <= 0 || request.Length > MaxImageBytes)
+        {
+            throw new ValidationException(new[]
+            {
+                new ValidationFailure(nameof(UploadProductImageCommand.Length), "Image must be between 1 byte and 10 MB."),
+            });
+        }
+
+        if (!AllowedContentTypes.Contains(request.ContentType))
+        {
+            throw new ValidationException(new[]
+            {
+                new ValidationFailure(nameof(UploadProductImageCommand.ContentType), "Only JPEG, PNG, WEBP, and GIF images are supported."),
+            });
+        }
+
+        var configuration = await db.StorageConfigurations
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.Id == StorageConfiguration.SingletonId, cancellationToken);
+
+        if (configuration is null
+            || string.IsNullOrWhiteSpace(configuration.EndpointUrl)
+            || string.IsNullOrWhiteSpace(configuration.AccessKey)
+            || string.IsNullOrWhiteSpace(configuration.SecretKey)
+            || string.IsNullOrWhiteSpace(configuration.BucketName))
+        {
+            throw new ValidationException(new[]
+            {
+                new ValidationFailure("storage", "Amazon S3 storage is not configured. Save storage settings first."),
+            });
+        }
+
+        await using var scanStream = new MemoryStream();
+        await request.Content.CopyToAsync(scanStream, cancellationToken);
+        scanStream.Position = 0;
+
+        var scanResult = await fileScannerService.ScanAsync(
+            new FileScanRequest(
+                scanStream,
+                request.FileName,
+                configuration.ScannerEnabled,
+                configuration.ScannerProvider,
+                configuration.ScannerEndpointUrl,
+                configuration.ScannerApiKey),
+            cancellationToken);
+
+        if (string.Equals(scanResult.Status, "infected", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ValidationException(new[]
+            {
+                new ValidationFailure("file", scanResult.Message),
+            });
+        }
+
+        if (string.Equals(scanResult.Status, "failed", StringComparison.OrdinalIgnoreCase))
+        {
+            throw new ValidationException(new[]
+            {
+                new ValidationFailure("file", scanResult.Message),
+            });
+        }
+
+        scanStream.Position = 0;
+        var extension = Path.GetExtension(request.FileName);
+        if (string.IsNullOrWhiteSpace(extension))
+            extension = ContentTypeToExtension(request.ContentType);
+
+        var objectKey = BuildObjectKey(configuration.Folder, request.FolderSegment, extension);
+        var uploadRequest = new ObjectStorageUploadRequest(
+            scanStream,
+            objectKey,
+            request.ContentType,
+            configuration.EndpointUrl,
+            configuration.AccessKey,
+            configuration.SecretKey,
+            configuration.BucketName,
+            configuration.Region,
+            configuration.UsePathStyle);
+
+        string url;
+        try
+        {
+            url = await objectStorageService.UploadAsync(uploadRequest, cancellationToken);
+        }
+        catch (ObjectStorageUnavailableException ex)
+        {
+            throw new ValidationException(new[]
+            {
+                new ValidationFailure("storage", ex.Message),
+            });
+        }
+
+        return new UploadProductImageResultDto(url);
+    }
+
+    private async Task<bool> IsAllowedAsync(
+        string resource,
+        IReadOnlyCollection<string> actions,
+        CancellationToken cancellationToken)
+    {
+        foreach (var action in actions)
+        {
+            if (await authorizationChecker.IsAllowedAsync(resource, action, cancellationToken))
+            {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static string BuildObjectKey(string folder, string folderSegment, string extension)
+    {
+        var prefix = string.IsNullOrWhiteSpace(folder) ? "uploads" : folder.Trim().Trim('/');
+        var segment = string.IsNullOrWhiteSpace(folderSegment) ? "images" : folderSegment.Trim().Trim('/');
+        return $"{prefix}/{segment}/{Guid.NewGuid():N}{extension.ToLowerInvariant()}";
+    }
+
+    private static string ContentTypeToExtension(string contentType) =>
+        contentType.ToLowerInvariant() switch
+        {
+            "image/png" => ".png",
+            "image/webp" => ".webp",
+            "image/gif" => ".gif",
+            _ => ".jpg",
+        };
+}

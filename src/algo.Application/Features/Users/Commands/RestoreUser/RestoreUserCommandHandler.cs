@@ -6,13 +6,13 @@ using Microsoft.EntityFrameworkCore;
 namespace algo.Application.Features.Users.Commands.RestoreUser;
 
 public sealed class RestoreUserCommandHandler(
-    IAccessPolicyEvaluator accessPolicyEvaluator,
+    IAccessPolicyAuthorizationChecker authorizationChecker,
     IApplicationDbContext db)
     : IRequestHandler<RestoreUserCommand, bool>
 {
     public async Task<bool> Handle(RestoreUserCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Users,
             AccessPolicyActions.Update,

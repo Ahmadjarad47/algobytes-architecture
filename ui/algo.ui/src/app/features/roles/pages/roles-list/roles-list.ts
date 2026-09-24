@@ -197,6 +197,8 @@ export class RolesList {
   protected readonly permissionMatrix: PermissionMatrixRow[] = [
     { module: 'Users', permissions: { View: true, Create: true, Edit: true, Delete: true } },
     { module: 'Roles', permissions: { View: true, Create: true, Edit: true, Delete: null } },
+    { module: 'Categories', permissions: { View: true, Create: true, Edit: true, Delete: true } },
+    { module: 'Products', permissions: { View: true, Create: true, Edit: true, Delete: true } },
     { module: 'Access Policies', permissions: { View: true, Create: true, Edit: true, Delete: true } },
     { module: 'Logs', permissions: { View: true, Create: null, Edit: null, Delete: null } },
     { module: 'Settings', permissions: { View: true, Create: null, Edit: true, Delete: null } }

@@ -9,14 +9,14 @@ namespace algo.Application.Features.AccessPolicies.Queries.ListAccessPolicies;
 
 public sealed class ListAccessPoliciesQueryHandler(
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator)
+    IAccessPolicyAuthorizationChecker authorizationChecker)
     : IRequestHandler<ListAccessPoliciesQuery, IReadOnlyList<AccessPolicyAdminDto>>
 {
     public async Task<IReadOnlyList<AccessPolicyAdminDto>> Handle(
         ListAccessPoliciesQuery request,
         CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.AccessPolicies,
             AccessPolicyActions.Read,

@@ -14,17 +14,18 @@ public sealed class AssignRolesCommandHandler(
     UserManager<ApplicationUser> userManager,
     RoleManager<ApplicationRole> roleManager,
     IApplicationDbContext db,
-    IAccessPolicyEvaluator accessPolicyEvaluator) : IRequestHandler<AssignRolesCommand, Unit>
+    IAccessPolicyAuthorizationChecker authorizationChecker,
+    IAccessPolicyQueryFilter queryFilter) : IRequestHandler<AssignRolesCommand, Unit>
 {
     public async Task<Unit> Handle(AssignRolesCommand request, CancellationToken cancellationToken)
     {
-        await accessPolicyEvaluator.EnsureResourceActionAllowedAsync(
+        await authorizationChecker.EnsureResourceActionAllowedAsync(
             db,
             AccessPolicyResources.Users,
             AccessPolicyActions.Update,
             cancellationToken);
 
-        var scoped = await accessPolicyEvaluator.ApplyAsync(
+        var scoped = await queryFilter.ApplyAsync(
             db.Users.AsNoTracking().Where(u => u.Id == request.UserId),
             AccessPolicyResources.Users,
             AccessPolicyActions.Update,

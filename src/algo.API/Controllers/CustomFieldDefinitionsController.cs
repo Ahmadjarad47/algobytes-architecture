@@ -35,26 +35,10 @@ public sealed class CustomFieldDefinitionsController(IMediator mediator) : BaseC
     [ProducesResponseType(StatusCodes.Status404NotFound)]
     public async Task<ActionResult<CustomFieldDefinitionDto>> Update(
         Guid id,
-        [FromBody] UpdateCustomFieldDefinitionBody body,
+        [FromBody] UpdateCustomFieldDefinitionRequest body,
         CancellationToken cancellationToken)
     {
-        var updated = await mediator.Send(
-            new UpdateCustomFieldDefinitionCommand(
-                id,
-                body.Label,
-                body.Type,
-                body.Required,
-                body.Searchable,
-                body.Filterable,
-                body.Sortable,
-                body.VisibleInTable,
-                body.VisibleInForm,
-                body.VisibleInDetails,
-                body.Options,
-                body.DefaultValue,
-                body.Validation),
-            cancellationToken);
-
+        var updated = await mediator.Send(body.ToCommand(id), cancellationToken);
         return updated is null ? NotFound() : Ok(updated);
     }
 
@@ -67,17 +51,3 @@ public sealed class CustomFieldDefinitionsController(IMediator mediator) : BaseC
         return deleted ? NoContent() : NotFound();
     }
 }
-
-public sealed record UpdateCustomFieldDefinitionBody(
-    string Label,
-    algo.Domain.CustomFields.CustomFieldType Type,
-    bool Required,
-    bool Searchable,
-    bool Filterable,
-    bool Sortable,
-    bool VisibleInTable,
-    bool VisibleInForm,
-    bool VisibleInDetails,
-    System.Text.Json.JsonElement? Options,
-    System.Text.Json.JsonElement? DefaultValue,
-    System.Text.Json.JsonElement? Validation);

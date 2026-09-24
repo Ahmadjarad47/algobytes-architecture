@@ -5,6 +5,10 @@ export type AdminGlobalAction =
   | 'create-user'
   | 'create-role'
   | 'create-access-policy'
+  | 'create-product'
+  | 'create-order'
+  | 'open-wallet'
+  | 'create-category'
   | 'create-api-key'
   | 'create-workspace';
 

@@ -12,6 +12,10 @@ export interface AdminFeatureFlags {
   readonly activeSessions: boolean;
   readonly logs: boolean;
   readonly errorLogs: boolean;
+  readonly products: boolean;
+  readonly orders: boolean;
+  readonly wallet: boolean;
+  readonly categories: boolean;
   readonly settings: boolean;
 }
 
@@ -164,6 +168,10 @@ export const DEFAULT_ADMIN_TEMPLATE_CONFIG: AdminTemplateConfig = {
     activeSessions: true,
     logs: true,
     errorLogs: true,
+    products: true,
+    orders: true,
+    wallet: true,
+    categories: true,
     settings: true
   }
 };

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore;
 namespace algo.Application.Features.Auth.Commands.Logout;
 
 public sealed class LogoutCommandHandler(
-    IJwtTokenService jwt,
+    IRefreshTokenHasher refreshTokenHasher,
     IApplicationDbContext db) : IRequestHandler<LogoutCommand, Unit>
 {
     public async Task<Unit> Handle(LogoutCommand request, CancellationToken cancellationToken)
@@ -15,7 +15,7 @@ public sealed class LogoutCommandHandler(
             return Unit.Value;
         }
 
-        var hash = jwt.HashRefreshToken(request.RefreshToken);
+        var hash = refreshTokenHasher.HashRefreshToken(request.RefreshToken);
         var token = await db.RefreshTokens
             .FirstOrDefaultAsync(t => t.TokenHash == hash && t.RevokedAt == null, cancellationToken);
 

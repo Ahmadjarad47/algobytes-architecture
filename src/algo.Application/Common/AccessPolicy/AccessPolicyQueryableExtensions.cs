@@ -6,10 +6,10 @@ public static class AccessPolicyQueryableExtensions
 {
     public static Task<IQueryable<TEntity>> ApplyAccessPolicyAsync<TEntity>(
         this IQueryable<TEntity> query,
-        IAccessPolicyEvaluator evaluator,
+        IAccessPolicyQueryFilter queryFilter,
         string resource,
         string action,
         CancellationToken cancellationToken = default)
         where TEntity : class =>
-        evaluator.ApplyAsync(query, resource, action, cancellationToken);
+        queryFilter.ApplyAsync(query, resource, action, cancellationToken);
 }

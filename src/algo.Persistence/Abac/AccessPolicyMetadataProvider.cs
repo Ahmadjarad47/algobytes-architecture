@@ -2,13 +2,14 @@ using System.Collections.ObjectModel;
 using System.Reflection;
 using algo.Application.Abstractions;
 using algo.Application.Common.AccessPolicy;
+using algo.Domain.Catalog.Entities;
 using algo.Domain.Identity.Entities;
 using algo.Domain.Identity.Policies;
 using algo.Domain.Logging.Entities;
 
 namespace algo.Persistence.Abac;
 
-public sealed class AccessPolicyMetadataProvider : IAccessPolicyMetadataProvider
+public sealed class AccessPolicyMetadataProvider : IAccessPolicyMetadataLookup, IAccessPolicyResourceCatalog
 {
     private static readonly IReadOnlyDictionary<string, AccessPolicyEntityMetadata> MetadataByResource =
         new ReadOnlyDictionary<string, AccessPolicyEntityMetadata>(
@@ -20,6 +21,8 @@ public sealed class AccessPolicyMetadataProvider : IAccessPolicyMetadataProvider
                 [AccessPolicyResources.Sessions] = CreateSessionsMetadata(),
                 [AccessPolicyResources.Logs] = CreateLogsMetadata(),
                 [AccessPolicyResources.ErrorLogs] = CreateErrorLogsMetadata(),
+                [AccessPolicyResources.Products] = CreateProductsMetadata(),
+                [AccessPolicyResources.Categories] = CreateCategoriesMetadata(),
             });
 
     public IReadOnlyCollection<string> GetRegisteredResources() => MetadataByResource.Keys.ToList();
@@ -161,6 +164,50 @@ public sealed class AccessPolicyMetadataProvider : IAccessPolicyMetadataProvider
             ["userName"] = Field(type, nameof(ErrorLog.UserName)),
             ["path"] = Field(type, nameof(ErrorLog.Path)),
             ["method"] = Field(type, nameof(ErrorLog.Method)),
+        };
+
+        return new AccessPolicyEntityMetadata
+        {
+            EntityType = type,
+            Fields = fields,
+        };
+    }
+
+    private static AccessPolicyEntityMetadata CreateProductsMetadata()
+    {
+        var type = typeof(Product);
+        var fields = new Dictionary<string, AccessPolicyFieldMetadata>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["id"] = Field(type, nameof(Product.Id)),
+            ["name"] = Field(type, nameof(Product.Name)),
+            ["categoryId"] = Field(type, nameof(Product.CategoryId)),
+            ["priceUsd"] = Field(type, nameof(Product.PriceUsd)),
+            ["priceSyp"] = Field(type, nameof(Product.PriceSyp)),
+            ["discountedPriceUsd"] = Field(type, nameof(Product.DiscountedPriceUsd)),
+            ["discountedPriceSyp"] = Field(type, nameof(Product.DiscountedPriceSyp)),
+            ["externalGameId"] = Field(type, nameof(Product.ExternalGameId)),
+            ["provider"] = Field(type, nameof(Product.Provider)),
+            ["imageUrl"] = Field(type, nameof(Product.ImageUrl)),
+            ["createdAt"] = Field(type, nameof(Product.CreatedAt)),
+            ["updatedAt"] = Field(type, nameof(Product.UpdatedAt)),
+        };
+
+        return new AccessPolicyEntityMetadata
+        {
+            EntityType = type,
+            Fields = fields,
+        };
+    }
+
+    private static AccessPolicyEntityMetadata CreateCategoriesMetadata()
+    {
+        var type = typeof(Category);
+        var fields = new Dictionary<string, AccessPolicyFieldMetadata>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["id"] = Field(type, nameof(Category.Id)),
+            ["name"] = Field(type, nameof(Category.Name)),
+            ["description"] = Field(type, nameof(Category.Description)),
+            ["imageUrl"] = Field(type, nameof(Category.ImageUrl)),
         };
 
         return new AccessPolicyEntityMetadata
